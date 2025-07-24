@@ -5,6 +5,7 @@ from lib.Navigation import NavigationManager
 
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
+from pages.Debug import DebugPage
 
 class App(ctk.CTk):
     APP_TITLE = "QuackOS"
@@ -20,10 +21,10 @@ class App(ctk.CTk):
 
         self.ui = CommandUI(self)
 
-        self.nav_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
-        self.navigation: 'NavigationManager' = NavigationManager(self.nav_root)
+        self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
+        self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
 
-        self._initGraphics()
+        self._initUI()
         self._initCommands()
         self._addPages()
 
@@ -32,60 +33,62 @@ class App(ctk.CTk):
         self.bind("<Escape>", lambda e: _setter(False))
         _setter(fullscreen)
     
-    def _initGraphics(self):
+    def _initUI(self):
         # init grid
-        self.grid_columnconfigure((1), weight=1)
         self.grid_columnconfigure((0), weight=0)
-        self.grid_rowconfigure((1), weight=1)
-        self.grid_rowconfigure((0), weight=0)
+        self.grid_columnconfigure((1), weight=1)
+        self.grid_rowconfigure((0), weight=1)
 
         # grid in the nav root
-        self.nav_root.grid(row=0, column=1, rowspan=4, sticky="nsew")
+        self.content_root.grid(row=0, column=1, rowspan=4, sticky="nsew")
+        self.content_root.getInstance().grid_rowconfigure((0), weight=1)
+        self.content_root.getInstance().grid_columnconfigure((0), weight=1)
 
         # init nav sidebar
-        sidebar = self.ui.add(ctk.CTkFrame, "sb_main",
-                              width=140,
-                              corner_radius=0
-                              )
-        sidebar.grid(row=0, column=0, rowspan=4, sticky="nsew")
-        # sidebar.grid_rowconfigure(4, weight=1)
+        self.navbar = self.ui.add(ctk.CTkFrame, "sb_main",
+                              width=800,
+                              corner_radius=0)
+        self.navbar.grid(row=0, column=0, sticky="nsew")
+        self.navbar.getInstance().grid_rowconfigure((2), weight=1)
 
-        self.ui.add(ctk.CTkLabel, "sb_title",
-                    root=sidebar,
+        self.ui.add(ctk.CTkLabel, "nav_title",
+                    root=self.navbar.getInstance(),
                     text=self.APP_TITLE,
                     font=(self.FONT_NAME, 24, "bold"),
-                    ).grid(row=0, column=0, padx=20, pady=40, sticky="n")
+                    ).grid(row=0, column=0, padx=20, pady=40, sticky="new")
 
-        self.ui.add(ctk.CTkButton, "sb_home",
-                    root=sidebar,
+        self.ui.add(ctk.CTkButton, "nav_home",
+                    root=self.navbar.getInstance(),
                     text="Home", 
                     font=(self.FONT_NAME, 18),
-                    width=120, height=40,
+                    width=150, height=50,
                     corner_radius=12
-                    ).grid(row=1, column=0, padx=20, pady=20, sticky="n")
+                    ).grid(row=1, column=0, padx=30, pady=20, sticky="new")
 
-        self.ui.add(ctk.CTkButton, "sb_settings", 
-                    root=sidebar,
+        self.ui.add(ctk.CTkButton, "nav_settings", 
+                    root=self.navbar.getInstance(),
                     text="Settings",
                     font=(self.FONT_NAME, 18),
-                    width=120, height=40, 
+                    width=150, height=50, 
                     corner_radius=12
-                    ).grid(row=3, column=0, padx=20, pady=20, sticky="s")
+                    ).grid(row=2, column=0, padx=30, pady=40, sticky="s")
 
     def _initCommands(self):
-        self.ui.addCommand("sb_home", lambda: self.navigation.navigate(HomePage))
-        self.ui.addCommand("sb_settings", lambda: self.navigation.navigate(SettingsPage))
+
+        self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
+        self.ui.addCommand("nav_settings", lambda: self.navigation.navigate(SettingsPage))
 
     def _addPages(self):
-        self.navigation.registerPage(HomePage(self.nav_root))
-        self.navigation.registerPage(SettingsPage(self.nav_root))
+        self.navigation.registerPage(HomePage(self, self.content_root.getInstance()))
+        self.navigation.registerPage(SettingsPage(self, self.content_root.getInstance()))
+        self.navigation.registerPage(DebugPage(self, self.content_root.getInstance()))
 
-        self.navigation.setInitialPage(HomePage)
+        self.navigation.navigate(HomePage)
 
 
 if __name__ == "__main__":
     app = App()
-    if not isDev():
-        app.setFullscreen(True)
+    # if not isDev():
+    #     app.setFullscreen(True)
     app.mainloop()
 

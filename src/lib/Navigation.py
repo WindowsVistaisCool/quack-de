@@ -3,33 +3,33 @@ from lib.CommandUI import CommandUI
 from typing import Type
 
 class NavigationPage(ctk.CTkFrame):
-    def __init__(self, master, title, **kwargs):
+    def __init__(self, master: ctk.CTkFrame, title: str, **kwargs):
         super().__init__(master, **kwargs)
         self.title = title
+        self.configure(fg_color=master._fg_color)
         self.ui = CommandUI(self)
 
 class NavigationManager:
-    def __init__(self, navDisplay: ctk.CTkFrame):
-        self.navDisplay: ctk.CTkFrame = navDisplay
+    def __init__(self, contentMaster: ctk.CTkFrame):
+        self.contentMaster: ctk.CTkFrame = contentMaster
         self.currentPage: 'NavigationPage' = None
         self.pages = {}
+
+    def pageExists(self, page: Type[NavigationPage]) -> bool:
+        return page in self.pages
 
     def registerPage(self, page: NavigationPage):
         self.pages[type(page)] = page
     
-    def setInitialPage(self, page: Type[NavigationPage]):
-        if page not in self.pages:
-            raise ValueError(f"Page {page} is not registered.")
-        self.currentPage = self.pages[page]
-        self.navigate(page)
-
     def navigate(self, page: Type[NavigationPage]):
         if page not in self.pages:
             raise ValueError(f"Page {page} is not registered.")
         
-        if self.currentPage is None:
-            raise ValueError("No current page to navigate from. (Use setInitialPage first.)")
+        if self.currentPage == self.pages[page]:
+            return
         
-        self.currentPage.grid_forget()
+        if self.currentPage is not None:
+            self.currentPage.grid_forget()
+
         self.currentPage = self.pages[page]
         self.currentPage.grid(row=0, column=0, sticky="nsew")
