@@ -8,6 +8,7 @@ class NavigationPage(ctk.CTkFrame):
         self.title = title
         self.configure(fg_color=master._fg_color)
         self.ui = CommandUI(self)
+        self.grid_columnconfigure(0, weight=1)
 
 class NavigationManager:
     def __init__(self, contentMaster: ctk.CTkFrame):

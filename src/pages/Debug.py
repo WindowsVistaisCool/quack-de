@@ -4,10 +4,13 @@ if TYPE_CHECKING:
 
 import customtkinter as ctk
 from lib.Navigation import NavigationPage
+from lib.Notifier import NotifierUI
 
 from pages.Home import HomePage
 
 class DebugPage(NavigationPage):
+    PLATFORM_TEXT = "OS: ben\n"*10
+
     def __init__(self, appRoot: 'App', master, **kwargs):
         super().__init__(master, title="Debug", **kwargs)
         self.appRoot: 'App' = appRoot
@@ -28,6 +31,29 @@ class DebugPage(NavigationPage):
                     text="magical fix everything button!!! har har harhahrarhraR!!!!!!",
                     ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
     
+        self.ui.add(ctk.CTkButton, "notify_test",
+                    text="Notify Test"
+                    ).grid(row=3, column=0, padx=20, pady=20, sticky="nw")
+    
+        f_specs = self.ui.add(ctk.CTkFrame, "f_specs",
+                    width=400, height=50,
+                    ).withGridProperties(row=4, column=0, columnspan=2, padx=30, pady=10, sticky="we")
+        f_specs.getInstance().grid_columnconfigure(0, weight=1)
+        f_specs.grid()
+
+        self.ui.add(ctk.CTkLabel, "l_specs",
+                    root=f_specs.getInstance(),
+                    text="Hardware Specifications:",
+                    font=(self.appRoot.FONT_NAME, 16, "bold")
+                    ).grid(row=0, column=0, padx=10, pady=5, sticky="nsw")
+    
+        self.ui.add(ctk.CTkLabel, "l_specs_pc",
+                    root=f_specs.getInstance(),
+                    text=self.PLATFORM_TEXT,
+                    font=(self.appRoot.FONT_NAME, 14),
+                    justify="left"
+                    ).grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsw")
+
     def _initCommands(self):
         self.ui.addCommand("destroy", self.appRoot.navbar.instance.grid_forget)
 
@@ -37,5 +63,5 @@ class DebugPage(NavigationPage):
                 self.appRoot.navigation.navigate(HomePage)
 
         self.ui.addCommand("rebuild", funny)
-        # Add more commands as needed for debugging purposes
-        # e.g., self.ui.addCommand("some_command", lambda: some_function())
+        
+        self.ui.addCommand("notify_test", lambda: NotifierUI.notify("This is a test notification! har har har!"))

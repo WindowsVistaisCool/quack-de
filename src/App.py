@@ -8,6 +8,7 @@ from lib.CommandUI import CommandUI
 from lib.Configurator import Configurator
 from lib.DevChecks import isDev
 from lib.Navigation import NavigationManager
+from lib.Notifier import NotifierUI
 
 from pages.About import AboutPage
 from pages.Debug import DebugPage
@@ -29,6 +30,10 @@ class App(ctk.CTk):
 
         self.ui = CommandUI(self)
 
+        NotifierUI.setFont((self.FONT_NAME, 16))
+        NotifierUI.setMessageSupplier(ctk.StringVar(value=""))
+        NotifierUI.setDelayFunction(lambda delay_ms, end_call: self.after(delay_ms, end_call))
+
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
         self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
 
@@ -46,9 +51,10 @@ class App(ctk.CTk):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
 
         # grid in the nav root
-        self.content_root.grid(row=0, column=1, rowspan=4, sticky="nsew")
+        self.content_root.grid(row=0, column=1, sticky="nsew")
         self.content_root.getInstance().grid_rowconfigure(0, weight=1)
         self.content_root.getInstance().grid_columnconfigure(0, weight=1)
 
@@ -56,7 +62,7 @@ class App(ctk.CTk):
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main",
                               width=800,
                               corner_radius=0)
-        self.navbar.grid(row=0, column=0, sticky="nsew")
+        self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
         self.navbar.getInstance().grid_rowconfigure(3, weight=1)
 
         self.ui.add(ctk.CTkLabel, "app_title",
@@ -96,6 +102,19 @@ class App(ctk.CTk):
                     width=150, height=50, 
                     corner_radius=12
                     ).grid(row=4, column=0, padx=30, pady=40, sticky="s")
+        
+        self.notifierUI = CommandUI(self)
+        self.notifierBase = self.notifierUI.add(ctk.CTkFrame, "notifier_base",
+                                                fg_color="transparent",
+                                                bg_color="transparent",
+                                                ).withGridProperties(row=1, column=1, padx=0, pady=0, sticky="sew")
+        self.notifierBase.getInstance().grid_columnconfigure(0, weight=1)
+        self.notifierBase.getInstance().grid_rowconfigure(0, weight=1)
+        self.notifierBase.grid()
+
+        self.notifier = NotifierUI(self.notifierBase.getInstance(), self.notifierUI)
+        NotifierUI.setActive(self.notifier)
+        NotifierUI.notify("", 100)
 
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))

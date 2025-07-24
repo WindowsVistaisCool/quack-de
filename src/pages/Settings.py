@@ -7,6 +7,7 @@ import customtkinter as ctk
 from lib.Configurator import Configurator
 from lib.Dialogs import Dialogs
 from lib.Navigation import NavigationPage
+from lib.Notifier import NotifierUI
 from lib.Themes import Theme
 
 from pages.About import AboutPage
@@ -73,7 +74,7 @@ class SettingsPage(NavigationPage):
             if result == Configurator.getInstance().getTheme().name:
                 return
             Configurator.getInstance().setTheme(Theme[result])
-            
+            NotifierUI.notify(f"You must restart for these changes to take effect!", 4000)
 
         self.ui.get("om_theme").setCommand(notifier)
         self.ui.get("s_darkmode").setCommand(lambda: ctk.set_appearance_mode("light" if not self.s_darkmode.get() else "dark"))

@@ -86,3 +86,12 @@ class CommandUI:
     def gridAll(self):
         for item in self.items.values():
             item.grid()
+    
+    def dropAll(self):
+        for item in self.items.values():
+            if item.className is None:
+                continue
+            try:
+                item.getInstance().grid_forget()
+            except:
+                print(f"Error dropping UI element '{item.className}'")
