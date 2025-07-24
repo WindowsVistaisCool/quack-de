@@ -5,20 +5,15 @@ if TYPE_CHECKING:
 import customtkinter as ctk
 import platform
 from lib.Navigation import NavigationPage
-from lib.Notifier import NotifierUI
 
 class AboutPage(NavigationPage):
-    ABOUT_TEXT = """This is a custom application built with Python and CustomTkinter.
-Made by Kyle Rush.
-"""
-
     PLATFORM_TEXT = f"""OS: {platform.platform()}
 Architecture: {platform.architecture()[0]}
 Python Version: {platform.python_version()}
 """
 
-    def __init__(self, appRoot: 'App', master, **kwargs):
-        super().__init__(master, title="About", **kwargs)
+    def __init__(self, navigator, appRoot: 'App', master, **kwargs):
+        super().__init__(navigator, master, title="About", **kwargs)
         self.appRoot: 'App' = appRoot
 
         self._initUI()
@@ -30,12 +25,12 @@ Python Version: {platform.python_version()}
         self.ui.add(ctk.CTkLabel, "title",
                     text=f"💡 About {self.appRoot.APP_TITLE}",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=30, pady=30, sticky="nw")
+                    ).grid(row=0, column=0, padx=30, pady=(30, 10), sticky="nw")
 
         self.ui.add(ctk.CTkLabel, "description",
-                    text=self.ABOUT_TEXT,
+                    text=self.appRoot.APP_DESCRIPTION,
                     font=(self.appRoot.FONT_NAME, 16)
-                    ).grid(row=1, column=0, padx=30, pady=10, sticky="nwe")
+                    ).grid(row=1, column=0, padx=30, pady=(0, 5), sticky="nwe")
 
     
         f_version = self.ui.add(ctk.CTkFrame, "f_version",
@@ -67,7 +62,7 @@ Python Version: {platform.python_version()}
                     text=self.PLATFORM_TEXT,
                     font=(self.appRoot.FONT_NAME, 14),
                     justify="left"
-                    ).grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsw")
+                    ).grid(row=1, column=0, padx=10, pady=5, sticky="nsw")
 
         self.ui.add(ctk.CTkButton, "nav_back",
                     text="Back",

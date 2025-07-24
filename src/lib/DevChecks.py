@@ -1,4 +1,4 @@
 from os import path
 
 def isDev():
-    return path.exists("../dev")
+    return path.exists("../dev") or True

@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 import customtkinter as ctk
 from lib.Navigation import NavigationPage
-from lib.Notifier import NotifierUI
+from lib.Notifier import NotifierService
 
 from pages.About import AboutPage
 from pages.Home import HomePage
@@ -13,8 +13,8 @@ from pages.Home import HomePage
 class DebugPage(NavigationPage):
     PLATFORM_TEXT = "OS: ben\n"*10
 
-    def __init__(self, appRoot: 'App', master, **kwargs):
-        super().__init__(master, title="Debug", **kwargs)
+    def __init__(self, navigator, appRoot: 'App', master, **kwargs):
+        super().__init__(navigator, master, title="Debug", **kwargs)
         self.appRoot: 'App' = appRoot
         self._initUI()
         self._initCommands()
@@ -37,7 +37,12 @@ class DebugPage(NavigationPage):
         self.ui.add(ctk.CTkButton, "rebuild",
                     text="magical fix everything button!!! har har harhahrarhraR!!!!!!",
                     ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
-    
+
+        self.ui.add(ctk.CTkButton, "cause_exception",
+                    text="Cause Exception",
+                    command=lambda: self.appRoot.navigation.navigate(AboutPage)
+                    ).grid(row=2, column=1, padx=20, pady=20, sticky="nw")
+
         self.ui.add(ctk.CTkButton, "notify_test",
                     text="Notify Test"
                     ).grid(row=3, column=0, padx=20, pady=20, sticky="nw")
@@ -66,7 +71,9 @@ class DebugPage(NavigationPage):
 
         def notifasodf():
             self.appRoot.navigation.navigate(AboutPage)
-            NotifierUI.notify("can you still see me in the about window?? :)))")
+            NotifierService.notify("get ready for this ultra mega goofy thing")
+
+            self.appRoot.after(3250, lambda: self.appRoot.toggleNav(True))
 
         self.ui.addCommand("test_about", notifasodf)
 
@@ -76,5 +83,9 @@ class DebugPage(NavigationPage):
                 self.appRoot.navigation.navigate(HomePage)
 
         self.ui.addCommand("rebuild", funny)
+
+        def raise_exception():
+            raise Exception("This exception is meant to happen!")
+        self.ui.get("cause_exception").setCommand(raise_exception)
         
-        self.ui.addCommand("notify_test", lambda: NotifierUI.notify("This is a test notification! har har har!", 10000))
+        self.ui.addCommand("notify_test", lambda: NotifierService.notify("This is a test notification! har har har!", 10000))

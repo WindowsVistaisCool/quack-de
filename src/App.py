@@ -7,7 +7,7 @@ from lib.CommandUI import CommandUI
 from lib.Configurator import Configurator
 from lib.DevChecks import isDev
 from lib.Navigation import NavigationManager
-from lib.Notifier import NotifierUI
+from lib.Notifier import NotifierService, NotifierUI
 
 from pages.About import AboutPage
 from pages.Debug import DebugPage
@@ -16,12 +16,14 @@ from pages.Settings import SettingsPage
 
 class App(ctk.CTk):
     VERSION = f"0.1{'-dev' if isDev() else ''}"
-    APP_TITLE = "QuackOS"
+    APP_TITLE = "QuackDE"
+    APP_DESCRIPTION = "Quack Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
 
     def __init__(self):
+        Configurator.initialize(self.APP_TITLE)
         ctk.set_appearance_mode(Configurator.getInstance().getAppearanceMode())
-        ctk.set_default_color_theme(Configurator.getInstance().getTheme().value)
+        ctk.set_default_color_theme(Configurator.getInstance().getTheme())
 
         super().__init__()
         self.title(self.APP_TITLE)
@@ -30,12 +32,16 @@ class App(ctk.CTk):
 
         self.ui = CommandUI(self)
 
+        NotifierService.setMessageSupplier(ctk.StringVar(value=""))
+        NotifierService.setDelayFuncs(
+            lambda delay_ms, end_call: self.after(delay_ms, end_call),
+            self.after_cancel
+        )
         NotifierUI.setFont((self.FONT_NAME, 16))
-        NotifierUI.setMessageSupplier(ctk.StringVar(value=""))
-        NotifierUI.setDelayFunction(lambda delay_ms, end_call: self.after(delay_ms, end_call))
 
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
         self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
+        self.navigation.registerExceptionHandling()
 
         self._initUI()
         self._initCommands()
@@ -113,8 +119,8 @@ class App(ctk.CTk):
         self.notifierBase.grid()
 
         self.notifier = NotifierUI(self.notifierBase.getInstance(), self.notifierUI)
-        NotifierUI.setActive(self.notifier)
-        NotifierUI.notify("", 100)
+        NotifierService.setActiveUI(self.notifier)
+        NotifierService.notify("", 100) # display a blank notification to initialize sizing properly
 
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
@@ -132,10 +138,10 @@ class App(ctk.CTk):
         self.clock_thread().start()
 
     def _addPages(self):
-        self.navigation.registerPage(AboutPage(self, self.content_root.getInstance()))
-        self.navigation.registerPage(HomePage(self, self.content_root.getInstance()))
-        self.navigation.registerPage(DebugPage(self, self.content_root.getInstance()))
-        self.navigation.registerPage(SettingsPage(self, self.content_root.getInstance()))
+        AboutPage(self.navigation, self, self.content_root.getInstance())
+        HomePage(self.navigation, self, self.content_root.getInstance())
+        DebugPage(self.navigation, self, self.content_root.getInstance())
+        SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.navigate(HomePage)
 

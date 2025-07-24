@@ -6,8 +6,8 @@ import customtkinter as ctk
 from lib.Navigation import NavigationPage
 
 class HomePage(NavigationPage):
-    def __init__(self, appRoot: 'App', master, **kwargs):
-        super().__init__(master, title="Home", **kwargs)
+    def __init__(self, navigator, appRoot: 'App', master, **kwargs):
+        super().__init__(navigator, master, title="Home", **kwargs)
         self.appRoot: 'App' = appRoot
         self._initUI()
         self._initCommands()
