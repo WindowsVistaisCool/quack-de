@@ -1,12 +1,9 @@
-from lib.PidWrapper import PidWrapper
+from lib.DevChecks import isDev
+from lib.ProcessWrapper import ProcessWrapper
 from subprocess import Popen
-from os import path
-
-def isDev():
-    return path.exists("../dev")
 
 if __name__ == '__main__':
-    wrapper = PidWrapper("./window.pid", lambda: Popen(["python3", "./window.py"]))
+    wrapper = ProcessWrapper("./window.pid", lambda: Popen(["python3", "./App.py"]))
 
     if isDev():
         wrapper.runSkipWrite()

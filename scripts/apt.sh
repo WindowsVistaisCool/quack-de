@@ -1,1 +1,0 @@
-# need: xinit, openbox, python3-tk, x11-xserver-utils

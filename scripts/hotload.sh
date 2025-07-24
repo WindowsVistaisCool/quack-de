@@ -1,6 +1,8 @@
 #!/bin/sh
 
 replace_code() {
+    # move contents from ~/temp to ~/deploy
+
     cd ~
     rm -rf ./deploy/
 
@@ -18,6 +20,7 @@ cd /home/kiosk/deploy
 
 # check if X is running
 if ! timeout 1s xset q &>/dev/null; then
+    # kill existing window process if it exists
     task_pid=$(cat /home/kiosk/deploy/window.pid)
     if [[ -z $task_pid ]]; then
         echo "No existing window process found."
@@ -32,9 +35,10 @@ if ! timeout 1s xset q &>/dev/null; then
 
     replace_code
 
-    DISPLAY=:1 python3 ./main.py &
+    # DISPLAY=:0 xset s reset # reset screensaver 
+    DISPLAY=:0 python3 ./main.py & # launch new app
 
-    echo "Window launched successfully."
+    echo "Launched successfully."
 
 else
     echo "DISPLAY is not set, skipping window launch."

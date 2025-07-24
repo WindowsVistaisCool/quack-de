@@ -7,7 +7,7 @@ cat > ~/.xinitrc <<- "EOF"
 #!/bin/sh
 xset s off
 xset s noblank
-xset -dpms
+xset -dpms s off
 
 openbox-session
 EOF
@@ -18,7 +18,7 @@ cat > ~/.bash_profile <<- "EOF"
 source ~/.profile
 if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
     cd /home/kiosk/deploy
-    startx -- -nocursor
+    startx # -- -nocursor
 fi
 EOF
 
