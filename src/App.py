@@ -27,6 +27,7 @@ class App(ctk.CTk):
         super().__init__()
         self.title(self.APP_TITLE)
         self.geometry("800x480")
+        self.resizable(False, False)
 
         self.ui = CommandUI(self)
 

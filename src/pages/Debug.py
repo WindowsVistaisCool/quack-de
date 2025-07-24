@@ -64,4 +64,4 @@ class DebugPage(NavigationPage):
 
         self.ui.addCommand("rebuild", funny)
         
-        self.ui.addCommand("notify_test", lambda: NotifierUI.notify("This is a test notification! har har har!"))
+        self.ui.addCommand("notify_test", lambda: NotifierUI.notify("This is a test notification! har har har!", 10000))

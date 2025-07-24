@@ -18,7 +18,7 @@ class NotifierUI:
     def _initUI(self):
         self.frame = self.ui.add(ctk.CTkFrame, "notifier_frame",
                                  corner_radius=32,
-                                 fg_color="red4",
+                                 fg_color=("coral1", "red4"),
                                  bg_color="transparent",
                                  ).withGridProperties(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.frame.getInstance().grid_rowconfigure(0, weight=1)
