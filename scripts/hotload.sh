@@ -35,7 +35,7 @@ if ! timeout 1s xset q &>/dev/null; then
 
     replace_code
 
-    # DISPLAY=:0 xset s reset # reset screensaver 
+    DISPLAY=:0 xset s reset # reset screensaver 
     DISPLAY=:0 python3 ./main.py & # launch new app
 
     echo "Launched successfully."
