@@ -14,9 +14,9 @@ class HomePage(NavigationPage):
 
     def _initUI(self):
         self.ui.add(ctk.CTkLabel, "title",
-                    text="Home :)",
-                    font=(self.appRoot.FONT_NAME, 24)
-                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
+                    text="🏠 Home",
+                    font=(self.appRoot.FONT_NAME, 32, "bold")
+                    ).grid(row=0, column=0, padx=30, pady=30, sticky="nw")
 
     def _initCommands(self):
         pass

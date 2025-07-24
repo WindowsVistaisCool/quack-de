@@ -1,20 +1,28 @@
 import customtkinter as ctk
+
+import time
+from datetime import datetime
+from threading import Thread
+
 from lib.CommandUI import CommandUI
+from lib.Configurator import Configurator
 from lib.DevChecks import isDev
 from lib.Navigation import NavigationManager
 
+from pages.About import AboutPage
+from pages.Debug import DebugPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
-from pages.Debug import DebugPage
 
 class App(ctk.CTk):
+    VERSION = "0.1-dev"
     APP_TITLE = "QuackOS"
     FONT_NAME = "Ubuntu Mono"
 
     def __init__(self):
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("./themes/cherry.json")
-        
+        ctk.set_appearance_mode(Configurator.getInstance().getAppearanceMode())
+        ctk.set_default_color_theme(Configurator.getInstance().getTheme().value)
+
         super().__init__()
         self.title(self.APP_TITLE)
         self.geometry("800x480")
@@ -35,27 +43,34 @@ class App(ctk.CTk):
     
     def _initUI(self):
         # init grid
-        self.grid_columnconfigure((0), weight=0)
-        self.grid_columnconfigure((1), weight=1)
-        self.grid_rowconfigure((0), weight=1)
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
         # grid in the nav root
         self.content_root.grid(row=0, column=1, rowspan=4, sticky="nsew")
-        self.content_root.getInstance().grid_rowconfigure((0), weight=1)
-        self.content_root.getInstance().grid_columnconfigure((0), weight=1)
+        self.content_root.getInstance().grid_rowconfigure(0, weight=1)
+        self.content_root.getInstance().grid_columnconfigure(0, weight=1)
 
         # init nav sidebar
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main",
                               width=800,
                               corner_radius=0)
         self.navbar.grid(row=0, column=0, sticky="nsew")
-        self.navbar.getInstance().grid_rowconfigure((2), weight=1)
+        self.navbar.getInstance().grid_rowconfigure(3, weight=1)
 
-        self.ui.add(ctk.CTkLabel, "nav_title",
+        self.ui.add(ctk.CTkLabel, "app_title",
                     root=self.navbar.getInstance(),
                     text=self.APP_TITLE,
-                    font=(self.FONT_NAME, 24, "bold"),
-                    ).grid(row=0, column=0, padx=20, pady=40, sticky="new")
+                    font=(self.FONT_NAME, 28, "bold"),
+                    ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
+
+        self.clock_label = ctk.StringVar(value="12:00 AM")
+        self.ui.add(ctk.CTkLabel, "clock",
+                    root=self.navbar.getInstance(),
+                    textvariable=self.clock_label,
+                    font=(self.FONT_NAME, 16),
+                    ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="new")
 
         self.ui.add(ctk.CTkButton, "nav_home",
                     root=self.navbar.getInstance(),
@@ -63,7 +78,16 @@ class App(ctk.CTk):
                     font=(self.FONT_NAME, 18),
                     width=150, height=50,
                     corner_radius=12
-                    ).grid(row=1, column=0, padx=30, pady=20, sticky="new")
+                    ).grid(row=2, column=0, padx=30, pady=10, sticky="new")
+
+        if isDev():
+            self.ui.add(ctk.CTkButton, "nav_debug",
+                        root=self.navbar.getInstance(),
+                        text="DEBUG!",
+                        font=(self.FONT_NAME, 18),
+                        width=150, height=50,
+                        corner_radius=0
+                        ).grid(row=3, column=0, padx=30, pady=10, sticky="new")
 
         self.ui.add(ctk.CTkButton, "nav_settings", 
                     root=self.navbar.getInstance(),
@@ -71,17 +95,28 @@ class App(ctk.CTk):
                     font=(self.FONT_NAME, 18),
                     width=150, height=50, 
                     corner_radius=12
-                    ).grid(row=2, column=0, padx=30, pady=40, sticky="s")
+                    ).grid(row=4, column=0, padx=30, pady=40, sticky="s")
 
     def _initCommands(self):
-
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
+        if isDev():
+            self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
         self.ui.addCommand("nav_settings", lambda: self.navigation.navigate(SettingsPage))
 
+        # initilaze the clock
+        self.clock_enabled = True
+        def clock_worker():
+            while self.clock_enabled:
+                self.clock_label.set(datetime.now().strftime("%I:%M:%S %p"))
+                time.sleep(1)
+        self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
+        self.clock_thread().start()
+
     def _addPages(self):
+        self.navigation.registerPage(AboutPage(self, self.content_root.getInstance()))
         self.navigation.registerPage(HomePage(self, self.content_root.getInstance()))
-        self.navigation.registerPage(SettingsPage(self, self.content_root.getInstance()))
         self.navigation.registerPage(DebugPage(self, self.content_root.getInstance()))
+        self.navigation.registerPage(SettingsPage(self, self.content_root.getInstance()))
 
         self.navigation.navigate(HomePage)
 

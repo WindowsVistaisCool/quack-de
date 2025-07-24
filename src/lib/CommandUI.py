@@ -30,6 +30,14 @@ class CommandUIItem(list, Generic[T]):
     def getInstance(self) -> T:
         return self.instance
     
+    def setCommand(self, command):
+        self[3] = command
+        if command and callable(command):
+            self.instance.configure(command=command)
+        else:
+            self.instance.configure(command=None)
+        return self
+    
     def withGridProperties(self, **kwargs):
         self.gridProperties.update(kwargs)
         return self
