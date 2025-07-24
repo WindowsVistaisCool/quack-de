@@ -1,1 +1,2 @@
-This file gets deleted off the Pi to signify a production environment.
+This file is used to notify the app that it is running in a dev environment.
+This file isn't copied to the Pi on purpose.
