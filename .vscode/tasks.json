@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Deploy",
+            "label": "Deploy App",
             "type": "shell",
             "command": ".vscode/deploy.bat",
             "presentation": {
@@ -20,7 +20,7 @@
             }
         },
         {
-            "label": "Deploy Initialize Scripts",
+            "label": "Setup Scripts on Target",
             "type": "shell",
             "command": ".vscode/deployscripts.bat",
             "presentation": {
