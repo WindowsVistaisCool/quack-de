@@ -10,7 +10,7 @@ class Configurator:
 
     def __init__(self):
         self.appearance_mode = "dark"
-        self.theme = Theme.Sky
+        self.theme = Theme.Cherry
 
     def getAppearanceMode(self):
         return self.appearance_mode

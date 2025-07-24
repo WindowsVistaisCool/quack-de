@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from App import App
 
@@ -6,6 +7,7 @@ import customtkinter as ctk
 from lib.Navigation import NavigationPage
 from lib.Notifier import NotifierUI
 
+from pages.About import AboutPage
 from pages.Home import HomePage
 
 class DebugPage(NavigationPage):
@@ -26,6 +28,11 @@ class DebugPage(NavigationPage):
         self.ui.add(ctk.CTkButton, "destroy",
                     text="destroy everything!! har har har",
                     ).grid(row=1, column=0, padx=20, pady=20, sticky="nw")
+        
+        self.ui.add(ctk.CTkButton, "test_about",
+                    text="Test About Page",
+                    command=lambda: self.appRoot.navigation.navigate(AboutPage)
+                    ).grid(row=1, column=1, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "rebuild",
                     text="magical fix everything button!!! har har harhahrarhraR!!!!!!",
@@ -56,6 +63,12 @@ class DebugPage(NavigationPage):
 
     def _initCommands(self):
         self.ui.addCommand("destroy", self.appRoot.navbar.instance.grid_forget)
+
+        def notifasodf():
+            self.appRoot.navigation.navigate(AboutPage)
+            NotifierUI.notify("can you still see me in the about window?? :)))")
+
+        self.ui.addCommand("test_about", notifasodf)
 
         def funny():
             self.appRoot.ui.gridAll()

@@ -1,5 +1,4 @@
 import customtkinter as ctk
-
 import time
 from datetime import datetime
 from threading import Thread
@@ -16,7 +15,7 @@ from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
 class App(ctk.CTk):
-    VERSION = "0.1-dev"
+    VERSION = f"0.1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackOS"
     FONT_NAME = "Ubuntu Mono"
 
@@ -140,6 +139,14 @@ class App(ctk.CTk):
 
         self.navigation.navigate(HomePage)
 
+    def toggleNav(self, viewable):
+        if not viewable:
+            self.ui.dropAll() # drop all UI
+            self.content_root.grid() # ensure the content root is visible
+        else:
+            self.ui.gridAll()
+            if self.navigation.currentPage is not None:
+                self.navigation.currentPage.ui.gridAll()
 
 if __name__ == "__main__":
     app = App()

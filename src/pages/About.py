@@ -5,6 +5,7 @@ if TYPE_CHECKING:
 import customtkinter as ctk
 import platform
 from lib.Navigation import NavigationPage
+from lib.Notifier import NotifierUI
 
 class AboutPage(NavigationPage):
     ABOUT_TEXT = """This is a custom application built with Python and CustomTkinter.
@@ -19,6 +20,7 @@ Python Version: {platform.python_version()}
     def __init__(self, appRoot: 'App', master, **kwargs):
         super().__init__(master, title="About", **kwargs)
         self.appRoot: 'App' = appRoot
+
         self._initUI()
         self._initCommands()
 
@@ -66,7 +68,20 @@ Python Version: {platform.python_version()}
                     font=(self.appRoot.FONT_NAME, 14),
                     justify="left"
                     ).grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsw")
-        
 
+        self.ui.add(ctk.CTkButton, "nav_back",
+                    text="Back",
+                    font=(self.appRoot.FONT_NAME, 18),
+                    width=150, height=50,
+                    corner_radius=12
+                    ).grid(row=4, column=0, padx=30, pady=20, sticky="s")
+    
     def _initCommands(self):
+        self.ui.addCommand("nav_back", lambda: self.appRoot.navigation.navigate(type(self.appRoot.navigation.previousPage)))
+
+    def onShow(self):
+        self.appRoot.toggleNav(False)
+    
+    def onHide(self):
+        self.appRoot.toggleNav(True)
         pass
