@@ -7,6 +7,7 @@ from Configurator import Configurator
 
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
+# isDev = lambda: True
 from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
 
@@ -32,11 +33,11 @@ class App(ctk.CTk):
 
         self.ui = CommandUI(self)
 
-        NotifierService.setMessageSupplier(ctk.StringVar(value=""))
         NotifierService.setDelayFuncs(
             lambda delay_ms, end_call: self.after(delay_ms, end_call),
             self.after_cancel
         )
+        NotifierService.init()
         NotifierUI.setFont((self.FONT_NAME, 16))
 
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
@@ -95,10 +96,10 @@ class App(ctk.CTk):
         if isDev():
             self.ui.add(ctk.CTkButton, "nav_debug",
                         root=self.navbar.getInstance(),
-                        text="DEBUG!",
+                        text="Debug",
                         font=(self.FONT_NAME, 18),
                         width=150, height=50,
-                        corner_radius=0
+                        corner_radius=12
                         ).grid(row=3, column=0, padx=30, pady=10, sticky="new")
 
         self.ui.add(ctk.CTkButton, "nav_settings", 

@@ -16,14 +16,17 @@ class NavigationPage(ctk.CTkFrame):
             self.navigator.registerPage(self)
 
         self.title = title
-        self.configure(fg_color=master._fg_color)
+        self.configure(fg_color=master._fg_color) # copy the master frame's color
         self.ui = CommandUI(self)
 
+        # if the navigator has an exception page, set the exception callback
         if self.navigator.exceptionPage:
             def exception_navigator(exception: str):
-                self.navigator.exceptionMessage.set(exception)
+                self.navigator.exceptionMessageSupplier.set(exception)
                 self.navigator.navigate(type(self.navigator.exceptionPage))
             self.ui.setExceptionCallback(exception_navigator)
+        
+        # [TODO] this was here at one point, but I don't remember why
         self.grid_columnconfigure(0, weight=1)
     
     def onShow(self):
@@ -44,12 +47,13 @@ class EphemeralNavigationPage(NavigationPage):
         self.is_ephemeral = True
 
 class DefaultExceptionPage(NavigationPage):
-    def __init__(self, navigator, master: ctk.CTkFrame, error: ctk.StringVar, **kwargs):
+    def __init__(self, navigator, master: ctk.CTkFrame, errorSupplier: ctk.StringVar, **kwargs):
         super().__init__(navigator, master, title="Error", **kwargs)
-        self.error = error
+        self.errorSupplier = errorSupplier
         self.ui = CommandUI(self)
 
-        self.errClass = ctk.StringVar(value="")
+        # A string variable to hold the error class name that is shown on error
+        self.navPageClass = ctk.StringVar(value="")
 
         self._initUI()
         self._initCommands()
@@ -67,7 +71,7 @@ class DefaultExceptionPage(NavigationPage):
                     font=("Arial", 24, "bold")
                     ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="nw")
         self.ui.add(ctk.CTkLabel, "error_class",
-                    textvariable=self.errClass,
+                    textvariable=self.navPageClass,
                     text_color="white",
                     font=("Arial", 12),
                     justify="left"
@@ -89,11 +93,12 @@ class DefaultExceptionPage(NavigationPage):
         self.ui.get("error_button").setCommand(self.navigator.navigateBack)
     
     def onShow(self):
-        self.errClass.set(f"{datetime.now()} {type(self.navigator.previousPage)}")
+        self.navPageClass.set(f"{datetime.now()} {type(self.navigator.previousPage)}")
 
+        # need to re-enable and disable or else it will not update the text
         self.ui.get("error_message").getInstance().configure(state="normal")
         self.ui.get("error_message").getInstance().delete("0.0", "end")
-        self.ui.get("error_message").getInstance().insert("0.0", self.error.get())
+        self.ui.get("error_message").getInstance().insert("0.0", self.errorSupplier.get())
         self.ui.get("error_message").getInstance().configure(state="disabled")
 
 class NavigationManager:
@@ -104,7 +109,7 @@ class NavigationManager:
         self.pages = {}
 
         self.exceptionPage = None
-        self.exceptionMessage = ctk.StringVar(value="")
+        self.exceptionMessageSupplier = ctk.StringVar(value="")
 
     def pageExists(self, page: Type[NavigationPage]) -> bool:
         return page in self.pages
@@ -119,7 +124,7 @@ class NavigationManager:
             exceptionPage = DefaultExceptionPage(
                 navigator=self,
                 master=self.contentMaster,
-                error=self.exceptionMessage
+                errorSupplier=self.exceptionMessageSupplier
             )
         self.exceptionPage = exceptionPage
     
@@ -172,7 +177,7 @@ class NavigationManager:
         page.onHide()
         page.grid_forget()
     
-
+# [TODO] i was smoking again apparently!
 # class NavigationContentRoot(ctk.CTkFrame):
 #     def __init__(self, master: ctk.CTkFrame, **kwargs):
 #         super().__init__(master, **kwargs)

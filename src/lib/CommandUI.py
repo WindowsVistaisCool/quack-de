@@ -78,6 +78,12 @@ class CommandUIItem(list, Generic[T]):
 
 
 class CommandUI:
+    """
+    CommandUI is a collection of (CommandUIElement)s
+
+    This class is useful for creating collections of UI elements that can be easily managed.
+
+    """
     def __init__(self, master):
         self.master = master
         self.items = {
@@ -99,18 +105,19 @@ class CommandUI:
             self.exceptionCallback)
         return self.items[id]
 
-    def addInnerUI(self, ui: 'CommandUI', id: str, root=None, **kwargs):
-        if id in self.items:
-            raise ValueError(f"UI element '{id}' already exists.")
-        if not root:
-            root = self.master
-        self.items[id] = CommandUIItem(
-            root,
-            ui.__class__,
-            ui,
-            None if not kwargs.get("command") else kwargs["command"],
-            self.exceptionCallback)
-        return self.items[id]
+    # [TODO] what was i smoking when i wrote this?
+    # def addInnerUI(self, ui: 'CommandUI', id: str, root=None, **kwargs):
+    #     if id in self.items:
+    #         raise ValueError(f"UI element '{id}' already exists.")
+    #     if not root:
+    #         root = self.master
+    #     self.items[id] = CommandUIItem(
+    #         root,
+    #         ui.__class__,
+    #         ui,
+    #         None if not kwargs.get("command") else kwargs["command"],
+    #         self.exceptionCallback)
+    #     return self.items[id]
     
     # def addExceptionUI(self, className, root=None, **kwargs):
     #     if self.exceptionUI is not None:

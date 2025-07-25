@@ -1,5 +1,7 @@
 import customtkinter as ctk
 
+# [TODO] what the HELL was i smoking again and why isn't this finished
+
 class Dialogs:
     class _DialogBase(ctk.CTkToplevel):
         def __init__(self, master, title: str, message: str, **kwargs):

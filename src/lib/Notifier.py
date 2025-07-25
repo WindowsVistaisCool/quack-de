@@ -11,9 +11,9 @@ class NotifierService:
     _CLEAR_DELAY = lambda id: None # function to clear the delay, if needed
 
     @classmethod
-    def setMessageSupplier(cls, message_supplier: ctk.StringVar):
+    def init(cls):
         """Sets the StringVar that will be used to update the notification message."""
-        cls._MESSAGE_SUPPLIER = message_supplier
+        cls._MESSAGE_SUPPLIER = ctk.StringVar(value="")
     
     @classmethod
     def setDelayFuncs(cls, delayFunction, clearDelay):
