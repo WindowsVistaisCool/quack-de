@@ -36,9 +36,9 @@ class CommandUIItem(list, Generic[T]):
         return self.instance
 
     def setCommand(self, command):
-        def commandWrapper():
+        def commandWrapper(*args, **kwargs):
             try:
-                command()
+                command(*args, **kwargs)
             except Exception:
                 ex = f"{traceback.format_exc()}"
                 print(ex)

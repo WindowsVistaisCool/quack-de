@@ -147,12 +147,14 @@ class App(ctk.CTk):
 
     def toggleNav(self, viewable):
         if not viewable:
-            self.ui.dropAll() # drop all UI
-            self.content_root.grid() # ensure the content root is visible
+            self.navbar.drop()
+            # self.ui.dropAll() # drop all UI
+            # self.content_root.grid() # ensure the content root is visible
         else:
-            self.ui.gridAll()
-            if self.navigation.currentPage is not None:
-                self.navigation.currentPage.ui.gridAll()
+            self.navbar.grid()
+            # self.ui.gridAll()
+            # if self.navigation.currentPage is not None:
+            #     self.navigation.currentPage.ui.gridAll()
 
 if __name__ == "__main__":
     app = App()

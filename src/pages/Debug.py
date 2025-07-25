@@ -8,7 +8,6 @@ from lib.Navigation import NavigationPage
 from lib.Notifier import NotifierService
 
 from pages.About import AboutPage
-from pages.Home import HomePage
 
 class DebugPage(NavigationPage):
     PLATFORM_TEXT = "OS: ben\n"*10
@@ -35,7 +34,7 @@ class DebugPage(NavigationPage):
                     ).grid(row=1, column=1, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "rebuild",
-                    text="magical fix everything button!!! har har harhahrarhraR!!!!!!",
+                    text="magical fix everything button!!",
                     ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "cause_exception",
@@ -67,22 +66,13 @@ class DebugPage(NavigationPage):
                     ).grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsw")
 
     def _initCommands(self):
-        self.ui.addCommand("destroy", self.appRoot.navbar.instance.grid_forget)
 
         def notifasodf():
             self.appRoot.navigation.navigate(AboutPage)
             NotifierService.notify("get ready for this ultra mega goofy thing")
-
             self.appRoot.after(3250, lambda: self.appRoot.toggleNav(True))
 
         self.ui.addCommand("test_about", notifasodf)
-
-        def funny():
-            self.appRoot.ui.gridAll()
-            if self.appRoot.navigation.pageExists(HomePage):
-                self.appRoot.navigation.navigate(HomePage)
-
-        self.ui.addCommand("rebuild", funny)
 
         def raise_exception():
             raise Exception("This exception is meant to happen!")
