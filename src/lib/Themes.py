@@ -2,11 +2,11 @@ import customtkinter as ctk
 import enum
 
 class Theme(enum.Enum):
-    Cherry = "./themes/cherry.json"
-    Metal = "./themes/metal.json"
-    Sky = "./themes/sky.json"
-    Violet = "./themes/violet.json"
-    Yellow = "./themes/yellow.json"
+    Cherry = "./assets/themes/cherry.json"
+    Metal = "./assets/themes/metal.json"
+    Sky = "./assets/themes/sky.json"
+    Violet = "./assets/themes/violet.json"
+    Yellow = "./assets/themes/yellow.json"
 
     @classmethod
     def getThemeNames(cls):

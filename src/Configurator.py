@@ -8,8 +8,12 @@ Configurator class for managing application settings and configurations.
 class Configurator:
     _INSTANCE = None
 
+    _SCHEMA_VER = 1
+
     def __init__(self, appName: str):
-        self.settings = {}
+        self.settings = {
+            "schema": self._SCHEMA_VER,
+        }
 
         self._defaultSettings()
     
@@ -30,7 +34,13 @@ class Configurator:
     def loadSettings(self):
         try:
             with open(self._config_path, "r") as config_file:
-                self.settings = json.load(config_file)
+                file_contents = json.load(config_file)
+                if "schema" not in file_contents or file_contents["schema"] != self._SCHEMA_VER:
+                    print(f"Configuration schema mismatch. Expected {self._SCHEMA_VER}, found {file_contents.get('schema', 'unknown')}. Using default settings.")
+                    self._defaultSettings()
+                    self.saveSettings()
+                else:
+                    self.settings = file_contents
         except FileNotFoundError:
             self.saveSettings()
         except json.JSONDecodeError:
@@ -45,6 +55,7 @@ class Configurator:
         
     def _defaultSettings(self):
         self.settings = {
+            "schema": self._SCHEMA_VER,
             "appearance_mode": "dark",
             "theme": Theme.Cherry.value
         }
@@ -73,3 +84,7 @@ class Configurator:
         if cls._INSTANCE is None:
             cls._INSTANCE = Configurator(appName)
         return cls._INSTANCE
+    
+    @staticmethod
+    def getSchemaVersion() -> int:
+        return Configurator._SCHEMA_VER

@@ -4,13 +4,14 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from lib.Configurator import Configurator
+from Configurator import Configurator
 from lib.Dialogs import Dialogs
 from lib.Navigation import NavigationPage
 from lib.Notifier import NotifierService
 from lib.Themes import Theme
 
-from pages.About import AboutPage
+from pages.ephemeral.About import AboutPage
+from pages.ephemeral.Lock import LockPage
 
 class SettingsPage(NavigationPage):
     def __init__(self, navigator, appRoot: 'App', master, **kwargs):
@@ -25,17 +26,21 @@ class SettingsPage(NavigationPage):
     def _initUI(self):
         self.grid_columnconfigure(0, weight=1)
 
-        self.ui.add(ctk.CTkLabel, "title",
+        self.ui.add(ctk.CTkButton, "title",
                     text="⚙️ Settings",
+                    fg_color=self._fg_color,
+                    bg_color=self._fg_color,
+                    hover_color=self._fg_color,
+                    anchor="nw",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=30, pady=30, sticky="nw")
+                    ).grid(row=0, column=0, padx=23, pady=(27, 5), sticky="nw")
     
         self.ui.add(ctk.CTkButton, "about",
                     text=f"About {self.appRoot.APP_TITLE}",
                     font=(self.appRoot.FONT_NAME, 18),
                     width=100, height=40,
                     corner_radius=12
-                    ).grid(row=0, column=1, padx=30, pady=30, sticky="ne")
+                    ).grid(row=0, column=1, padx=30, pady=(30, 5), sticky="ne")
 
         self.ui.add(ctk.CTkLabel, "l_desc",
                     text="Configure application settings here",
@@ -45,7 +50,7 @@ class SettingsPage(NavigationPage):
         f_settings = self.ui.add(ctk.CTkFrame, "f_settings",
                     width=400, height=50,
                     ).withGridProperties(row=2, column=0, columnspan=2, padx=30, pady=10, sticky="we")
-        f_settings.getInstance().grid_columnconfigure(1, weight=1)
+        f_settings.getInstance().grid_columnconfigure(0, weight=1)
         f_settings.grid()
 
         self.ui.add(ctk.CTkLabel, "l_theme",
@@ -59,27 +64,65 @@ class SettingsPage(NavigationPage):
                     root=f_settings.getInstance(),
                     variable=self.om_theme,
                     values=Theme.getThemeNames(),
-                    ).grid(row=1, column=0, padx=10, pady=(0, 10), sticky="sw")
+                    ).grid(row=1, column=0, rowspan=2, padx=10, pady=(0, 10), sticky="w")
 
         self.s_darkmode = ctk.BooleanVar(value=Configurator.getInstance().getAppearanceMode() == "dark")
         s_darkmode = self.ui.add(ctk.CTkSwitch, "s_darkmode",
                     root=f_settings.getInstance(),
                     text="Dark Mode",
                     variable=self.s_darkmode,
-                    ).withGridProperties(row=1, column=1, padx=20, pady=(0, 10), sticky="se")
+                    ).withGridProperties(row=1, column=1, padx=20, pady=(0, 10), sticky="sw")
         if self.s_darkmode.get() == "dark":
             s_darkmode.getInstance().toggle()
         s_darkmode.grid()
+
+        self.ui.add(ctk.CTkSwitch, "s_animations",
+                    root=f_settings.getInstance(),
+                    text="Animations",
+                    state="disabled"
+                    ).grid(row=2, column=1, padx=20, pady=(0, 10), sticky="sw")
+
+        self.lockedSettings = self.ui.add(ctk.CTkFrame, "f_deviceSettings",
+                    ).withGridProperties(row=3, column=0, columnspan=2, padx=30, pady=10, sticky="we")
+        self.lockedSettings.getInstance().grid_columnconfigure(0, weight=1)
+        self.lockedSettings.drop() # ensure frame is not loaded
+
+        self.ui.add(ctk.CTkLabel, "l_deviceSettings",
+                    root=self.lockedSettings.getInstance(),
+                    text="Device Options:",
+                    font=(self.appRoot.FONT_NAME, 14, "bold")
+                    ).grid(row=0, column=0, columnspan=10, padx=10, pady=5, sticky="nsw")
+
+        self.ui.add(ctk.CTkButton, "b_restart",
+                    root=self.lockedSettings.getInstance(),
+                    text="Restart Device",
+                    height=40,
+                    fg_color=("red2", "red3"),
+                    hover_color="darkred",
+                    ).grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ns")
 
         self.b_save = self.ui.add(ctk.CTkButton, "save",
                     text="Save Settings",
                     height=40,
                     font=(self.appRoot.FONT_NAME, 16),
                     corner_radius=12
-                    ).withGridProperties(row=3, column=0, columnspan=2, padx=30, pady=(20, 10), sticky="se")
+                    ).withGridProperties(row=4, column=0, columnspan=2, padx=30, pady=(20, 10), sticky="se")
 
     def _initCommands(self):
-        self.ui.get("about").setCommand(lambda: self.appRoot.navigation.navigate(AboutPage))
+        def showLockPage():
+            lockPage = LockPage(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
+
+            lockPage.addSuccessCallback(self.unlockDeviceSettings)
+            lockPage.addFailureCallback(self.navigator.navigateBack)
+
+            self.navigator.navigateEphemeral(lockPage)
+        self.ui.get("title").setCommand(showLockPage)
+
+        self.ui.get("about").setCommand(
+            lambda: self.navigator.navigateEphemeral(
+                AboutPage(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
+            )
+        )
 
         def hasUnsaved():
             self.hasUnsavedChanges = True
@@ -105,3 +148,14 @@ class SettingsPage(NavigationPage):
             ctk.set_appearance_mode(Configurator.getInstance().getAppearanceMode())
 
         self.ui.get("save").setCommand(save_invoke)
+
+    def unlockDeviceSettings(self):
+        """Unlocks the device settings section."""
+        self.lockedSettings.grid()
+    
+    def lockDeviceSettings(self):
+        """Locks the device settings section."""
+        self.lockedSettings.drop()
+
+    def onHide(self):
+        self.lockDeviceSettings()

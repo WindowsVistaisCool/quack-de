@@ -1,15 +1,21 @@
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
 import platform
-from lib.Navigation import NavigationPage
+from Configurator import Configurator
+from lib.Navigation import EphemeralNavigationPage
 
-class AboutPage(NavigationPage):
+class AboutPage(EphemeralNavigationPage):
     PLATFORM_TEXT = f"""OS: {platform.platform()}
 Architecture: {platform.architecture()[0]}
-Python Version: {platform.python_version()}
+Hostname: {platform.node()}
+IP Address: <TODO>
+Uptime: <TODO>
+
+Configurator Schema: v{Configurator.getSchemaVersion()}
 """
 
     def __init__(self, navigator, appRoot: 'App', master, **kwargs):
@@ -23,7 +29,7 @@ Python Version: {platform.python_version()}
         self.grid_columnconfigure((0), weight=1)
 
         self.ui.add(ctk.CTkLabel, "title",
-                    text=f"💡 About {self.appRoot.APP_TITLE}",
+                    text=f"💡 About {self.appRoot.APP_TITLE} {self.appRoot.VERSION}",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
                     ).grid(row=0, column=0, padx=30, pady=(30, 10), sticky="nw")
 
@@ -31,19 +37,6 @@ Python Version: {platform.python_version()}
                     text=self.appRoot.APP_DESCRIPTION,
                     font=(self.appRoot.FONT_NAME, 16)
                     ).grid(row=1, column=0, padx=30, pady=(0, 5), sticky="nwe")
-
-    
-        f_version = self.ui.add(ctk.CTkFrame, "f_version",
-                    width=400, height=50,
-                    ).withGridProperties(row=2, column=0, columnspan=2, padx=30, pady=10, sticky="we")
-        f_version.getInstance().grid_columnconfigure(0, weight=1)
-        f_version.grid()
-
-        self.ui.add(ctk.CTkLabel, "l_version",
-                    root=f_version.getInstance(),
-                    text=f"App Version: {self.appRoot.VERSION}",
-                    font=(self.appRoot.FONT_NAME, 14)
-                    ).grid(row=0, column=0, padx=10, pady=5, sticky="nsw")
 
         f_specs = self.ui.add(ctk.CTkFrame, "f_specs",
                     width=400, height=50,
@@ -53,16 +46,16 @@ Python Version: {platform.python_version()}
 
         self.ui.add(ctk.CTkLabel, "l_specs",
                     root=f_specs.getInstance(),
-                    text="Hardware Specifications:",
+                    text="Platform Specifications:",
                     font=(self.appRoot.FONT_NAME, 16, "bold")
-                    ).grid(row=0, column=0, padx=10, pady=5, sticky="nsw")
+                    ).grid(row=0, column=0, padx=10, pady=(5, 0), sticky="nsw")
     
         self.ui.add(ctk.CTkLabel, "l_specs_pc",
                     root=f_specs.getInstance(),
                     text=self.PLATFORM_TEXT,
                     font=(self.appRoot.FONT_NAME, 14),
                     justify="left"
-                    ).grid(row=1, column=0, padx=10, pady=5, sticky="nsw")
+                    ).grid(row=1, column=0, padx=10, pady=(0, 5), sticky="nsw")
 
         self.ui.add(ctk.CTkButton, "nav_back",
                     text="Back",
@@ -79,4 +72,3 @@ Python Version: {platform.python_version()}
     
     def onHide(self):
         self.appRoot.toggleNav(True)
-        pass

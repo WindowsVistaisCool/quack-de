@@ -79,7 +79,7 @@ class CommandUIItem(list, Generic[T]):
 
 class CommandUI:
     def __init__(self, master):
-        self.window = master
+        self.master = master
         self.items = {
             "root": CommandUIItem(None, None, master, None, None)
         }
@@ -90,11 +90,24 @@ class CommandUI:
         if id in self.items:
             raise ValueError(f"UI element '{id}' already exists.")
         if not root:
-            root = self.window
+            root = self.master
         self.items[id] = CommandUIItem(
             root,
             className,
             className(master=root, **kwargs),
+            None if not kwargs.get("command") else kwargs["command"],
+            self.exceptionCallback)
+        return self.items[id]
+
+    def addInnerUI(self, ui: 'CommandUI', id: str, root=None, **kwargs):
+        if id in self.items:
+            raise ValueError(f"UI element '{id}' already exists.")
+        if not root:
+            root = self.master
+        self.items[id] = CommandUIItem(
+            root,
+            ui.__class__,
+            ui,
             None if not kwargs.get("command") else kwargs["command"],
             self.exceptionCallback)
         return self.items[id]

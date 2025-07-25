@@ -7,8 +7,6 @@ import customtkinter as ctk
 from lib.Navigation import NavigationPage
 from lib.Notifier import NotifierService
 
-from pages.About import AboutPage
-
 class DebugPage(NavigationPage):
     PLATFORM_TEXT = "OS: ben\n"*10
 
@@ -22,24 +20,22 @@ class DebugPage(NavigationPage):
         self.ui.add(ctk.CTkLabel, "title",
                     text="hehehaw this is the debug page!!!! grrrr",
                     font=(self.appRoot.FONT_NAME, 24)
-                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
+                    ).grid(row=0, column=0, columnspan=10, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "destroy",
-                    text="destroy everything!! har har har",
+                    text="fade BUTTON!!!",
                     ).grid(row=1, column=0, padx=20, pady=20, sticky="nw")
         
         self.ui.add(ctk.CTkButton, "test_about",
                     text="Test About Page",
-                    command=lambda: self.appRoot.navigation.navigate(AboutPage)
                     ).grid(row=1, column=1, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "rebuild",
-                    text="magical fix everything button!!",
+                    text="disable ui???",
                     ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "cause_exception",
                     text="Cause Exception",
-                    command=lambda: self.appRoot.navigation.navigate(AboutPage)
                     ).grid(row=2, column=1, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "notify_test",
@@ -66,11 +62,31 @@ class DebugPage(NavigationPage):
                     ).grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsw")
 
     def _initCommands(self):
+        def fade():
+            def fadeOut():
+                alpha = self.appRoot.attributes("-alpha")
+                print(alpha)
+                if alpha > 0:
+                    self.appRoot.attributes("-alpha", alpha - 0.05)
+                    self.appRoot.after(50, fadeOut)
+                else:
+                    self.appRoot.destroy()
+            fadeOut()
+
+        self.ui.get("destroy").setCommand(fade)
+
+        def rebuild():
+            for _, item in self.ui.items.items():
+                try:
+                    item.getInstance().configure(state="disabled")
+                except:
+                    print("womp")
+        self.ui.get("rebuild").setCommand(rebuild)
 
         def notifasodf():
-            self.appRoot.navigation.navigate(AboutPage)
+            # self.appRoot.navigation.navigate(AboutPage)
             NotifierService.notify("get ready for this ultra mega goofy thing")
-            self.appRoot.after(3250, lambda: self.appRoot.toggleNav(True))
+            # self.appRoot.after(3250, lambda: self.appRoot.toggleNav(True))
 
         self.ui.addCommand("test_about", notifasodf)
 
@@ -78,4 +94,7 @@ class DebugPage(NavigationPage):
             raise Exception("This exception is meant to happen!")
         self.ui.get("cause_exception").setCommand(raise_exception)
         
-        self.ui.addCommand("notify_test", lambda: NotifierService.notify("This is a test notification! har har har!", 10000))
+        def ashkjsahtsadf():
+            self.appRoot.after(2000, lambda: NotifierService.notify("This is a test notification! har har har!"))
+
+        self.ui.addCommand("notify_test", ashkjsahtsadf)

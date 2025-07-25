@@ -1,12 +1,20 @@
 import customtkinter as ctk
 from lib.CommandUI import CommandUI
-from typing import Type
+from datetime import datetime
+from typing import Type, Optional
 
 class NavigationPage(ctk.CTkFrame):
     def __init__(self, navigator: 'NavigationManager', master: ctk.CTkFrame, title: str, **kwargs):
+        self.is_ephemeral = "ephemeral" in kwargs and kwargs["ephemeral"]
+        if self.is_ephemeral:
+            kwargs.pop("ephemeral")
+
         super().__init__(master, **kwargs)
+
         self.navigator = navigator
-        self.navigator.registerPage(self)
+        if not self.is_ephemeral:
+            self.navigator.registerPage(self)
+
         self.title = title
         self.configure(fg_color=master._fg_color)
         self.ui = CommandUI(self)
@@ -22,9 +30,18 @@ class NavigationPage(ctk.CTkFrame):
         """Override this method to handle when the page is shown."""
         pass
 
-    def onHide(self):
-        """Override this method to handle when the page is hidden."""
+    def onHide(self) -> Optional[bool]:
+        """
+        Override this method to handle when the page is hidden.
+        Return True if the navigation should be cancelled, False or None to continue.
+        currently not functional [TODO]
+        """
         pass
+
+class EphemeralNavigationPage(NavigationPage):
+    def __init__(self, navigator: 'NavigationManager', master: ctk.CTkFrame, title: str, **kwargs):
+        super().__init__(navigator, master, title, ephemeral=True, **kwargs)
+        self.is_ephemeral = True
 
 class DefaultExceptionPage(NavigationPage):
     def __init__(self, navigator, master: ctk.CTkFrame, error: ctk.StringVar, **kwargs):
@@ -32,37 +49,52 @@ class DefaultExceptionPage(NavigationPage):
         self.error = error
         self.ui = CommandUI(self)
 
+        self.errClass = ctk.StringVar(value="")
+
         self._initUI()
         self._initCommands()
     
     def _initUI(self):
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
         self.configure(fg_color="black", bg_color="black")
 
         self.ui.add(ctk.CTkLabel, "error_label",
-                    text=":( An unexpected error occurred!",
+                    text=f"An error occurred!",
                     fg_color="red",
                     bg_color="black",
                     text_color="white",
                     font=("Arial", 24, "bold")
-                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
+                    ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="nw")
+        self.ui.add(ctk.CTkLabel, "error_class",
+                    textvariable=self.errClass,
+                    text_color="white",
+                    font=("Arial", 12),
+                    justify="left"
+                    ).grid(row=1, column=0, padx=20, pady=5, sticky="nw")
         self.ui.add(ctk.CTkButton, "error_button",
                     text="Return to Previous Page",
                     fg_color="blue",
                     bg_color="blue",
+                    hover_color="darkblue",
                     text_color="white",
                     corner_radius=0
-                    ).grid(row=1, column=0, padx=20, pady=5, sticky="nw")
-        self.ui.add(ctk.CTkLabel, "error_message",
-                    textvariable=self.error,
-                    text_color="white",
+                    ).grid(row=2, column=0, padx=20, pady=5, sticky="nw")
+        self.ui.add(ctk.CTkTextbox, "error_message",
                     font=("Arial", 12),
-                    justify="left"
-                    ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
+                    state="disabled",
+                    ).grid(row=3, column=0, padx=20, pady=20, sticky="nsew")
 
     def _initCommands(self):
         self.ui.get("error_button").setCommand(self.navigator.navigateBack)
+    
+    def onShow(self):
+        self.errClass.set(f"{datetime.now()} {type(self.navigator.previousPage)}")
+
+        self.ui.get("error_message").getInstance().configure(state="normal")
+        self.ui.get("error_message").getInstance().delete("0.0", "end")
+        self.ui.get("error_message").getInstance().insert("0.0", self.error.get())
+        self.ui.get("error_message").getInstance().configure(state="disabled")
 
 class NavigationManager:
     def __init__(self, contentMaster: ctk.CTkFrame):
@@ -99,17 +131,47 @@ class NavigationManager:
             return
         
         if self.currentPage is not None:
-            self.previousPage = self.currentPage
-            self.currentPage.onHide()
-            self.currentPage.grid_forget()
+            if not self.currentPage.is_ephemeral:
+                self.previousPage = self.currentPage
+
+            self._pageUnload(self.currentPage) # give any page a chance to unload, regardless of ephemeral status
+            
+            if self.currentPage.is_ephemeral:
+                self.currentPage.destroy()
 
         self.currentPage = self.pages[page]
-        self.currentPage.grid(row=0, column=0, sticky="nsew")
-        self.currentPage.onShow()
+        self._pageLoad(self.currentPage)
+    
+    def navigateEphemeral(self, page: 'NavigationPage'):
+        """
+        Navigates to a temporary page that does not persist in the navigation history.
+        This is useful for pages that are meant to be transient, such as dialogs or popups.
+        """
+        if not page.is_ephemeral:
+            raise ValueError("Ephemeral navigation can only be used with ephemeral pages.")
+        if self.currentPage is not None:
+            self.previousPage = self.currentPage
+            self._pageUnload(self.currentPage)
+        self.currentPage = page
+        self._pageLoad(self.currentPage)
     
     def navigateBack(self):
         if self.previousPage is not None:
             self.navigate(type(self.previousPage))
+    
+    @staticmethod
+    def _pageLoad(page: 'NavigationPage'):
+        page.grid(row=0, column=0, sticky="nsew")
+        page.onShow()
+
+    @staticmethod
+    def _pageUnload(page: 'NavigationPage'):
+        """
+        unloads a page from view
+        """
+        page.onHide()
+        page.grid_forget()
+    
 
 # class NavigationContentRoot(ctk.CTkFrame):
 #     def __init__(self, master: ctk.CTkFrame, **kwargs):

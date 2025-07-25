@@ -3,13 +3,13 @@ import time
 from datetime import datetime
 from threading import Thread
 
+from Configurator import Configurator
+
 from lib.CommandUI import CommandUI
-from lib.Configurator import Configurator
 from lib.DevChecks import isDev
 from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
 
-from pages.About import AboutPage
 from pages.Debug import DebugPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
@@ -17,7 +17,7 @@ from pages.Settings import SettingsPage
 class App(ctk.CTk):
     VERSION = f"0.1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
-    APP_DESCRIPTION = "Quack Dorm Environment\nWritten by Kyle Rush"
+    APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
 
     def __init__(self):
@@ -138,7 +138,6 @@ class App(ctk.CTk):
         self.clock_thread().start()
 
     def _addPages(self):
-        AboutPage(self.navigation, self, self.content_root.getInstance())
         HomePage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
@@ -148,13 +147,8 @@ class App(ctk.CTk):
     def toggleNav(self, viewable):
         if not viewable:
             self.navbar.drop()
-            # self.ui.dropAll() # drop all UI
-            # self.content_root.grid() # ensure the content root is visible
         else:
             self.navbar.grid()
-            # self.ui.gridAll()
-            # if self.navigation.currentPage is not None:
-            #     self.navigation.currentPage.ui.gridAll()
 
 if __name__ == "__main__":
     app = App()
