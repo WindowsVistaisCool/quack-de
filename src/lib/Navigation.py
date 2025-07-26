@@ -46,6 +46,7 @@ class EphemeralNavigationPage(NavigationPage):
         super().__init__(navigator, master, title, ephemeral=True, **kwargs)
         self.is_ephemeral = True
 
+# TODO: CONVERT TO EPHEMERAL PAGE
 class DefaultExceptionPage(NavigationPage):
     def __init__(self, navigator, master: ctk.CTkFrame, errorSupplier: ctk.StringVar, **kwargs):
         super().__init__(navigator, master, title="Error", **kwargs)
@@ -130,7 +131,12 @@ class NavigationManager:
     
     def navigate(self, page: Type[NavigationPage]):
         if page not in self.pages:
-            raise ValueError(f"Page {page} is not registered.")
+            if self.exceptionPage:
+                self.exceptionMessageSupplier.set(f"Page {page} is not registered with navigator {self.__class__}!")
+                self.navigate(type(self.exceptionPage))
+            else:
+                raise ValueError(f"Page {page} is not registered.")
+            return
         
         if self.currentPage == self.pages[page]:
             return

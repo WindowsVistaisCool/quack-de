@@ -16,13 +16,13 @@ class HomePage(NavigationPage):
         self.ui.add(ctk.CTkLabel, "title",
                     text="🏠 Home",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=30, pady=30, sticky="nw")
+                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
 
         self.ui.add(ctk.CTkLabel, "description",
                     text=f"Since there are no modules, here is your quote of the day:\n thank you for using {self.appRoot.APP_TITLE}",
                     font=(self.appRoot.FONT_NAME, 16),
                     justify="center"
-                    ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsew")
+                    ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="nsew")
 
     def _initCommands(self):
         pass

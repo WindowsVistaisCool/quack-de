@@ -30,16 +30,16 @@ Configurator Schema: v{Configurator.getSchemaVersion()}
         self.ui.add(ctk.CTkLabel, "title",
                     text=f"💡 About {self.appRoot.APP_TITLE} {self.appRoot.VERSION}",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=30, pady=(30, 10), sticky="nw")
+                    ).grid(row=0, column=0, padx=20, pady=(20, 10), sticky="nw")
 
         self.ui.add(ctk.CTkLabel, "description",
                     text=self.appRoot.APP_DESCRIPTION,
                     font=(self.appRoot.FONT_NAME, 16)
-                    ).grid(row=1, column=0, padx=30, pady=(0, 5), sticky="nwe")
+                    ).grid(row=1, column=0, padx=20, pady=(0, 5), sticky="nwe")
 
         f_specs = self.ui.add(ctk.CTkFrame, "f_specs",
                     width=400, height=50,
-                    ).withGridProperties(row=3, column=0, columnspan=2, padx=30, pady=10, sticky="we")
+                    ).withGridProperties(row=3, column=0, columnspan=2, padx=20, pady=10, sticky="we")
         f_specs.getInstance().grid_columnconfigure(0, weight=1)
         f_specs.grid()
 
@@ -61,8 +61,8 @@ Configurator Schema: v{Configurator.getSchemaVersion()}
                     font=(self.appRoot.FONT_NAME, 18),
                     width=150, height=50,
                     corner_radius=12
-                    ).grid(row=4, column=0, padx=30, pady=20, sticky="s")
-    
+                    ).grid(row=4, column=0, padx=20, pady=20, sticky="s")
+
     def _initCommands(self):
         self.ui.addCommand("nav_back", lambda: self.appRoot.navigation.navigate(type(self.appRoot.navigation.previousPage)))
 

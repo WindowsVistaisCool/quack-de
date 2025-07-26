@@ -36,26 +36,26 @@ class SettingsPage(NavigationPage):
                     hover_color=self._fg_color,
                     anchor="nw",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=23, pady=(27, 5), sticky="nw")
+                    ).grid(row=0, column=0, padx=13, pady=(17, 5), sticky="nw")
     
         self.ui.add(ctk.CTkButton, "about",
                     text=f"About {self.appRoot.APP_TITLE}",
                     font=(self.appRoot.FONT_NAME, 18),
                     width=100, height=40,
                     corner_radius=12
-                    ).grid(row=0, column=1, padx=30, pady=(30, 5), sticky="ne")
+                    ).grid(row=0, column=1, padx=20, pady=(20, 5), sticky="ne")
 
         self.ui.add(ctk.CTkLabel, "l_desc",
                     text="Configure application settings here",
                     font=(self.appRoot.FONT_NAME, 16)
-                    ).grid(row=1, column=0, padx=30, pady=5, sticky="nw")
+                    ).grid(row=1, column=0, padx=20, pady=5, sticky="nw")
     
         # copy text color from label to title
         self.ui.get("title").getInstance().configure(text_color=self.ui.get("l_desc").getInstance().cget("text_color"))
 
         f_settings = self.ui.add(ctk.CTkFrame, "f_settings",
                     width=400, height=50,
-                    ).withGridProperties(row=2, column=0, columnspan=2, padx=30, pady=10, sticky="we")
+                    ).withGridProperties(row=2, column=0, columnspan=2, padx=20, pady=10, sticky="we")
         f_settings.getInstance().grid_columnconfigure(0, weight=1)
         f_settings.grid()
 
@@ -90,7 +90,7 @@ class SettingsPage(NavigationPage):
                     ).grid(row=2, column=1, padx=20, pady=(0, 10), sticky="sw")
 
         self.lockedSettings = self.ui.add(ctk.CTkFrame, "f_deviceSettings",
-                    ).withGridProperties(row=3, column=0, columnspan=2, padx=30, pady=10, sticky="we")
+                    ).withGridProperties(row=3, column=0, columnspan=2, padx=20, pady=10, sticky="we")
         self.lockedSettings.getInstance().grid_columnconfigure((0, 1), weight=1)
         self.lockedSettings.drop() # ensure frame is not loaded
 
@@ -120,16 +120,24 @@ class SettingsPage(NavigationPage):
                     height=40,
                     font=(self.appRoot.FONT_NAME, 16),
                     corner_radius=12
-                    ).withGridProperties(row=4, column=0, columnspan=2, padx=30, pady=(20, 10), sticky="se")
+                    ).withGridProperties(row=4, column=0, columnspan=2, padx=20, pady=(20, 10), sticky="se")
 
     def _initCommands(self):
+        self.appRoot.addLockCallback(self.lockDeviceSettings)
+
         def showLockPage():
             if self.lockedSettings.getInstance().winfo_ismapped():
-                self.lockDeviceSettings()
+                self.appRoot.toggleFullAccess(False)
+                NotifierService.notify("App locked.", 1500)
                 return
 
+            def successCallback():
+                self.appRoot.toggleFullAccess(True)
+                self.unlockDeviceSettings()
+                NotifierService.notify("App unlocked for 5 minutes.", 1500)
+
             lockPage = LockPage(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
-            lockPage.addSuccessCallback(self.unlockDeviceSettings)
+            lockPage.addSuccessCallback(successCallback)
             lockPage.addFailureCallback(self.navigator.navigateBack)
 
             self.navigator.navigateEphemeral(lockPage)
@@ -158,24 +166,19 @@ class SettingsPage(NavigationPage):
 
         def b_restart_callback():
             def yes_callback():
-                self.unlockDeviceSettings()
                 if os.name == 'nt':
                     NotifierService.notify("Can't invoke that on this device!", 2000)
                     return
                 os.system("sudo reboot")
 
-            def no_callback():
-                self.unlockDeviceSettings()
-
             dialog = YesNoDialog(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
             dialog.init(
                 message="Are you sure you want to restart the device?",
                 yesCallback=yes_callback,
-                noCallback=no_callback
+                noCallback=lambda: None
             )
             self.navigator.navigateEphemeral(dialog)
         self.ui.get("b_restart").setCommand(b_restart_callback)
-
 
         self.ui.get("s_darkmode").setCommand(hasUnsaved)
 
@@ -201,6 +204,10 @@ class SettingsPage(NavigationPage):
         """Locks the device settings section."""
         self.lockedSettings.drop()
         self.ui.get("b_restart").getInstance().configure(state="disabled")
+
+    def onShow(self):
+        if self.appRoot.hasFullAccess():
+            self.unlockDeviceSettings()
 
     def onHide(self):
         self.lockDeviceSettings()

@@ -12,6 +12,7 @@ from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
 
 from pages.Debug import DebugPage
+from pages.LEDs import LEDsPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
@@ -39,6 +40,10 @@ class App(ctk.CTk):
         )
         NotifierService.init()
         NotifierUI.setFont((self.FONT_NAME, 16))
+
+        self._fullAccessMode = False
+        self._fullAccessTimerID = None
+        self._fullAccessLockCallbacks = []
 
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
         self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
@@ -72,9 +77,10 @@ class App(ctk.CTk):
         self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
         self.navbar.getInstance().grid_rowconfigure(3, weight=1)
 
+        self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
         self.ui.add(ctk.CTkLabel, "app_title",
                     root=self.navbar.getInstance(),
-                    text=self.APP_TITLE,
+                    textvariable=self._fullAccessText,
                     font=(self.FONT_NAME, 28, "bold"),
                     ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
 
@@ -83,15 +89,23 @@ class App(ctk.CTk):
                     root=self.navbar.getInstance(),
                     textvariable=self.clock_label,
                     font=(self.FONT_NAME, 16),
-                    ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="new")
+                    ).grid(row=1, column=0, padx=20, pady=(0, 10), sticky="new")
 
         self.ui.add(ctk.CTkButton, "nav_home",
                     root=self.navbar.getInstance(),
                     text="Home", 
                     font=(self.FONT_NAME, 18),
                     width=150, height=50,
-                    corner_radius=12
-                    ).grid(row=2, column=0, padx=30, pady=10, sticky="new")
+                    corner_radius=20
+                    ).grid(row=2, column=0, padx=20, pady=(10, 0), sticky="new")
+
+        self.ui.add(ctk.CTkButton, "nav_leds",
+                    root=self.navbar.getInstance(),
+                    text="LEDs",
+                    font=(self.FONT_NAME, 18),
+                    width=150, height=50,
+                    corner_radius=20
+                    ).grid(row=3, column=0, padx=20, pady=(10, 0), sticky="new")
 
         if isDev():
             self.ui.add(ctk.CTkButton, "nav_debug",
@@ -99,16 +113,16 @@ class App(ctk.CTk):
                         text="Debug",
                         font=(self.FONT_NAME, 18),
                         width=150, height=50,
-                        corner_radius=12
-                        ).grid(row=3, column=0, padx=30, pady=10, sticky="new")
+                        corner_radius=20
+                        ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
 
         self.ui.add(ctk.CTkButton, "nav_settings", 
                     root=self.navbar.getInstance(),
                     text="Settings",
                     font=(self.FONT_NAME, 18),
                     width=150, height=50, 
-                    corner_radius=12
-                    ).grid(row=4, column=0, padx=30, pady=40, sticky="s")
+                    corner_radius=20
+                    ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="sew")
         
         self.notifierUI = CommandUI(self)
         self.notifierBase = self.notifierUI.add(ctk.CTkFrame, "notifier_base",
@@ -125,6 +139,7 @@ class App(ctk.CTk):
 
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
+        self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
         if isDev():
             self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
         self.ui.addCommand("nav_settings", lambda: self.navigation.navigate(SettingsPage))
@@ -140,6 +155,7 @@ class App(ctk.CTk):
 
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
+        LEDsPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
@@ -150,6 +166,37 @@ class App(ctk.CTk):
             self.navbar.drop()
         else:
             self.navbar.grid()
+
+    def _disableFullAccessCallback(self):
+        """Callback to disable full access mode."""
+        self.toggleFullAccess(False)
+        [call() for call in self._fullAccessLockCallbacks]
+
+    def toggleFullAccess(self, enable: bool):
+        """Enables or disables full access mode, which allows access to all pages."""
+        self._fullAccessMode = enable
+        if enable:
+            self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
+            self._fullAccessTimerID = self.after(10 * 1000, self._disableFullAccessCallback)
+        elif not enable and self._fullAccessTimerID is not None:
+            self.after_cancel(self._fullAccessTimerID)
+            self._fullAccessText.set(f"{self.APP_TITLE}")
+            self._fullAccessTimerID = None
+    
+    def hasFullAccess(self) -> bool:
+        """Returns whether full access mode is enabled."""
+        return self._fullAccessMode
+
+    def resetFullAccessTimer(self):
+        """Resets the full access timer, if it is running."""
+        if self._fullAccessTimerID is not None:
+            self.after_cancel(self._fullAccessTimerID)
+            self._fullAccessTimerID = self.after(5 * 60 * 1000, self._disableFullAccessCallback)
+        
+    def addLockCallback(self, callback):
+        """Adds a callback to be called when the lock is activated."""
+        self._fullAccessLockCallbacks.append(callback)
+        
 
 if __name__ == "__main__":
     app = App()

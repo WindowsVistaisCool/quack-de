@@ -24,23 +24,23 @@ class DebugPage(NavigationPage):
 
         self.ui.add(ctk.CTkButton, "destroy",
                     text="fade BUTTON!!!",
-                    ).grid(row=1, column=0, padx=20, pady=20, sticky="nw")
+                    ).grid(row=1, column=0, padx=20, pady=0, sticky="nw")
         
         self.ui.add(ctk.CTkButton, "test_about",
                     text="Test About Page",
-                    ).grid(row=1, column=1, padx=20, pady=20, sticky="nw")
+                    ).grid(row=1, column=1, padx=20, pady=0, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "rebuild",
                     text="disable ui???",
-                    ).grid(row=2, column=0, padx=20, pady=20, sticky="nw")
+                    ).grid(row=2, column=0, padx=20, pady=0, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "cause_exception",
                     text="Cause Exception",
-                    ).grid(row=2, column=1, padx=20, pady=20, sticky="nw")
+                    ).grid(row=2, column=1, padx=20, pady=0, sticky="nw")
 
         self.ui.add(ctk.CTkButton, "notify_test",
                     text="Notify Test"
-                    ).grid(row=3, column=0, padx=20, pady=20, sticky="nw")
+                    ).grid(row=3, column=0, padx=20, pady=0, sticky="nw")
     
         f_specs = self.ui.add(ctk.CTkFrame, "f_specs",
                     width=400, height=50,
