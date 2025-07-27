@@ -147,8 +147,12 @@ class App(ctk.CTk):
         # initilaze the clock
         self.clock_enabled = True
         def clock_worker():
+            now = None
             while self.clock_enabled:
-                self.clock_label.set(datetime.now().strftime("%I:%M:%S %p"))
+                now = datetime.now()
+                self.clock_label.set(now.strftime("%I:%M:%S %p"))
+                if now.minute % 60 == 0 and now.second == 0:
+                    self.navigation.getPage(HomePage).updateGreeting(now)
                 time.sleep(1)
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
         self.clock_thread().start()
@@ -158,6 +162,8 @@ class App(ctk.CTk):
         LEDsPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
+
+        self.navigation.getPage(HomePage).updateGreeting(datetime.now())
 
         self.navigation.navigate(HomePage)
 

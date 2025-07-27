@@ -129,6 +129,15 @@ class NavigationManager:
             )
         self.exceptionPage = exceptionPage
     
+    def getPage(self, page: Type[NavigationPage]) -> Optional[NavigationPage]:
+        if not self.pageExists(page):
+            if self.exceptionPage:
+                self.exceptionMessageSupplier.set(f"Page {page} is not registered with navigator {self.__class__}!")
+                return self.getPage(type(self.exceptionPage))
+            else:
+                raise ValueError(f"Page {page} is not registered.")
+        return self.pages.get(page, None)
+    
     def navigate(self, page: Type[NavigationPage]):
         if page not in self.pages:
             if self.exceptionPage:

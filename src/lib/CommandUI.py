@@ -4,10 +4,15 @@ from typing import Generic, TypeVar
 
 T = TypeVar('T', bound=ctk.CTkBaseClass)
 
+"""
+so uhhhhhh yeah this is kinda poopy and a mess
+[TODO]
+"""
 class CommandUIItem(list, Generic[T]):
     def __init__(self, root, className, instance: T, command, exceptionCallback):
         super().__init__([root, className, instance, command, exceptionCallback])
         self.gridProperties = {}
+        self.placeProperties = {}
 
     def __new__(cls, root, className, instance, command, exceptionCallback):
         return super().__new__(cls, [root, className, instance, command, exceptionCallback])
@@ -64,9 +69,21 @@ class CommandUIItem(list, Generic[T]):
         elif self.gridProperties.keys().__len__() > 0:
             self.instance.grid(**self.gridProperties)
     
+    def withPlaceProperties(self, **kwargs):
+        self.placeProperties.update(kwargs)
+        return self
+
+    def place(self, **kwargs):
+        if kwargs.__len__() != 0:
+            self.placeProperties = kwargs
+            self.instance.place(**kwargs)
+        elif self.placeProperties.keys().__len__() > 0:
+            self.instance.place(**self.placeProperties)
+
     def drop(self):
         """Removes the instance from the grid."""
         self.instance.grid_forget()
+        self.instance.place_forget()
 
     @command.setter
     def command(self, value):
