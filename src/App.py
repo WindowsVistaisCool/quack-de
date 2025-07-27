@@ -7,7 +7,6 @@ from Configurator import Configurator
 
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
-# isDev = lambda: True
 from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
 
@@ -95,24 +94,24 @@ class App(ctk.CTk):
                     root=self.navbar.getInstance(),
                     text="Home", 
                     font=(self.FONT_NAME, 18),
-                    width=150, height=50,
+                    width=150, height=60,
                     corner_radius=20
-                    ).grid(row=2, column=0, padx=20, pady=(10, 0), sticky="new")
+                    ).grid(row=2, column=0, padx=20, pady=(15, 0), sticky="new")
 
         self.ui.add(ctk.CTkButton, "nav_leds",
                     root=self.navbar.getInstance(),
                     text="LEDs",
                     font=(self.FONT_NAME, 18),
-                    width=150, height=50,
+                    width=150, height=60,
                     corner_radius=20
-                    ).grid(row=3, column=0, padx=20, pady=(10, 0), sticky="new")
+                    ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
         if isDev():
             self.ui.add(ctk.CTkButton, "nav_debug",
                         root=self.navbar.getInstance(),
                         text="Debug",
                         font=(self.FONT_NAME, 18),
-                        width=150, height=50,
+                        width=150, height=60,
                         corner_radius=20
                         ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
 
@@ -120,7 +119,7 @@ class App(ctk.CTk):
                     root=self.navbar.getInstance(),
                     text="Settings",
                     font=(self.FONT_NAME, 18),
-                    width=150, height=50, 
+                    width=150, height=60, 
                     corner_radius=20
                     ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="sew")
         
@@ -155,7 +154,6 @@ class App(ctk.CTk):
                     self.navigation.getPage(HomePage).updateGreeting(now)
                 time.sleep(1)
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
-        self.clock_thread().start()
 
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
@@ -164,7 +162,8 @@ class App(ctk.CTk):
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())
-
+        self.clock_thread().start()
+        
         self.navigation.navigate(HomePage)
 
     def toggleNav(self, viewable):
@@ -183,9 +182,10 @@ class App(ctk.CTk):
         self._fullAccessMode = enable
         if enable:
             self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
-            self._fullAccessTimerID = self.after(10 * 1000, self._disableFullAccessCallback)
+            self._fullAccessTimerID = self.after((1 * 60 * 1000) if isDev() else (5 * 60 * 1000), self._disableFullAccessCallback)
         elif not enable and self._fullAccessTimerID is not None:
             self.after_cancel(self._fullAccessTimerID)
+            [call() for call in self._fullAccessLockCallbacks]
             self._fullAccessText.set(f"{self.APP_TITLE}")
             self._fullAccessTimerID = None
     
@@ -206,7 +206,9 @@ class App(ctk.CTk):
 
 if __name__ == "__main__":
     app = App()
-    # if not isDev():
-    #     app.setFullscreen(True)
+    if not isDev():
+        app.setFullscreen(True)
+    app.toggleFullAccess(True)
+    app.navigation.navigate(LEDsPage)
     app.mainloop()
 

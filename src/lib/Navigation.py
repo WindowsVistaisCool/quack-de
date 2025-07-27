@@ -3,6 +3,13 @@ from lib.CommandUI import CommandUI
 from datetime import datetime
 from typing import Type, Optional
 
+"""
+[TODO]
+idea for nav pages in the future.
+all pages rn import an approot, so bascially have a
+NavigationPage<T> where T is the app root `ctk.CTk` instance
+boom genius
+"""
 class NavigationPage(ctk.CTkFrame):
     def __init__(self, navigator: 'NavigationManager', master: ctk.CTkFrame, title: str, **kwargs):
         self.is_ephemeral = "ephemeral" in kwargs and kwargs["ephemeral"]

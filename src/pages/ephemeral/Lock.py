@@ -27,18 +27,19 @@ class LockPage(EphemeralNavigationPage):
                     root=top_frame.getInstance(),
                     text="Back",
                     font=(self.appRoot.FONT_NAME, 18),
-                    height=40,
+                    height=60,
                     corner_radius=12
-                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nsw")
+                    ).grid(row=0, column=0, padx=15, pady=15, sticky="nsw")
 
         self.ui.add(ctk.CTkLabel, "description",
                     root=top_frame.getInstance(),
                     text="You need to enter a password to unlock this.",
-                    font=(self.appRoot.FONT_NAME, 16),
+                    font=(self.appRoot.FONT_NAME, 20),
                     justify="left",
-                    ).grid(row=0, column=1, padx=20, pady=20, sticky="w")
+                    ).grid(row=0, column=1, padx=15, pady=15, sticky="w")
 
         self.ui.add(ctk.CTkButton, "cheat",
+                    height=100,
                     text="unlock. shh!!").grid(row=1, column=0, padx=20, pady=(0, 20), sticky="nw")
     
     def _initCommands(self):

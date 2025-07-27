@@ -41,7 +41,7 @@ class SettingsPage(NavigationPage):
         self.ui.add(ctk.CTkButton, "about",
                     text=f"About {self.appRoot.APP_TITLE}",
                     font=(self.appRoot.FONT_NAME, 18),
-                    width=100, height=40,
+                    width=100, height=60,
                     corner_radius=12
                     ).grid(row=0, column=1, padx=20, pady=(20, 5), sticky="ne")
 

@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from lib.CommandUI import CommandUI, CommandUIItem
+from typing import Optional
 
 class SwappableUI(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -19,6 +20,11 @@ class SwappableUI(ctk.CTkFrame):
         frame = SwappableUIFrame(self)
         self.frames[name] = frame
         return frame
+    
+    def getFrame(self, name: str) -> Optional['SwappableUIFrame']:
+        if name not in self.frames:
+            raise ValueError(f"Frame '{name}' does not exist.")
+        return self.frames[name]
 
     def swap(self, name: str):
         if name not in self.frames:

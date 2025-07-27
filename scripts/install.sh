@@ -1,6 +1,7 @@
 echo "Creating necessary directories and files..."
-mkdir ~/deploy
-mkdir ~/temp
+mkdir ~/deploy # Directory for the main application
+mkdir ~/led # Directory for LED service
+mkdir ~/temp # Temporary directory for scripts
 
 echo "Setting up environment [xinit]..."
 cat > ~/.xinitrc <<- "EOF"
@@ -17,7 +18,7 @@ cat > ~/.bash_profile <<- "EOF"
 source ~/.profile
 if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
     cd /home/kiosk/deploy
-    startx # -- -nocursor
+    startx -- -nocursor
 fi
 EOF
 
@@ -26,5 +27,5 @@ cat > ~/.config/openbox/autostart <<- "EOF"
 #!/bin/sh
 # Start the main application
 cd ~/deploy
-python3 ./main.py &
+sudo python3 ./main.py &
 EOF

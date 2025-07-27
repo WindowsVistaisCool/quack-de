@@ -2,16 +2,15 @@
 
 replace_code() {
     # move contents from ~/temp to ~/deploy
-
     cd ~
     rm -rf ./deploy/
 
     mkdir deploy
     cp -r ./temp/* ./deploy/
 
-    cd deploy
+    rm -r ./temp/
 
-    chmod +x ./main.py
+    cd deploy
 
     echo "Code replaced successfully."
 }
@@ -36,9 +35,9 @@ if ! timeout 1s xset q &>/dev/null; then
     replace_code
 
     DISPLAY=:0 xset s reset # reset screensaver 
-    DISPLAY=:0 python3 ./main.py & # launch new app
+    # DISPLAY=:0 sudo python3 ./main.py & # launch new app
 
-    echo "Launched successfully."
+    # echo "Launched successfully."
 
 else
     echo "DISPLAY is not set, skipping window launch."
