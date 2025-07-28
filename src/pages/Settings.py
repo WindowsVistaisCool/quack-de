@@ -104,7 +104,7 @@ class SettingsPage(NavigationPage):
                     root=self.lockedSettings.getInstance(),
                     text="Restart X",
                     height=40,
-                    ).grid(row=1, column=0, padx=15, pady=(0, 10), sticky="nse")
+                    ).grid(row=1, column=0, padx=5, pady=(0, 10), sticky="nse")
 
         self.ui.add(ctk.CTkButton, "b_restart",
                     root=self.lockedSettings.getInstance(),
@@ -112,9 +112,17 @@ class SettingsPage(NavigationPage):
                     height=40,
                     fg_color=("red2", "red3"),
                     hover_color="darkred",
-                    state="disabled", # disabled for "safety"
-                    ).grid(row=1, column=1, padx=15, pady=(0, 10), sticky="nsw")
+                    state="disabled", # disabled for "safety" [TODO] what????
+                    ).grid(row=1, column=1, padx=5, pady=(0, 10), sticky="ns")
 
+        self.ui.add(ctk.CTkButton, "b_shutdown",
+                    root=self.lockedSettings.getInstance(),
+                    text="Shutdown Device",
+                    height=40,
+                    fg_color=("red2", "red3"),
+                    hover_color="darkred",
+                    ).grid(row=1, column=2, padx=(5, 15), pady=(0, 10), sticky="nse")
+        
         self.b_save = self.ui.add(ctk.CTkButton, "save",
                     text="Save Settings",
                     height=40,
@@ -164,21 +172,22 @@ class SettingsPage(NavigationPage):
             os.system("sudo pkill -t tty1")
         self.ui.get("b_restartXServer").setCommand(b_restartApp_callback)
 
-        def b_restart_callback():
+        def commandCallback(cmd, msg="restart"):
             def yes_callback():
                 if os.name == 'nt':
                     NotifierService.notify("Can't invoke that on this device!", 2000)
                     return
-                os.system("sudo reboot")
+                os.system(cmd)
 
             dialog = YesNoDialog(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
             dialog.init(
-                message="Are you sure you want to restart the device?",
+                message=f"Are you sure you want to {msg} the device?",
                 yesCallback=yes_callback,
                 noCallback=lambda: None
             )
             self.navigator.navigateEphemeral(dialog)
-        self.ui.get("b_restart").setCommand(b_restart_callback)
+        self.ui.get("b_restart").setCommand(lambda: commandCallback("sudo reboot", "restart"))
+        self.ui.get("b_shutdown").setCommand(lambda: commandCallback("sudo shutdown now", "shutdown"))
 
         self.ui.get("s_darkmode").setCommand(hasUnsaved)
 

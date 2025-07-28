@@ -141,7 +141,7 @@ class LEDsPage(NavigationPage):
         self.tabviewUI.setFrame("main")
 
 class LEDService:
-    LED_COUNT = 40
+    LED_COUNT = 50
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
