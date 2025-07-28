@@ -1,1 +1,1 @@
-# need: xinit, openbox, python3-tk, x11-xserver-utils, python3-pip
+# need: xinit, openbox, python3-tk, x11-xserver-utils, python3-pip, fonts-noto-color-emoji

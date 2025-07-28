@@ -128,13 +128,13 @@ class SettingsPage(NavigationPage):
         def showLockPage():
             if self.lockedSettings.getInstance().winfo_ismapped():
                 self.appRoot.toggleFullAccess(False)
-                NotifierService.notify("App locked.", 1500)
+                NotifierService.notify("App locked.", 3000)
                 return
 
             def successCallback():
                 self.appRoot.toggleFullAccess(True)
                 self.unlockDeviceSettings()
-                NotifierService.notify("App unlocked for 5 minutes.", 1500)
+                NotifierService.notify("App unlocked for 5 minutes.", 3000)
 
             lockPage = LockPage(self.navigator, self.appRoot, self.appRoot.content_root.getInstance())
             lockPage.addSuccessCallback(successCallback)

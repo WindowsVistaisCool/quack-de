@@ -1,2 +1,3 @@
 customtkinter
 rpi-ws281x
+ctkcolorpicker

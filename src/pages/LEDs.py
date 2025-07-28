@@ -1,15 +1,18 @@
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
+import CTkColorPicker as colorPicker
 import rpi_ws281x as ws
 import threading
 import time
 import traceback
 from lib.CommandUI import CommandUI
 from lib.Navigation import NavigationPage
+from lib.QuackColorPicker import QuackColorPicker
 from lib.SwappableUI import SwappableUI, SwappableUIFrame
 
 class LEDsPage(NavigationPage):
@@ -25,32 +28,46 @@ class LEDsPage(NavigationPage):
 
     def _initUI(self):
         self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
 
         self.ui.add(ctk.CTkLabel, "title",
                     text="💡 LEDs",
                     font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="nsw")
+                    ).grid(row=0, column=0, padx=(20, 0), pady=(20, 0), sticky="nsw")
         
+        self.ui.add(ctk.CTkButton, "b_config",
+                    text="Configuration",
+                    font=(self.appRoot.FONT_NAME, 18),
+                    height=40,
+                    corner_radius=12,
+                    ).grid(row=0, column=1, padx=(0, 10), pady=(20, 0), sticky="w")
+
         self.ui.add(ctk.CTkButton, "toggle_leds",
                     text="Turn Off",
                     font=(self.appRoot.FONT_NAME, 18),
-                    width=90, height=35,
+                    width=120, height=50,
                     corner_radius=12
-                    ).grid(row=0, column=1, padx=20, pady=(20, 0), sticky="nse")
-    
+                    ).grid(row=0, column=2, padx=20, pady=(20, 0), sticky="nse")
+
+        self.tabviewUI = SwappableUI(self)
+        self.tabviewUI.grid(row=1, column=0, columnspan=3, padx=20, pady=(10, 20), sticky="nsew")
+        self.tabviewFrame = self.tabviewUI.addFrame("main")
+        self.configFrame = self.tabviewUI.addFrame("config")
+        self.tabviewUI.setFrame("main")
+
         self.tabview = self.ui.add(ctk.CTkTabview, "tab_main",
-                    corner_radius=12,
-                    ).withGridProperties(row=1, column=0, columnspan=2, padx=20, pady=(10, 20), sticky="nsew")
+                                   root=self.tabviewFrame,
+                                   corner_radius=12,
+                                   ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
-        self.tabview.getInstance().add("Effects")
-        self.tabview.getInstance().add("Solid Colors")
-        self.tabview.getInstance().add("Configure")
+        # self.tabview.getInstance().add("Effects")
+        self.tabview.getInstance().add("Solid Color")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget("unselected_color")
         self.tabview.getInstance()._segmented_button.configure(
             font=(self.appRoot.FONT_NAME, 18),
             # corner_radius=12,
-            height=35,
+            height=50,
             fg_color=self.appRoot._fg_color,
             unselected_color=self.tabview.getInstance().cget("fg_color"),
             # border_width=10,
@@ -64,81 +81,71 @@ class LEDsPage(NavigationPage):
                            root=themesTab,
                            text="This is the themes page.",
                            font=(self.appRoot.FONT_NAME, 18)
-                           ).grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+                           ).grid(row=0, column=0, padx=10, pady=0, sticky="nsew")
         self.themesTab.add(ctk.CTkButton, "test_themes",
                            root=themesTab,
-                           text="Test ocean theme!!!!!!",
+                           text="za rainbow",
                            font=(self.appRoot.FONT_NAME, 18),
                            width=150, height=50,
                            corner_radius=20
                            ).grid(row=1, column=0, padx=5, pady=5, sticky="sew")
+        self.themesTab.add(ctk.CTkButton, "test_themes2",
+                            root=themesTab,
+                            text="za rainbow2",
+                            font=(self.appRoot.FONT_NAME, 18),
+                            width=150, height=50,
+                            corner_radius=20
+                            ).grid(row=2, column=0, padx=5, pady=5, sticky="sew")
     
-        solidColorsTab = self.tabview.getInstance().tab("Solid Colors")
+        solidColorsTab = self.tabview.getInstance().tab("Solid Color")
         solidColorsTab.grid_columnconfigure(0, weight=1)
-        self.solidColorsTab = CommandUI(solidColorsTab)
-        self.solidColorsTab.add(ctk.CTkSlider, "slider_r",
+        self.ui.add(QuackColorPicker, "color_picker",
                                 root=solidColorsTab,
-                                from_=0, to=255,
-                                ).grid(row=0, column=0, padx=20, pady=10, sticky="new")
-        self.solidColorsTab.add(ctk.CTkSlider, "slider_g",
-                                root=solidColorsTab,
-                                from_=0, to=255,
-                                ).grid(row=1, column=0, padx=20, pady=10, sticky="new")
-        self.solidColorsTab.add(ctk.CTkSlider, "slider_b",
-                                root=solidColorsTab,
-                                from_=0, to=255,
-                                ).grid(row=2, column=0, padx=20, pady=10, sticky="new")
-
-        self.configureTab = SwappableUI(self.tabview.getInstance().tab("Configure"))
-        noauth = self.configureTab.newFrame("noauth")
-        noauth.ui.add(ctk.CTkLabel, "noauth_label",
-                    root=noauth,
-                    text="This page is locked. Sorry!",
-                    font=(self.appRoot.FONT_NAME, 18)
-                    ).grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
-        self.authConfigPage = self.configureTab.newFrame("auth")
-        self.authConfigPage.grid_rowconfigure(0, weight=0)
-        self.authConfigPage.grid_rowconfigure(10, weight=1)
-        self.authConfigPage.ui.add(ctk.CTkLabel, "l_actions",
-                              root=self.authConfigPage,
-                              text="Socket Actions",
-                              font=(self.appRoot.FONT_NAME, 18),
-                              ).grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="nw")
-        self.configureTab.swap("noauth")
-
+                                width=380,
+                                ).grid(row=0, column=0, padx=0, pady=0, sticky="")
 
     def _initCommands(self):
-        self.appRoot.addLockCallback(lambda: self.configureTab.swap("noauth"))
+        def lockPage():
+            self.tabviewUI.setFrame("main")
+            self.ui.get("b_config").getInstance().configure(text="Configuration")
+            self.ui.get("b_config").drop()
+
+        self.appRoot.addLockCallback(lockPage)
+
+        def showConfig():
+            if self.tabviewUI.getCurrentFrameName() == "main":
+                self.ui.get("b_config").getInstance().configure(text="Back to LEDs")
+                self.tabviewUI.setFrame("config")
+            else:
+                self.ui.get("b_config").getInstance().configure(text="Configuration")
+                self.tabviewUI.setFrame("main")
+
+        self.ui.get("b_config").setCommand(showConfig)
 
         self.ui.get("toggle_leds").setCommand(self.ledService.off)
 
         self.themesTab.get("test_themes").setCommand(lambda: self.ledService.setLoop(LEDLoops.rainbow()))
+        self.themesTab.get("test_themes2").setCommand(lambda: self.ledService.setLoop(LEDLoops.rainbow2()))
 
-        def solid_color_command(_):
-            r = self.solidColorsTab.get("slider_r").getInstance().get()
-            g = self.solidColorsTab.get("slider_g").getInstance().get()
-            b = self.solidColorsTab.get("slider_b").getInstance().get()
-            self.ledService.setSolid(int(r), int(g), int(b))
+        def solid_color_command(rgb):
+            self.ledService.setSolid(*rgb)
 
-        self.solidColorsTab.get("slider_r").setCommand(solid_color_command)
-        self.solidColorsTab.get("slider_g").setCommand(solid_color_command)
-        self.solidColorsTab.get("slider_b").setCommand(solid_color_command)
+        self.ui.get("color_picker").setCommand(solid_color_command)
 
     def onShow(self):
-        # self.tabview.getInstance().set("Themes")
         if self.appRoot.hasFullAccess():
-            self.configureTab.swap("auth")
+            self.ui.get("b_config").grid()
     
     def onHide(self):
-        # self.tabview.getInstance().set("Themes")
-        self.configureTab.swap("noauth")
-        
+        self.ui.get("b_config").drop()
+        self.tabviewUI.setFrame("main")
+
 class LEDService:
-    LED_COUNT = 30
+    LED_COUNT = 40
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
-    LED_BRIGHTNESS = 128
+    LED_BRIGHTNESS = 200 # 0-255
     LED_INVERT = False
     LED_CHANNEL = 0
 
@@ -178,7 +185,6 @@ class LEDService:
                     self._breakLoopEvent.set()
             except Exception:
                 self.loopErrCallback(traceback.format_exc())
-                self.leds.fill(ws.Color(0, 0, 0))  # Turn off LEDs when breaking the loop
                 break
         self._isInLoop = False
         
