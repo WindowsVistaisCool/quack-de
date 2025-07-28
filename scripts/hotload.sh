@@ -27,7 +27,7 @@ if ! timeout 1s xset q &>/dev/null; then
     else
         echo $task_pid
         echo "Killing existing window process with PID $task_pid..."
-        kill $task_pid
+        sudo kill $task_pid
     fi
 
     sleep 0.5
@@ -35,9 +35,13 @@ if ! timeout 1s xset q &>/dev/null; then
     replace_code
 
     DISPLAY=:0 xset s reset # reset screensaver 
-    # DISPLAY=:0 sudo python3 ./main.py & # launch new app
+    DISPLAY=:0 xhost + #allow local user to access X server
+    DISPLAY=:0 sudo python3 ./main.py & # launch new app
 
-    # echo "Launched successfully."
+    sleep 4
+    DISPLAY=:0 xhost - # disallow local user to access X server
+
+    echo "Launched successfully."
 
 else
     echo "DISPLAY is not set, skipping window launch."

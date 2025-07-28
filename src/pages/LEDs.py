@@ -1,11 +1,9 @@
 from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-import CTkColorPicker as colorPicker
+from LEDLoops import LEDLoops
 import rpi_ws281x as ws
 import threading
 import time
@@ -13,7 +11,7 @@ import traceback
 from lib.CommandUI import CommandUI
 from lib.Navigation import NavigationPage
 from lib.QuackColorPicker import QuackColorPicker
-from lib.SwappableUI import SwappableUI, SwappableUIFrame
+from lib.SwappableUI import SwappableUI
 
 class LEDsPage(NavigationPage):
     def __init__(self, navigator, appRoot: 'App', master, **kwargs):
@@ -125,7 +123,7 @@ class LEDsPage(NavigationPage):
         self.ui.get("toggle_leds").setCommand(self.ledService.off)
 
         self.themesTab.get("test_themes").setCommand(lambda: self.ledService.setLoop(LEDLoops.rainbow()))
-        self.themesTab.get("test_themes2").setCommand(lambda: self.ledService.setLoop(LEDLoops.rainbow2()))
+        self.themesTab.get("test_themes2").setCommand(lambda: self.ledService.setLoop(LEDLoops.holidayTwinkle(self.appRoot.after)))
 
         def solid_color_command(rgb):
             self.ledService.setSolid(*rgb)
@@ -225,53 +223,3 @@ class LEDService:
     
     def off(self):
         self.setSolid(0, 0, 0)
-
-class LEDLoops:
-    @staticmethod
-    def _wheel(pos):
-            """Generate rainbow colors across 0-255 positions."""
-            if pos < 85:
-                return ws.Color(pos * 3, 255 - pos * 3, 0)
-            elif pos < 170:
-                pos -= 85
-                return ws.Color(255 - pos * 3, 0, pos * 3)
-            else:
-                pos -= 170
-                return ws.Color(0, pos * 3, 255 - pos * 3)
-
-    @staticmethod
-    def null():
-        return lambda *_ : True
-
-    @classmethod
-    def rainbow(cls, iterations=1):
-        iterations = int(iterations)
-        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
-            for j in range(256 * iterations):
-                if break_event.is_set():
-                    return True
-                for i in range(leds.numPixels()):
-                    leds.setPixelColor(i, cls._wheel(((i * 256 // iterations) + j) & 255))
-                leds.show()
-                time.sleep(20 / 1000.0)  # 20 ms delay
-        return target
-
-    @classmethod
-    def rainbow2(cls, wait_ms=50):
-        wait_ms = int(wait_ms)
-        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
-            """Rainbow movie theater light style chaser animation."""
-            for j in range(256):
-                if break_event.is_set():
-                    return True
-                for q in range(3):
-                    if break_event.is_set():
-                        return True
-                    for i in range(0, leds.numPixels(), 3):
-                        leds.setPixelColor(i + q, cls._wheel((i + j) % 255))
-                    leds.show()
-                    time.sleep(wait_ms / 1000.0)
-                    for i in range(0, leds.numPixels(), 3):
-                        leds.setPixelColor(i + q, 0)
-        return target
-    
