@@ -14,7 +14,7 @@ from LEDLoops import LEDLoops
 
 from lib.CommandUI import CommandUI
 from lib.Navigation import NavigationPage
-from lib.QuackColorPicker import QuackColorPicker
+from lib.CustomWidgets import QuackColorPicker, TouchScrollableFrame
 from lib.SwappableUI import SwappableUI
 
 class LEDsPage(NavigationPage):
@@ -83,7 +83,7 @@ class LEDsPage(NavigationPage):
         themesTab = self.tabview.getInstance().tab("Themes")
         themesTab.grid_columnconfigure(0, weight=1)
         themesTab.grid_rowconfigure(0, weight=1)
-        _scrollFrame = self.ui.add(ctk.CTkScrollableFrame, "scroll_filler",
+        _scrollFrame = self.ui.add(TouchScrollableFrame, "scroll_filler",
                                     root=themesTab,
                                     fg_color=themesTab._fg_color,
                                     border_width=0,
@@ -106,6 +106,20 @@ class LEDsPage(NavigationPage):
                 "assets/images/rainbow.png",
                 lambda: self.ledService.setLoop(LEDLoops.rainbow(50)),
                 (0, 1),
+                "ne"
+            ),
+            (
+                "Rainbow Snake",
+                "assets/images/snake.png",
+                lambda: self.ledService.setLoop(LEDLoops.rgbSnake()),
+                (1, 0),
+                "nw"
+            ),
+            (
+                "Dev",
+                "assets/images/a.png",
+                lambda: None,
+                (1, 1),
                 "ne"
             )
         ]

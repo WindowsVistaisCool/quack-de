@@ -3,23 +3,56 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
+import datetime
+import os
 import platform
+import socket
+
+if os.name == "nt":
+    import ctypes
+    def getBootTime():
+        kernel32 = ctypes.windll.kernel32
+        uptime = kernel32.GetTickCount64() / 1000
+        return datetime.timedelta(seconds=uptime)
+else:
+    import psutil
+    def getBootTime():
+        boot_time = psutil.boot_time()
+        return datetime.datetime.now() - datetime.datetime.fromtimestamp(boot_time)
+
 from Configurator import Configurator
+
 from lib.Navigation import EphemeralNavigationPage
 
-class AboutPage(EphemeralNavigationPage):
-    PLATFORM_TEXT = f"""OS: {platform.platform()}
-Architecture: {platform.architecture()[0]}
-Hostname: {platform.node()}
-IP Address: <TODO>
-Uptime: <TODO>
-
-Configurator Schema: v{Configurator.getSchemaVersion()}
-"""
+class AboutPage(EphemeralNavigationPage):    
+    @staticmethod
+    def getPlatformIP():
+        try:
+            if os.name == "nt":
+                hostname = socket.gethostname()
+                ip_address = socket.gethostbyname(hostname)
+                return ip_address
+            else:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                ip_address = s.getsockname()[0]
+                s.close()
+                return ip_address
+        except socket.error as e:
+            return f"Error retrieving IP: {e}"
 
     def __init__(self, navigator, appRoot: 'App', master, **kwargs):
         super().__init__(navigator, master, title="About", **kwargs)
         self.appRoot: 'App' = appRoot
+
+        self.PLATFORM_TEXT = f"""OS: {platform.platform()}
+Architecture: {platform.architecture()[0]}
+Hostname: {platform.node()}
+IP Address: {self.getPlatformIP()}
+Uptime: {getBootTime()}
+
+Configurator Schema: v{Configurator.getSchemaVersion()}
+"""
 
         self._initUI()
         self._initCommands()

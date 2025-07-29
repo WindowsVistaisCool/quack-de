@@ -1,3 +1,4 @@
+import colorsys
 import math
 import rpi_ws281x as ws
 import threading
@@ -9,6 +10,11 @@ class FastLEDFunctions:
 
     Ported by Kyle Rush
     """
+
+    @staticmethod
+    def fromHSV(hue, sat, val):
+        rgb = colorsys.hsv_to_rgb(hue / 255.0, sat / 255.0, val / 255.0)
+        return (int(rgb[0] * 255) & 0xFF, int(rgb[1] * 255) & 0xFF, int(rgb[2] * 255) & 0xFF)
 
     @staticmethod
     def nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges=24):
@@ -58,6 +64,13 @@ class FastLEDFunctions:
     @staticmethod
     def scale8(value, scale):
         return ((int(value) & 0xFFFF) * ((int(scale) & 0xFFFF) + 1)) >> 8
+
+    @classmethod
+    def CRGB_nscale8(cls, rgb: tuple, scaledown: int):
+        r = ((rgb[0]) * (scaledown + 1)) >> 8
+        g = ((rgb[1]) * (scaledown + 1)) >> 8
+        b = ((rgb[2]) * (scaledown + 1)) >> 8
+        return (r & 0xFF, g & 0xFF, b & 0xFF)
 
     @classmethod
     def ColorFromPalette(cls, palette: tuple, index: int, brightness: int = 255, _: str = "NOBLEND"):
@@ -156,26 +169,48 @@ class LEDLoops:
         return target
     
     @staticmethod
+    def fire2012():
+        cooling = 65
+        sparking = 130
+        reversed = False
+
+    @staticmethod
+    def rgbSnake(delay=10):
+        hue = 0
+        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
+            nonlocal hue
+            doReverse = False
+            for _ in range(2):
+                rangeList = list(range(leds.numPixels()))
+                if doReverse:
+                    rangeList.reverse()
+                for i in rangeList:
+                    if break_event.is_set():
+                        leds.show()
+                        return True
+                    hue += 1
+                    hue &= 0xFF
+                    leds.setPixelColor(i, ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
+                    leds.show()
+
+                    # leds.setPixelColor(i, ws.Color(0, 0, 0))
+                    for j in range(leds.numPixels()):
+                        if break_event.is_set():
+                            leds.show()
+                            return True
+                        rgbw = leds.getPixelColorRGB(j)
+                        leds.setPixelColor(j, ws.Color(*FastLEDFunctions.CRGB_nscale8((rgbw.r, rgbw.g, rgbw.b), 250)))
+
+                    time.sleep(delay / 1000)
+                doReverse = not doReverse
+        return target
+
+    @staticmethod
     def twinkle(afterCallable = lambda _, _0: None):
         """
-        This function creates a twinkle effect for holiday lights.
+        [TODO] describe
         Originally wrote for Arduino but adapted for Python.
         """
-
-        class Palette:
-            def __init__(self, name, colors=[], palette=None):
-                self.name = name
-                self.colors = colors
-                self.palette = []
-
-                if colors != [] and palette:
-                    self.palette = [self.colors[i] for i in palette]
-                elif colors == []:
-                    self.palette = palette if palette else []
-            
-            def get(self):
-                return tuple(self.palette)
-
         palettes = (
             Palette("C9",
                 {
@@ -311,7 +346,6 @@ class LEDLoops:
                 if break_event.is_set():
                     return
                 nonlocal currentPalette, targetPalette
-                # currentPalette = targetPalette
                 currentPalette = FastLEDFunctions.nblendPaletteTowardPalette(currentPalette, targetPalette, 12)
                 afterCallable(10, blend_target)
 
@@ -392,3 +426,17 @@ class LEDLoops:
             leds.show()
     
         return target
+
+class Palette:
+    def __init__(self, name, colors=[], palette=None):
+        self.name = name
+        self.colors = colors
+        self.palette = []
+
+        if colors != [] and palette:
+            self.palette = [self.colors[i] for i in palette]
+        elif colors == []:
+            self.palette = palette if palette else []
+    
+    def get(self):
+        return tuple(self.palette)
