@@ -4,6 +4,7 @@ from datetime import datetime
 from threading import Thread
 
 from Configurator import Configurator
+from LEDLoops import LEDLoops
 
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
@@ -16,7 +17,7 @@ from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
 class App(ctk.CTk):
-    VERSION = f"0.1{'-dev' if isDev() else ''}"
+    VERSION = f"v0.1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
@@ -47,6 +48,8 @@ class App(ctk.CTk):
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
         self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
         self.navigation.registerExceptionHandling()
+
+        self.leds = None
 
         self._initUI()
         self._initCommands()
@@ -157,13 +160,13 @@ class App(ctk.CTk):
 
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
-        LEDsPage(self.navigation, self, self.content_root.getInstance())
+        self.leds = LEDsPage(self.navigation, self, self.content_root.getInstance()).getLeds()
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())
         self.clock_thread().start()
-        
+
         self.navigation.navigate(HomePage)
 
     def toggleNav(self, viewable):
@@ -210,5 +213,6 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     app.toggleFullAccess(True)
     app.navigation.navigate(LEDsPage)
+    app.leds.setLoop(LEDLoops.twinkle(app.after))
     app.mainloop()
 

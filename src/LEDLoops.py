@@ -13,24 +13,42 @@ class FastLEDFunctions:
     @staticmethod
     def nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges=24):
         """Blend currentPalette toward targetPalette."""
-        currentPalette = list(currentPalette)
+        current = list(currentPalette)
+        target = list(targetPalette)
         changes = 0
-        numColors = min(len(currentPalette), len(targetPalette))
-        for i in range(numColors):
+        # Each color is a tuple (r, g, b), so flatten both palettes to lists of channels
+        def flatten(palette):
+            flat = []
+            for color in palette:
+                if isinstance(color, int):
+                    # Convert hex to (r, g, b)
+                    color = ((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF)
+                flat.extend(color)
+            return flat
+
+        def unflatten(flat, length):
+            return [tuple(flat[i:i+3]) for i in range(0, length, 3)]
+
+        flat_current = flatten(current)
+        flat_target = flatten(target)
+        totalChannels = min(len(flat_current), len(flat_target))
+
+        for i in range(totalChannels):
+            if flat_current[i] == flat_target[i]:
+                continue
+            if flat_current[i] < flat_target[i]:
+                flat_current[i] += 1
+                changes += 1
+            elif flat_current[i] > flat_target[i]:
+                flat_current[i] -= 1
+                changes += 1
+                if flat_current[i] > flat_target[i]:
+                    flat_current[i] -= 1
             if changes >= maxChanges:
                 break
-            currentColor = currentPalette[i]
-            targetColor = targetPalette[i]
-            if currentColor != targetColor:
-                if (currentColor < targetColor):
-                    currentPalette[i] += 1
-                    changes += 1
-                elif (currentColor > targetColor):
-                    currentPalette[i] -= 1
-                    changes += 1
-                    if currentColor > targetColor:
-                        currentPalette[i] -= 1    
-        return tuple(currentPalette)
+
+        # Rebuild palette as tuple of (r, g, b)
+        return tuple(unflatten(flat_current, len(flat_current)))
 
     @classmethod
     def getAverageLight(cls, crgb):
@@ -128,7 +146,7 @@ class LEDLoops:
     def rainbow(iterations=1):
         iterations = int(iterations)
         def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
-            for j in range(256 * iterations):
+            for j in range(256):
                 if break_event.is_set():
                     return True
                 for i in range(leds.numPixels()):
@@ -138,27 +156,28 @@ class LEDLoops:
         return target
     
     @staticmethod
-    def holidayTwinkle(afterCallable = lambda _, _0: None):
+    def twinkle(afterCallable = lambda _, _0: None):
         """
         This function creates a twinkle effect for holiday lights.
         Originally wrote for Arduino but adapted for Python.
         """
 
         class Palette:
-            def __init__(self, name, colors, palette=None):
+            def __init__(self, name, colors=[], palette=None):
                 self.name = name
                 self.colors = colors
                 self.palette = []
-                
-                if palette:
+
+                if colors != [] and palette:
                     self.palette = [self.colors[i] for i in palette]
+                elif colors == []:
+                    self.palette = palette if palette else []
             
             def get(self):
                 return tuple(self.palette)
 
         palettes = (
-            Palette(
-                "C9",
+            Palette("C9",
                 {
                     'red': 0xbb80400,
                     'orange': 0x902c02,
@@ -171,25 +190,21 @@ class LEDLoops:
                     'orange', 'red', 'orange', 'red',
                     'green', 'green', 'green', 'green',
                     'blue', 'blue', 'blue', 'white'
-                ]
-            ),
-            Palette(
-                "Blue and White",
-                {'blue': 0x00000FF, 'gray': 0x808080},
+                ]),
+            Palette("Blue and White", {'blue': 0x00000FF, 'gray': 0x808080},
                 [
                     'blue', 'blue', 'blue', 'blue',
                     'blue', 'blue', 'blue', 'blue',
                     'blue', 'blue', 'blue', 'blue',
                     'blue', 'gray', 'gray', 'gray'
-                ]
-            ),
-            # Palette(
-            #     "Rainbow Colors",
-            #     {'pholder': 0x000000},
-            #     ['pholder']
-            # ),
-            Palette(
-                "Fairy Lights",
+                ]),
+            Palette("Rainbow", palette=[
+                    0xFF0000, 0xD52A00, 0xAB5500, 0xAB7F00,
+                    0xABAB00, 0x56D500, 0x00FF00, 0x00D52A,
+                    0x00AB55, 0x0056AA, 0x0000FF, 0x2A00D5,
+                    0x5500AB, 0x7F0081, 0xAB0055, 0xD5002B
+                ]),
+            Palette("Fairy Lights",
                 {
                     'fairy': 0xFFE42D,
                     'half-fairy': int((0xFFE42D & 0xFEFEFE) / 2) & 0xFFFFFF,
@@ -200,13 +215,75 @@ class LEDLoops:
                     'half-fairy', 'half-fairy', 'fairy', 'fairy',
                     'quarter-fairy', 'quarter-fairy', 'fairy', 'fairy',
                     'fairy', 'fairy', 'fairy', 'fairy'
-                ]
-            )
+                ]),
+            Palette("Red Green White",
+                {
+                    'red': 0xFF0000,
+                    'gray': 0x808080,
+                    'green': 0x00FF00,
+                },
+                [
+                    'red', 'red', 'red', 'red',
+                    'red', 'red', 'red', 'red',
+                    'red', 'red', 'gray', 'gray',
+                    'green', 'green', 'green', 'green'
+                ]),
+            Palette("Party Colors", palette=[
+                    0x5500AB, 0x84007C, 0xB5004B, 0xE5001B,
+                    0xE81700, 0xB84700, 0xAB7700, 0xABAB00,
+                    0xAB5500, 0xDD2200, 0xF2000E, 0xC2003E,
+                    0x8F0071, 0x5F00A1, 0x2F00D0, 0x0007F9
+                ]),
+            Palette("Red and White",
+                {
+                    'red': 0xFF0000,
+                    'gray': 0x808080,
+                },
+                [
+                    'red', 'red', 'red', 'red',
+                    'gray', 'gray', 'gray', 'gray',
+                    'red', 'red', 'red', 'red',
+                    'gray', 'gray', 'gray', 'gray'
+                ]),
+            Palette("Snow",
+                {
+                    'soft': 0x304048,
+                    'bright': 0xE0F0FF,
+                },
+                [
+                    'soft', 'soft', 'soft', 'soft',
+                    'soft', 'soft', 'soft', 'soft',
+                    'soft', 'soft', 'soft', 'soft',
+                    'soft', 'soft', 'soft', 'bright'
+                ]),
+            Palette("Holly",
+                {
+                    'green': 0x00580C,
+                    'red': 0xB00402,
+                },
+                [
+                    'green', 'green', 'green', 'green',
+                    'green', 'green', 'green', 'green',
+                    'green', 'green', 'green', 'green',
+                    'green', 'green', 'green', 'red'
+                ]),
+            Palette("Ice Blue",
+                {
+                    'Ice_Blue1': 0x0C1040,
+                    'Ice_Blue2': 0x182080,
+                    'Ice_Blue3': 0x5080C0,
+                },
+                [
+                    'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1',
+                    'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1',
+                    'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1', 'Ice_Blue1',
+                    'Ice_Blue2', 'Ice_Blue2', 'Ice_Blue2', 'Ice_Blue3'
+                ]),
         )
 
         twinkleSpeed = 4 # 1-8
         twinkleDensity = 5 # 1-8
-        secondsPerPallette = 10 # seconds
+        secondsPerPallette = 60 # seconds
         autoSelectBackgroundColor = False
         coolLikeIncandescent = True
 
@@ -234,8 +311,8 @@ class LEDLoops:
                 if break_event.is_set():
                     return
                 nonlocal currentPalette, targetPalette
-                currentPalette = targetPalette
-                # currentPalette = FastLEDFunctions.nblendPaletteTowardPalette(currentPalette, targetPalette, 12)
+                # currentPalette = targetPalette
+                currentPalette = FastLEDFunctions.nblendPaletteTowardPalette(currentPalette, targetPalette, 12)
                 afterCallable(10, blend_target)
 
             if not blendCallRunning:
