@@ -49,8 +49,10 @@ class NavigationPage(ctk.CTkFrame):
         pass
 
 class EphemeralNavigationPage(NavigationPage):
-    def __init__(self, navigator: 'NavigationManager', master: ctk.CTkFrame, title: str, **kwargs):
-        super().__init__(navigator, master, title, ephemeral=True, **kwargs)
+    def __init__(self, *args, **kwargs):
+        if "ephemeral" not in kwargs:
+            kwargs["ephemeral"] = True
+        super().__init__(*args, **kwargs)
         self.is_ephemeral = True
 
 # TODO: CONVERT TO EPHEMERAL PAGE

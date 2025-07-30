@@ -11,13 +11,14 @@ from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
 from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
+from lib.QuackApp import QuackApp
 
 from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
-class App(ctk.CTk):
+class App(QuackApp):
     VERSION = f"v1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
@@ -33,33 +34,15 @@ class App(ctk.CTk):
         self.geometry("800x480")
         self.resizable(False, False)
 
-        self.ui = CommandUI(self)
-
-        NotifierService.setDelayFuncs(
-            lambda delay_ms, end_call: self.after(delay_ms, end_call),
-            self.after_cancel
-        )
-        NotifierService.init()
         NotifierUI.setFont((self.FONT_NAME, 16))
 
         self._fullAccessMode = False
         self._fullAccessTimerID = None
         self._fullAccessLockCallbacks = []
-
-        self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
-        self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
-        self.navigation.registerExceptionHandling()
     
         self._initUI()
         self._initCommands()
         self._addPages()
-
-        LEDService.getInstance().passAfterMethod(self.after)
-
-    def setFullscreen(self, fullscreen: bool):
-        _setter = lambda fs: self.attributes("-fullscreen", fs)
-        self.bind("<Escape>", lambda e: _setter(False))
-        _setter(fullscreen)
     
     def _initUI(self):
         # init grid
@@ -214,6 +197,6 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     app.toggleFullAccess(True)
     app.navigation.navigate(LEDsPage)
-    LEDService.getInstance().setLoop(LEDLoops.twinkle())
+    LEDService.getInstance().setLoop(LEDLoops.getLoop("twinkle"))
     app.mainloop()
 

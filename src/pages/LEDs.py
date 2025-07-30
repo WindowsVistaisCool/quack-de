@@ -1,4 +1,5 @@
 
+import traceback
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ from LEDLoops import LEDLoops
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
-from lib.LEDLoop import LEDLoop
+from lib.led.LEDLoop import LEDLoop
 from lib.Navigation import NavigationPage
 from lib.CustomWidgets import QuackColorPicker, TouchScrollableFrame, QuackExtendedButton
 from lib.SwappableUI import SwappableUI
@@ -22,7 +23,7 @@ class LEDsPage(NavigationPage):
         super().__init__(navigator, master, title="LEDs", **kwargs)
         self.appRoot: 'App' = appRoot
 
-        self.ledService = LEDService()
+        self.ledService = LEDService(self.appRoot)
         self.ledService.errorCallback = self.ui.exceptionCallback
 
         self._initUI()
@@ -95,25 +96,25 @@ class LEDsPage(NavigationPage):
                 "Twinkle",
                 "assets/images/christmas.png",
                 (0, 0),
-                LEDLoops.twinkle(),
+                LEDLoops.getLoop("twinkle"),
             ),
             (
                 "Rainbow",
                 "assets/images/rainbow.png",
                 (0, 1),
-                LEDLoops.rainbow(50),
+                LEDLoops.getLoop("rainbow"),
             ),
             (
                 "Rainbow Snake",
                 "assets/images/snake.png",
                 (1, 0),
-                LEDLoops.rgbSnake(),
+                LEDLoops.getLoop("rgbSnake"),
             ),
             (
                 "Fire 2012",
                 "assets/images/fire.png",
                 (1, 1),
-                LEDLoops.fire2012(),
+                LEDLoops.getLoop("fire2012"),
             )
         ]
 
@@ -125,11 +126,21 @@ class LEDsPage(NavigationPage):
             
             # Create long press callback for this theme
             def make_long_press_callback(loop: 'LEDLoop'):
-                return lambda: self.navigator.navigateEphemeral(loop.getSettings())
+                def exception_wrapper():
+                    try:
+                        self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
+                    except:
+                        self.ui.exceptionCallback(traceback.format_exc())
+                return exception_wrapper
             
             # Create normal command for this theme
             def make_normal_command(led_loop):
-                return lambda: self.ledService.setLoop(led_loop)
+                def exception_wrapper():
+                    try:
+                        self.ledService.setLoop(led_loop)
+                    except:
+                        self.ui.exceptionCallback(traceback.format_exc())
+                return exception_wrapper
             
             themesUI.add(QuackExtendedButton, f"b_{theme_name.lower()}",
                          root=_frame.getInstance(),
@@ -146,7 +157,7 @@ class LEDsPage(NavigationPage):
                          image=PhotoImage(file=image_path),
                          command=make_normal_command(loop),
                          longpress_callback=make_long_press_callback(loop),
-                         longpress_threshold=750
+                         longpress_threshold=550
                          ).grid(row=0, column=0, padx=10, pady=10)
 
         solidColorsTab = self.tabview.getInstance().tab("Solid Color")

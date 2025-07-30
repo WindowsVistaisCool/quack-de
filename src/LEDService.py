@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from App import App
+
 import threading
 import time
 import traceback
 import rpi_ws281x as ws
 
 from LEDLoops import LEDLoops
-from lib.LEDLoop import LEDLoop
+from lib.led.LEDLoop import LEDLoop
 
 class LEDService:
     _instance = None
@@ -17,7 +21,7 @@ class LEDService:
     LED_INVERT = False
     LED_CHANNEL = 0
 
-    def __init__(self):
+    def __init__(self, appRoot: 'App'):
         if LEDService._instance is not None:
             raise RuntimeError("LEDService is a singleton and cannot be instantiated multiple times.")
         self.leds = ws.PixelStrip(
@@ -31,9 +35,10 @@ class LEDService:
         )
         self.leds.begin()
 
-        self.afterMethod = lambda *_: None
+        self.appRoot: 'App' = appRoot
 
-        self.loop: 'LEDLoop' = LEDLoops.null()
+        LEDLoops() # initialize all LED loops
+        self.loop = LEDLoops.null()
 
         self._breakLoopEvent = threading.Event()
         self._isInLoop = False
@@ -47,17 +52,14 @@ class LEDService:
         self.loopThread.start()
 
         LEDService._instance = self
-    
-    def passAfterMethod(self, after_method: callable):
-        self.afterMethod = after_method
 
     def _createLoopThread(self):
         self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
 
     def _ledLoopTarget(self):
         self._isInLoop = True
+        self.loop.passApp(self.appRoot, self.appRoot.navigation)
         self.loop.passArgs(self.leds, self._breakLoopEvent)
-        self.loop.passAfterMethod(self.afterMethod)
         self.loop.runInit()
         while not self._breakLoopEvent.is_set():
             time.sleep(0.005)  # Sleep to prevent busy waiting

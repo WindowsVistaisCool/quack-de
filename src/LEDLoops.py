@@ -6,7 +6,9 @@ import rpi_ws281x as ws
 import threading
 import time
 
-from lib.LEDLoop import LEDLoop
+from lib.CommandUI import CommandUI
+from lib.led.LEDLoop import LEDLoop
+from lib.led.LEDLoopSettings import LEDLoopSettings
 
 class FastLEDFunctions:
     """
@@ -207,13 +209,55 @@ class FastLEDFunctions:
                 return ws.Color(0, pos * 3, 255 - pos * 3)
 
 class LEDLoops:
+    _instance = None
+
+    def __init__(self):
+        assert LEDLoops._instance is None, "LEDLoops instance already exists"
+        LEDLoops._instance = self
+        self.loops = {
+            "null": LEDLoops.null()
+        } # needs to init like this because `self._checkLoopExists` references it
+        self.loops = {
+            "rainbow": self.rainbow(_name="rainbow"),
+            "fire2012": self.fire2012(),
+            "rgbSnake": self.rgbSnake(),
+            "twinkle": self.twinkle(),
+        }
+
+    @classmethod
+    def _checkAssr(cls):
+        """
+        Check if the LEDLoops instance is initialized.
+        Raises an AssertionError if not initialized.
+        """
+        assert cls._instance, "LEDLoops instance not initialized"
+
+    @classmethod
+    def getInstance(cls):
+        cls._checkAssr()
+        return cls._instance
+
+    @classmethod
+    def getLoop(cls, loop_id: str = None):
+        cls._checkAssr()
+        return cls._instance.loops.get(loop_id)
+
+    @classmethod
+    def getAllLoops(cls):
+        cls._checkAssr()
+        return cls._instance.loops.keys()
+
     @staticmethod
     def null():
         return LEDLoop("null")
 
-    @staticmethod
-    def rainbow(iterations=1):
-        def target(self: 'LEDLoop'):
+    def _checkLoopExists(self, loop_id: str):
+        assert loop_id not in self.loops.keys(), f"LED loop '{loop_id}' already exists"
+
+    def rainbow(self, iterations=1, *, _name = "rainbow"):
+        self._checkLoopExists(_name)
+
+        def target(loop: 'LEDLoop'):
             _iterations = 1
             if isinstance(iterations, ctk.IntVar):
                 _iterations = iterations.get()
@@ -221,16 +265,17 @@ class LEDLoops:
                 _iterations = int(iterations)
 
             for j in range(256):
-                if self.checkBreak():
+                if loop.checkBreak():
                     return 1
-                for i in range(self.leds.numPixels()):
-                    self.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
-                self.leds.show()
+                for i in range(loop.leds.numPixels()):
+                    loop.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
+                loop.leds.show()
                 time.sleep(20 / 1000.0)  # 20 ms delay
-        return LEDLoop("rainbow", target)
-    
-    @staticmethod
-    def fire2012(cooling=30, sparking=130, reversed=False):
+        return LEDLoop(_name, target)
+
+    def fire2012(self, cooling=30, sparking=130, reversed=False, *, _name = "fire2012"):
+        self._checkLoopExists(_name)
+
         cooling = int(cooling)
         sparking = int(sparking)
     
@@ -265,10 +310,11 @@ class LEDLoops:
                 return True
             self.leds.show()
             # time.sleep(0.05)
-        return LEDLoop("fire2012", target)
+        return LEDLoop(_name, target)
 
-    @staticmethod
-    def rgbSnake(delay=10):
+    def rgbSnake(self, delay=10, *, _name = "rgbSnake"):
+        self._checkLoopExists(_name)
+
         tailScaleFactor = 250
 
         hue = 0
@@ -296,16 +342,16 @@ class LEDLoops:
 
                     time.sleep(delay / 1000)
                 doReverse = not doReverse
-        return LEDLoop("rgbSnake", target)
+        return LEDLoop(_name, target)
 
-    @staticmethod
-    def ocean():
+    def ocean(self, *, _name = "ocean"):
+        self._checkLoopExists(_name)
+
         def target(self: 'LEDLoop'):
             return 1
-        return LEDLoop("ocean", target)
+        return LEDLoop(_name, target)
 
-    @staticmethod
-    def twinkle():
+    def twinkle(self, *, _name = "twinkle"):
         """
         [TODO] describe
         Originally wrote for Arduino but adapted for Python.
@@ -540,8 +586,10 @@ class LEDLoops:
                 else:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
-    
-        return LEDLoop("twinkle", target, init)
+        def uiMaker(ui: CommandUI):
+            ui.add(ctk.CTkLabel, "ben", text="Twinkle Settings").grid(row=1, column=0, padx=10, pady=10)
+
+        return LEDLoop(_name, target, init, settingsUIFactory=uiMaker)
 
 class Palette:
     def __init__(self, name, colors=[], palette=None):
