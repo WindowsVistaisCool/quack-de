@@ -4,12 +4,13 @@ import rpi_ws281x as ws
 from lib.Navigation import NavigationPage
 
 class LEDLoop:
-    def __init__(self, id: str, target=lambda *_: 1, settings: 'NavigationPage' = None):
+    def __init__(self, id: str, loopTarget=lambda *_: 1, initTarget=lambda *_: None, settings: 'NavigationPage' = None):
         self.id = id
 
         # self._isFinished = False
 
-        self.target = target
+        self.loopTarget = loopTarget
+        self.initTarget = initTarget
 
         self.settings: NavigationPage = settings
 
@@ -47,6 +48,15 @@ class LEDLoop:
     def isFinished(self) -> bool:
         return self._isFinished
 
+    def runInit(self):
+        """
+        Runs the initialization target function.
+        """
+        if not self.initTarget:
+            raise RuntimeError("LEDLoop target requires init method to be set.")
+
+        return self.initTarget(self)
+
     def runLoop(self):
         """
         Runs the LED loop with the provided target function.
@@ -57,4 +67,4 @@ class LEDLoop:
         if not self.after:
             raise RuntimeError("LEDLoop target requires after method to be set.")
 
-        return self.target(self)
+        return self.loopTarget(self)

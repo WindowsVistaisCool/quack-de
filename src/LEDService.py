@@ -58,6 +58,7 @@ class LEDService:
         self._isInLoop = True
         self.loop.passArgs(self.leds, self._breakLoopEvent)
         self.loop.passAfterMethod(self.afterMethod)
+        self.loop.runInit()
         while not self._breakLoopEvent.is_set():
             time.sleep(0.005)  # Sleep to prevent busy waiting
             try:

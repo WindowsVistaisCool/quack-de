@@ -415,8 +415,8 @@ class LEDLoops:
                 ]),
         )
 
-        twinkleSpeed = 4 # 1-8
-        twinkleDensity = 5 # 1-8
+        twinkleSpeed = 5 # 1-8
+        twinkleDensity = 4 # 1-8
         secondsPerPallette = 60 # seconds
         autoSelectBackgroundColor = False
         coolLikeIncandescent = True
@@ -427,9 +427,22 @@ class LEDLoops:
         currentPalette = (0x000000,) * len(targetPalette)  # Initialize with black
 
         ms_0 = int(time.time() * 1000)
-
         blendCallRunning = False
         paletteSwapCallRunning = False
+
+        def init(self: 'LEDLoop'):
+            nonlocal palettes, currentIndex, targetPalette, currentPalette, ms_0, blendCallRunning, paletteSwapCallRunning
+            if not palettes:
+                raise ValueError("No palettes provided for twinkle effect")
+            
+            # Initialize the first palette
+            rawPalettes = [p.get() for p in palettes]
+            currentIndex = 0
+            targetPalette = rawPalettes[currentIndex]
+            currentPalette = (0x000000,) * len(targetPalette)
+            ms_0 = int(time.time() * 1000)
+            blendCallRunning = False
+            paletteSwapCallRunning = False
         def target(self: 'LEDLoop'):
             nonlocal blendCallRunning, paletteSwapCallRunning, currentPalette, targetPalette, ms_0
 
@@ -490,6 +503,8 @@ class LEDLoops:
 
                 slowCycle_16b += int(math.sin(slowCycle_16b) * 255) + 128
                 slowCycle_16b &= 0xFFFF
+                slowCycle_16b = (slowCycle_16b * 2053) + 1384
+                slowCycle_16b &= 0xFFFF
                 slowCycle_8b = ((slowCycle_16b & 0xFF) + (slowCycle_16b >> 8)) & 0xFF
 
                 bright_8b = 0
@@ -499,8 +514,11 @@ class LEDLoops:
                         bright_8b = copy * 3
                     else:
                         copy -= 86
-                        bright_8b = 255 - (copy + int(i / 2))
-                    bright_8b &= 0xFF
+                        # Fix: Ensure brightness calculation doesn't go negative or wrap around
+                        adjustment = min(copy, 169)  # Cap the adjustment to prevent negative results
+                        bright_8b = 255 - adjustment
+                    # Ensure brightness stays within valid range
+                    bright_8b = max(0, min(255, bright_8b)) & 0xFF
                 
                 hue_8b = (slowCycle_8b - salt) & 0xFF
                 outputColor = (0, 0, 0)
@@ -523,7 +541,7 @@ class LEDLoops:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
     
-        return LEDLoop("twinkle", target)
+        return LEDLoop("twinkle", target, init)
 
 class Palette:
     def __init__(self, name, colors=[], palette=None):
