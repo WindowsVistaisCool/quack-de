@@ -12,8 +12,9 @@ from LEDLoops import LEDLoops
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
+from lib.LEDLoop import LEDLoop
 from lib.Navigation import NavigationPage
-from lib.CustomWidgets import QuackColorPicker, TouchScrollableFrame
+from lib.CustomWidgets import QuackColorPicker, TouchScrollableFrame, QuackExtendedButton
 from lib.SwappableUI import SwappableUI
 
 class LEDsPage(NavigationPage):
@@ -22,13 +23,10 @@ class LEDsPage(NavigationPage):
         self.appRoot: 'App' = appRoot
 
         self.ledService = LEDService()
-        self.ledService.loopErrCallback = self.ui.exceptionCallback
+        self.ledService.errorCallback = self.ui.exceptionCallback
 
         self._initUI()
         self._initCommands()
-
-    def getLeds(self):
-        return self.ledService
 
     def _initUI(self):
         self.grid_rowconfigure(1, weight=1)
@@ -96,40 +94,44 @@ class LEDsPage(NavigationPage):
             (
                 "Twinkle",
                 "assets/images/christmas.png",
-                lambda: self.ledService.setLoop(LEDLoops.twinkle(self.appRoot.after)),
                 (0, 0),
-                "nw"
+                LEDLoops.twinkle(),
             ),
             (
                 "Rainbow",
                 "assets/images/rainbow.png",
-                lambda: self.ledService.setLoop(LEDLoops.rainbow(50)),
                 (0, 1),
-                "ne"
+                LEDLoops.rainbow(50),
             ),
             (
                 "Rainbow Snake",
                 "assets/images/snake.png",
-                lambda: self.ledService.setLoop(LEDLoops.rgbSnake()),
                 (1, 0),
-                "nw"
+                LEDLoops.rgbSnake(),
             ),
             (
-                "Dev",
-                "assets/images/a.png",
-                lambda: None,
+                "Fire 2012",
+                "assets/images/fire.png",
                 (1, 1),
-                "ne"
+                LEDLoops.fire2012(),
             )
         ]
 
-        for theme_name, image_path, cmd, location, sticky in test_themes:
+        for theme_name, image_path, location, loop in test_themes:
             _frame = themesUI.add(ctk.CTkFrame, f"f_{theme_name.lower()}",
                                    corner_radius=25
-                                   ).withGridProperties(row=location[0], column=location[1], padx=(5, 10), pady=(0, 40), sticky=sticky)
+                                   ).withGridProperties(row=location[0], column=location[1], padx=(5, 10), pady=(0, 40), stick="n")
             _frame.grid()
-            command = cmd
-            themesUI.add(ctk.CTkButton, f"b_{theme_name.lower()}",
+            
+            # Create long press callback for this theme
+            def make_long_press_callback(loop: 'LEDLoop'):
+                return lambda: self.navigator.navigateEphemeral(loop.getSettings())
+            
+            # Create normal command for this theme
+            def make_normal_command(led_loop):
+                return lambda: self.ledService.setLoop(led_loop)
+            
+            themesUI.add(QuackExtendedButton, f"b_{theme_name.lower()}",
                          root=_frame.getInstance(),
                          text=theme_name,
                          compound="top",
@@ -141,8 +143,10 @@ class LEDsPage(NavigationPage):
                          fg_color=_frame.getInstance().cget("fg_color"),
                          bg_color=_frame.getInstance().cget("fg_color"),
                          hover_color=_frame.getInstance().cget("fg_color"),
-                         command=command,
                          image=PhotoImage(file=image_path),
+                         command=make_normal_command(loop),
+                         longpress_callback=make_long_press_callback(loop),
+                         longpress_threshold=750
                          ).grid(row=0, column=0, padx=10, pady=10)
 
         solidColorsTab = self.tabview.getInstance().tab("Solid Color")

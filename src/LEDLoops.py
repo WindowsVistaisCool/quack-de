@@ -1,8 +1,12 @@
+import customtkinter as ctk
 import colorsys
 import math
+import random
 import rpi_ws281x as ws
 import threading
 import time
+
+from lib.LEDLoop import LEDLoop
 
 class FastLEDFunctions:
     """
@@ -72,6 +76,16 @@ class FastLEDFunctions:
         b = ((rgb[2]) * (scaledown + 1)) >> 8
         return (r & 0xFF, g & 0xFF, b & 0xFF)
 
+    @staticmethod
+    def qaddint(a, b, lim=0xFF):
+        """Add b to a, ensuring the result does not exceed 255."""
+        return min(lim, a + b)
+
+    @staticmethod
+    def qsubint(a, b):
+        """Subtract b from a, ensuring the result is not negative."""
+        return int(max(0, a - b))
+
     @classmethod
     def ColorFromPalette(cls, palette: tuple, index: int, brightness: int = 255, _: str = "NOBLEND"):
         if not palette:
@@ -139,6 +153,48 @@ class FastLEDFunctions:
         return (r, g, b)
 
     @staticmethod
+    def random8(min=0, lim=0xFF):
+        min = int(min) & 0xFF
+        lim = int(lim) & 0xFF
+        return random.randint(min, lim)
+
+    @staticmethod
+    def random16(min=0, lim=0xFFFF):
+        min = int(min) & 0xFFFF
+        lim = int(lim) & 0xFFFF
+        return random.randint(min, lim)
+
+    @classmethod
+    def HeatColor(cls, temperature: int):
+        """Convert a temperature value (0-255) to a color."""
+        temperature = int(temperature) & 0xFF
+        color = [0, 0, 0]
+
+        # scale heat from 0-255 to 0-191
+        scaled = cls.scale8(temperature, 0xBF)
+
+        heatramp = scaled & 0x3F # 0-63
+        heatramp <<= 2 # 0-252
+
+        if scaled & 0x80:
+            # hottest third of 0xBF
+            color[0] = 255
+            color[1] = 255
+            color[2] = heatramp
+        elif scaled & 0x40:
+            # middle third of 0xBF
+            color[0] = 255
+            color[1] = heatramp
+            color[2] = 0
+        else:
+            # coolest third of 0xBF
+            color[0] = heatramp
+            color[1] = 0
+            color[2] = 0
+        return tuple(color)
+
+
+    @staticmethod
     def _wheel(pos):
             """Generate rainbow colors across 0-255 positions."""
             if pos < 85:
@@ -153,60 +209,103 @@ class FastLEDFunctions:
 class LEDLoops:
     @staticmethod
     def null():
-        return lambda *_ : True
+        return LEDLoop("null")
 
     @staticmethod
     def rainbow(iterations=1):
-        iterations = int(iterations)
-        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
+        def target(self: 'LEDLoop'):
+            _iterations = 1
+            if isinstance(iterations, ctk.IntVar):
+                _iterations = iterations.get()
+            elif isinstance(iterations, int):
+                _iterations = int(iterations)
+
             for j in range(256):
-                if break_event.is_set():
-                    return True
-                for i in range(leds.numPixels()):
-                    leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // iterations) + j) & 255))
-                leds.show()
+                if self.checkBreak():
+                    return 1
+                for i in range(self.leds.numPixels()):
+                    self.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
+                self.leds.show()
                 time.sleep(20 / 1000.0)  # 20 ms delay
-        return target
+        return LEDLoop("rainbow", target)
     
     @staticmethod
-    def fire2012():
-        cooling = 65
-        sparking = 130
-        reversed = False
+    def fire2012(cooling=30, sparking=130, reversed=False):
+        cooling = int(cooling)
+        sparking = int(sparking)
+    
+        temperatures = None
+        def target(self: 'LEDLoop'):
+            nonlocal temperatures
+            if temperatures is None:
+                temperatures = [0] * self.leds.numPixels()
+            # cool cells
+            for i in range(self.leds.numPixels()):
+                temperatures[i] = FastLEDFunctions.qsubint(temperatures[i], FastLEDFunctions.random8(0, ((cooling * 10) / self.leds.numPixels()) + 2)) & 0xFF
+            # heat up randomly
+            reversePixelsRange = list(range(self.leds.numPixels() - 1))[::-1][:-1]
+            for k in reversePixelsRange:
+                temperatures[k] = int((temperatures[k - 1] + temperatures[k - 2] + temperatures[k - 2]) / 3) & 0xFF
+
+            if FastLEDFunctions.random8(0, 0xFF) < sparking:
+                random_sparked = FastLEDFunctions.random8(lim=7)
+                temperatures[random_sparked] = FastLEDFunctions.qaddint(
+                    temperatures[random_sparked],
+                    FastLEDFunctions.random8(160, 255),
+                    0xFF
+                )
+
+            for i in range(self.leds.numPixels()):
+                color = FastLEDFunctions.HeatColor(temperatures[i])
+                if reversed:
+                    self.leds.setPixelColor(self.leds.numPixels() - 1 - i, color)
+                else:
+                    self.leds.setPixelColor(i, ws.Color(*color))
+            if self.checkBreak():
+                return True
+            self.leds.show()
+            # time.sleep(0.05)
+        return LEDLoop("fire2012", target)
 
     @staticmethod
     def rgbSnake(delay=10):
+        tailScaleFactor = 250
+
         hue = 0
-        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
+        def target(self: 'LEDLoop'):
             nonlocal hue
             doReverse = False
             for _ in range(2):
-                rangeList = list(range(leds.numPixels()))
+                rangeList = list(range(self.leds.numPixels()))
                 if doReverse:
                     rangeList.reverse()
                 for i in rangeList:
-                    if break_event.is_set():
-                        leds.show()
+                    if self.checkBreak():
                         return True
                     hue += 1
                     hue &= 0xFF
-                    leds.setPixelColor(i, ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
-                    leds.show()
+                    self.leds.setPixelColor(i, ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
+                    self.leds.show()
 
-                    # leds.setPixelColor(i, ws.Color(0, 0, 0))
-                    for j in range(leds.numPixels()):
-                        if break_event.is_set():
-                            leds.show()
+                    # self.leds.setPixelColor(i, ws.Color(0, 0, 0))
+                    for j in range(self.leds.numPixels()):
+                        if self.checkBreak():
                             return True
-                        rgbw = leds.getPixelColorRGB(j)
-                        leds.setPixelColor(j, ws.Color(*FastLEDFunctions.CRGB_nscale8((rgbw.r, rgbw.g, rgbw.b), 250)))
+                        rgbw = self.leds.getPixelColorRGB(j)
+                        self.leds.setPixelColor(j, ws.Color(*FastLEDFunctions.CRGB_nscale8((rgbw.r, rgbw.g, rgbw.b), tailScaleFactor)))
 
                     time.sleep(delay / 1000)
                 doReverse = not doReverse
-        return target
+        return LEDLoop("rgbSnake", target)
 
     @staticmethod
-    def twinkle(afterCallable = lambda _, _0: None):
+    def ocean():
+        def target(self: 'LEDLoop'):
+            return 1
+        return LEDLoop("ocean", target)
+
+    @staticmethod
+    def twinkle():
         """
         [TODO] describe
         Originally wrote for Arduino but adapted for Python.
@@ -325,35 +424,35 @@ class LEDLoops:
         rawPalettes = [p.get() for p in palettes]
         currentIndex = 0
         targetPalette = rawPalettes[currentIndex]
-        currentPalette = targetPalette
+        currentPalette = (0x000000,) * len(targetPalette)  # Initialize with black
 
         ms_0 = int(time.time() * 1000)
 
         blendCallRunning = False
         paletteSwapCallRunning = False
-        def target(leds: 'ws.PixelStrip', break_event: 'threading.Event'):
+        def target(self: 'LEDLoop'):
             nonlocal blendCallRunning, paletteSwapCallRunning, currentPalette, targetPalette, ms_0
 
             def swap_palette():
-                if break_event.is_set():
+                if self.checkBreak():
                     return
                 nonlocal currentIndex, targetPalette
                 currentIndex = (currentIndex + 1) % len(rawPalettes)
                 targetPalette = rawPalettes[currentIndex]
-                afterCallable(1000 * secondsPerPallette, swap_palette)
+                self.after(1000 * secondsPerPallette, swap_palette)
 
             def blend_target():
-                if break_event.is_set():
+                if self.checkBreak():
                     return
                 nonlocal currentPalette, targetPalette
                 currentPalette = FastLEDFunctions.nblendPaletteTowardPalette(currentPalette, targetPalette, 12)
-                afterCallable(10, blend_target)
+                self.after(10, blend_target)
 
             if not blendCallRunning:
                 blend_target()
                 blendCallRunning = True
             if not paletteSwapCallRunning:
-                afterCallable(1000 * secondsPerPallette, swap_palette)
+                self.after(1000 * secondsPerPallette, swap_palette)
                 paletteSwapCallRunning = True
 
             rng_16b = 11337
@@ -367,9 +466,8 @@ class LEDLoops:
 
             bgBrightness_8b = FastLEDFunctions.getAverageLight(bg) & 0xFF
 
-            for i in range(leds.numPixels()):
-                if break_event.is_set():
-                    leds.show()
+            for i in range(self.leds.numPixels()):
+                if self.checkBreak():
                     return True
                 
                 rng_16b = (rng_16b * 2053) + 1384
@@ -418,14 +516,14 @@ class LEDLoops:
                 outputBrightAvg_8b = FastLEDFunctions.getAverageLight(outputColor) & 0xFF
                 deltaBright_8b = (outputBrightAvg_8b - bgBrightness_8b) & 0xFF
                 if deltaBright_8b >= 32 or not bg:
-                    leds.setPixelColor(i, ws.Color(*outputColor))
+                    self.leds.setPixelColor(i, ws.Color(*outputColor))
                 elif deltaBright_8b > 0:
-                    leds.setPixelColor(i, ws.Color(*FastLEDFunctions.blend(bg, outputColor, deltaBright_8b * 8)))
+                    self.leds.setPixelColor(i, ws.Color(*FastLEDFunctions.blend(bg, outputColor, deltaBright_8b * 8)))
                 else:
-                    leds.setPixelColor(i, ws.Color(*bg))
-            leds.show()
+                    self.leds.setPixelColor(i, ws.Color(*bg))
+            self.leds.show()
     
-        return target
+        return LEDLoop("twinkle", target)
 
 class Palette:
     def __init__(self, name, colors=[], palette=None):

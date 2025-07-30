@@ -5,6 +5,7 @@ from threading import Thread
 
 from Configurator import Configurator
 from LEDLoops import LEDLoops
+from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
@@ -17,7 +18,7 @@ from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
 class App(ctk.CTk):
-    VERSION = f"v0.1{'-dev' if isDev() else ''}"
+    VERSION = f"v1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
@@ -48,12 +49,12 @@ class App(ctk.CTk):
         self.content_root = self.ui.add(ctk.CTkFrame, "nav_root", fg_color=self._fg_color)
         self.navigation: 'NavigationManager' = NavigationManager(self.content_root.getInstance())
         self.navigation.registerExceptionHandling()
-
-        self.leds = None
-
+    
         self._initUI()
         self._initCommands()
         self._addPages()
+
+        LEDService.getInstance().passAfterMethod(self.after)
 
     def setFullscreen(self, fullscreen: bool):
         _setter = lambda fs: self.attributes("-fullscreen", fs)
@@ -160,7 +161,7 @@ class App(ctk.CTk):
 
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
-        self.leds = LEDsPage(self.navigation, self, self.content_root.getInstance()).getLeds()
+        LEDsPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
@@ -213,6 +214,6 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     app.toggleFullAccess(True)
     app.navigation.navigate(LEDsPage)
-    app.leds.setLoop(LEDLoops.twinkle(app.after))
+    LEDService.getInstance().setLoop(LEDLoops.twinkle())
     app.mainloop()
 

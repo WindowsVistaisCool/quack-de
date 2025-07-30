@@ -1,11 +1,14 @@
 import threading
 import time
 import traceback
-from rpi_ws281x import PixelStrip as ws
+import rpi_ws281x as ws
 
 from LEDLoops import LEDLoops
+from lib.LEDLoop import LEDLoop
 
 class LEDService:
+    _instance = None
+
     LED_COUNT = 300
     LED_PIN = 18
     LED_FREQ_HZ = 800000
@@ -15,6 +18,8 @@ class LEDService:
     LED_CHANNEL = 0
 
     def __init__(self):
+        if LEDService._instance is not None:
+            raise RuntimeError("LEDService is a singleton and cannot be instantiated multiple times.")
         self.leds = ws.PixelStrip(
             self.LED_COUNT,
             self.LED_PIN,
@@ -25,41 +30,59 @@ class LEDService:
             self.LED_CHANNEL
         )
         self.leds.begin()
-        
-        self.loop = LEDLoops.null()
+
+        self.afterMethod = lambda *_: None
+
+        self.loop: 'LEDLoop' = LEDLoops.null()
+
         self._breakLoopEvent = threading.Event()
         self._isInLoop = False
         self._isChangingLoop = False
         self._hasChangeTimedOut = False
         self.loopThread = None
 
-        self.loopErrCallback = lambda e: print(e)
+        self.errorCallback = lambda e: print(e)
 
         self._createLoopThread()
         self.loopThread.start()
+
+        LEDService._instance = self
     
+    def passAfterMethod(self, after_method: callable):
+        self.afterMethod = after_method
+
     def _createLoopThread(self):
         self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
 
     def _ledLoopTarget(self):
         self._isInLoop = True
+        self.loop.passArgs(self.leds, self._breakLoopEvent)
+        self.loop.passAfterMethod(self.afterMethod)
         while not self._breakLoopEvent.is_set():
-            time.sleep(0.05)  # Sleep to prevent busy waiting
+            time.sleep(0.005)  # Sleep to prevent busy waiting
             try:
-                finished = self.loop(self.leds, self._breakLoopEvent)
-                if finished is True:
+                stat = self.loop.runLoop()
+                if stat == 1:
+                    # print("finished " + self.loop.id)
                     self._breakLoopEvent.set()
+                    break
             except Exception:
-                self.loopErrCallback(traceback.format_exc())
+                self.errorCallback(traceback.format_exc())
                 break
         self._isInLoop = False
         
-    def setLoop(self, callable):
-        self._breakLoopEvent.set()
-
+    def setLoop(self, loop: 'LEDLoop' = None):
         # ensure this is not called multiple times
         if self._isChangingLoop and not self._hasChangeTimedOut:
             return
+        
+        if not loop:
+            loop = LEDLoops.null()
+
+        if loop.id == self.loop.id and not self._isChangingLoop:
+            return
+        
+        self._breakLoopEvent.set()
         
         if self._hasChangeTimedOut:
             self._hasChangeTimedOut = False
@@ -75,14 +98,14 @@ class LEDService:
                 self._hasChangeTimedOut = True
                 raise RuntimeError("LED loop is still running after 2 seconds. This should not happen!")
             except:
-                self.loopErrCallback(traceback.format_exc())
+                self.errorCallback(traceback.format_exc())
             return
 
         self._breakLoopEvent.clear()
 
-        if not callable:
-            callable = LEDLoops.null()
-        self.loop = callable
+        if not loop:
+            loop = LEDLoops.null()
+        self.loop = loop
 
         self._createLoopThread()
         self.loopThread.start()
@@ -103,3 +126,7 @@ class LEDService:
     
     def off(self):
         self.setSolid(0, 0, 0)
+
+    @classmethod
+    def getInstance(cls):
+        return cls._instance

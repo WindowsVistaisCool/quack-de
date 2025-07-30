@@ -174,6 +174,8 @@ class NavigationManager:
         Navigates to a temporary page that does not persist in the navigation history.
         This is useful for pages that are meant to be transient, such as dialogs or popups.
         """
+        if not page:
+            return
         if not page.is_ephemeral:
             raise ValueError("Ephemeral navigation can only be used with ephemeral pages.")
         if self.currentPage is not None:

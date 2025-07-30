@@ -3,6 +3,89 @@ import math
 import time
 from CTkColorPicker import CTkColorPicker
 
+class QuackExtendedButton(ctk.CTkButton):
+    def __init__(self, master=None, longpress_callback=None, longpress_threshold=550, **kwargs):
+        super().__init__(master=master, **kwargs)
+        
+        # Long press configuration
+        self.longpress_callback = longpress_callback
+        self.longpress_threshold = longpress_threshold
+        
+        # Long press state variables
+        self.press_start_time = None
+        self.is_long_press = False
+        self.longpress_timer_id = None
+        self.normal_command = None
+        
+        # Store the original command and replace it with our handler
+        if "command" in kwargs:
+            self.normal_command = kwargs["command"]
+        
+        # Override the command to disable default behavior
+        super().configure(command=lambda: None)
+        
+        # Bind our event handlers
+        self.bind("<Button-1>", self._on_button_press, '+')
+        self.bind("<ButtonRelease-1>", self._on_button_release, '+')
+    
+    def configure(self, **kwargs):
+        """Override configure to handle command parameter"""
+        if "command" in kwargs:
+            self.normal_command = kwargs["command"]
+            del kwargs["command"]  # Remove it so parent doesn't get it
+        
+        if "longpress_callback" in kwargs:
+            self.longpress_callback = kwargs["longpress_callback"]
+            del kwargs["longpress_callback"]
+        
+        if "longpress_threshold" in kwargs:
+            self.longpress_threshold = kwargs["longpress_threshold"]
+            del kwargs["longpress_threshold"]
+        
+        super().configure(**kwargs)
+    
+    def _trigger_long_press(self):
+        """Triggered automatically when long press threshold is reached"""
+        self.is_long_press = True
+        if self.longpress_callback:
+            self.longpress_callback()
+    
+    def _on_button_press(self, event):
+        """Handle button press start"""
+        self.press_start_time = time.time()
+        self.is_long_press = False
+        
+        # Schedule long press trigger
+        if self.longpress_callback:
+            self.longpress_timer_id = self.after(
+                int(self.longpress_threshold),
+                self._trigger_long_press
+            )
+    
+    def _on_button_release(self, event):
+        """Handle button release"""
+        if self.press_start_time is None:
+            return
+        
+        # Cancel the long press timer if it hasn't triggered yet
+        if self.longpress_timer_id is not None:
+            self.after_cancel(self.longpress_timer_id)
+            self.longpress_timer_id = None
+        
+        # Only execute normal command if it wasn't a long press
+        if not self.is_long_press and self.normal_command:
+            self.normal_command()
+        
+        self.press_start_time = None
+    
+    def set_long_press_callback(self, callback):
+        """Set the long press callback function"""
+        self.longpress_callback = callback
+    
+    def set_normal_command(self, command):
+        """Set the normal (short press) command function"""
+        self.normal_command = command
+
 class TouchScrollableFrame(ctk.CTkScrollableFrame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master=master, **kwargs)
