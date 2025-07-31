@@ -463,10 +463,16 @@ class LEDLoops:
                 ]),
         )
 
+        hasVariableChange = True # start true to populate initial values
+
         twinkleSpeed = ctk.IntVar(value=5)  # 1-8
         twinkleDensity = ctk.IntVar(value=4)  # 1-8
         secondsPerPallette = ctk.IntVar(value=60)  # seconds
         coolLikeIncandescent = ctk.BooleanVar(value=True)
+        _twinkleSpeed = 5
+        _twinkleDensity = 4
+        _secondsPerPallette = 60
+        _coolLikeIncandescent = True
 
         rawPalettes = [p.get() for p in palettes]
         currentIndex = 0
@@ -497,32 +503,18 @@ class LEDLoops:
             if self.checkBreak():
                 return True
 
+            nonlocal hasVariableChange
             nonlocal blendCallRunning, paletteSwapCallRunning, currentPalette, targetPalette, ms_0
+            
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
-
-            _twinkleSpeed = 1
             if isinstance(twinkleSpeed, ctk.IntVar):
                 _twinkleSpeed = twinkleSpeed.get()
-            elif isinstance(twinkleSpeed, int):
-                _twinkleSpeed = int(twinkleSpeed)
-            _twinkleSpeed = max(1, min(8, _twinkleSpeed))  # Ensure it's between 1 and 8
-            _twinkleDensity = 1
             if isinstance(twinkleDensity, ctk.IntVar):
                 _twinkleDensity = twinkleDensity.get()
-            elif isinstance(twinkleDensity, int):
-                _twinkleDensity = int(twinkleDensity)
-            _twinkleDensity = max(1, min(8, _twinkleDensity))  # Ensure it's between 1 and 8
-            _secondsPerPallette = 60
             if isinstance(secondsPerPallette, ctk.IntVar):
                 _secondsPerPallette = secondsPerPallette.get()
-            elif isinstance(secondsPerPallette, int):
-                _secondsPerPallette = int(secondsPerPallette)
-            _secondsPerPallette = max(1, _secondsPerPallette)  # Ensure it's at least 1 second
-            _coolLikeIncandescent = True
             if isinstance(coolLikeIncandescent, ctk.BooleanVar):
                 _coolLikeIncandescent = coolLikeIncandescent.get()
-            elif isinstance(coolLikeIncandescent, bool):
-                _coolLikeIncandescent = bool(coolLikeIncandescent)
 
             def swap_palette():
                 if self.checkBreak():
@@ -553,9 +545,9 @@ class LEDLoops:
 
             bgBrightness_8b = FastLEDFunctions.getAverageLight(bg) & 0xFF
 
-            if self.checkBreak():
-                return True
             for i in range(self.leds.numPixels()):
+                if self.checkBreak():
+                    return True
                 
                 rng_16b = (rng_16b * 2053) + 1384
                 rng_16b &= 0xFFFF  # Ensure PRNG16 is 16 bits
@@ -615,7 +607,8 @@ class LEDLoops:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
         def uiMaker(ui: CommandUI):
-            nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+            nonlocal hasVariableChange, twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+
 
             _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=20, pady=20, sticky="new")
             _frame.getInstance().grid_columnconfigure(0, weight=0)
@@ -631,7 +624,7 @@ class LEDLoops:
                    to=8,
                    number_of_steps=7,
                    height=30,
-                   variable=twinkleSpeed
+                   variable=twinkleSpeed,
                    ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
         
             ui.add(ctk.CTkLabel, "l_density",
@@ -645,7 +638,7 @@ class LEDLoops:
                    to=8,
                    number_of_steps=7,
                    height=30,
-                   variable=twinkleDensity
+                   variable=twinkleDensity,
                    ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
             ui.add(ctk.CTkLabel, "l_seconds",
@@ -659,7 +652,7 @@ class LEDLoops:
                    to=120,
                    number_of_steps=119,
                    height=30,
-                   variable=secondsPerPallette
+                   variable=secondsPerPallette,
                    ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
 

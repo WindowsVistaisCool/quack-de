@@ -80,10 +80,7 @@ class LEDLoop:
         Checks if the break event is set.
         Returns True if the loop should stop, False otherwise.
         """
-        if self.break_event.is_set():
-            self.leds.show()
-            return True
-        return False
+        return self.break_event.is_set()
 
     def setFinished(self):
         self._isFinished = True
