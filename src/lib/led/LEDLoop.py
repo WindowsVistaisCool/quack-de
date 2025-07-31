@@ -45,9 +45,22 @@ class LEDLoop:
 
         self.app: 'QuackApp' = None
 
+        self._disableSafetySleep = False
+
         self.leds: 'ws.PixelStrip' = None
         self.break_event: 'threading.Event' = None
         self.after = lambda delay, callback: None
+
+    def getSafetySleepState(self) -> bool:
+        """
+        Returns whether the safety sleep is disabled.
+        If True, the loop will not sleep between iterations.
+        """
+        return not self._disableSafetySleep
+
+    def withoutSafetySleep(self):
+        self._disableSafetySleep = True
+        return self
 
     def getSettings(self, app: QuackApp) -> 'LEDLoopSettings':
         """

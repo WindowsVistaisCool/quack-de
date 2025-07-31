@@ -61,8 +61,10 @@ class LEDService:
         self.loop.passApp(self.appRoot)
         self.loop.passArgs(self.leds, self._breakLoopEvent)
         self.loop.runInit()
+        shouldSleep = self.loop.getSafetySleepState()
         while not self._breakLoopEvent.is_set():
-            time.sleep(0.005)  # Sleep to prevent busy waiting
+            if shouldSleep:
+                time.sleep(0.001) # Sleep to prevent busy waiting
             try:
                 stat = self.loop.runLoop()
                 if stat is not None:
@@ -92,14 +94,14 @@ class LEDService:
 
         self._isChangingLoop = True
 
-        timeout = time.time() + 2
+        timeout = time.time() + 0.5
         while self._isInLoop and time.time() < timeout:
             time.sleep(0.1)
 
         if self._isInLoop:
             try:
                 self._hasChangeTimedOut = True
-                raise RuntimeError("LED loop is still running after 2 seconds. This should not happen!")
+                raise RuntimeError("LED loop is still running after 0.5 seconds. This should not happen!")
             except:
                 self.errorCallback(traceback.format_exc())
             return

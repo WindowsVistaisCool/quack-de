@@ -312,18 +312,23 @@ class LEDLoops:
             # time.sleep(0.05)
         return LEDLoop(_name, target)
 
-    def rgbSnake(self, delay=10, *, _name = "rgbSnake"):
+    def rgbSnake(self, *, _name = "rgbSnake"):
         self._checkLoopExists(_name)
 
-        tailScaleFactor = 250
+        tailScaleFactor = ctk.IntVar(value=250)
+        _tailScaleFactor = tailScaleFactor.get()
+
+        delay = ctk.IntVar(value=10) # ms
+        _delay = delay.get()
 
         hue = 0
         def target(self: 'LEDLoop'):
             nonlocal hue
-            doReverse = False
-            for _ in range(2):
-                rangeList = list(range(self.leds.numPixels()))
-                if doReverse:
+            nonlocal _tailScaleFactor, _delay
+
+            rangeList = list(range(0, self.leds.numPixels()))
+            for k in range(2):
+                if k % 2 != 0:
                     rangeList.reverse()
                 for i in rangeList:
                     if self.checkBreak():
@@ -331,20 +336,51 @@ class LEDLoops:
                     hue += 1
                     hue &= 0xFF
                     self.leds.setPixelColor(i, ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
-                    self.leds.show()
+                    # self.leds.setPixelColor(i - 1 & self.leds.numPixels(), ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
 
-                    # self.leds.setPixelColor(i, ws.Color(0, 0, 0))
-                    for j in range(self.leds.numPixels()):
+                    for k in range(self.leds.numPixels()):
                         if self.checkBreak():
                             return True
-                        rgbw = self.leds.getPixelColorRGB(j)
-                        self.leds.setPixelColor(j, ws.Color(*FastLEDFunctions.CRGB_nscale8((rgbw.r, rgbw.g, rgbw.b), tailScaleFactor)))
+                        rgbw = self.leds.getPixelColorRGB(k)
+                        self.leds.setPixelColor(k, ws.Color(*FastLEDFunctions.CRGB_nscale8((rgbw.r, rgbw.g, rgbw.b), _tailScaleFactor)))
+                    if isinstance(tailScaleFactor, ctk.IntVar):
+                        _tailScaleFactor = tailScaleFactor.get()
+                    if isinstance(delay, ctk.IntVar):
+                        _delay = delay.get()
+                    self.leds.show()
+                    time.sleep(_delay / 10000)
 
-                    time.sleep(delay / 1000)
-                doReverse = not doReverse
         def uiMaker(ui: CommandUI):
-            pass
-        return LEDLoop(_name, target, settingsUIFactory=uiMaker)
+            _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=30, pady=30, sticky="new")
+            _frame.getInstance().columnconfigure(0, weight=0)
+            _frame.getInstance().columnconfigure(1, weight=1)
+            ui.add(ctk.CTkLabel, "l_tailScaleFactor",
+                   root=_frame.getInstance(),
+                   text="Tail Length",
+                   font=("Arial", 20)
+                ).grid(row=0, column=0, padx=20, pady=20, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_tailScaleFactor",
+                   root=_frame.getInstance(),
+                   variable=tailScaleFactor,
+                   from_=0,
+                   to=255,
+                   number_of_steps=249,
+                   height=30
+                ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nsew")
+            ui.add(ctk.CTkLabel, "l_delay",
+                   root=_frame.getInstance(),
+                   text="Delay (ms)",
+                   font=("Arial", 20)
+                ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_delay",
+                   root=_frame.getInstance(),
+                   variable=delay,
+                   from_=1,
+                   to=500,
+                   number_of_steps=499,
+                   height=30
+                ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew")
+        return LEDLoop(_name, target, settingsUIFactory=uiMaker).withoutSafetySleep()
 
     def ocean(self, *, _name = "ocean"):
         self._checkLoopExists(_name)
@@ -463,7 +499,6 @@ class LEDLoops:
                 ]),
         )
 
-        hasVariableChange = True # start true to populate initial values
 
         twinkleSpeed = ctk.IntVar(value=5)  # 1-8
         twinkleDensity = ctk.IntVar(value=4)  # 1-8
@@ -477,14 +512,14 @@ class LEDLoops:
         rawPalettes = [p.get() for p in palettes]
         currentIndex = 0
         targetPalette = rawPalettes[currentIndex]
-        currentPalette = (0x000000,) * len(targetPalette)  # Initialize with black
+        currentPalette = (0x000000,) * len(targetPalette)
 
         ms_0 = int(time.time() * 1000)
         blendCallRunning = False
         paletteSwapCallRunning = False
 
         def init(self: 'LEDLoop'):
-            nonlocal palettes, currentIndex, targetPalette, currentPalette, ms_0, blendCallRunning, paletteSwapCallRunning
+            nonlocal palettes, currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
             if not palettes:
                 raise ValueError("No palettes provided for twinkle effect")
             
@@ -492,9 +527,7 @@ class LEDLoops:
             rawPalettes = [p.get() for p in palettes]
             currentIndex = 0
             targetPalette = rawPalettes[currentIndex]
-            currentPalette = rawPalettes[currentIndex]
-            # currentPalette = (0x000000,) * len(targetPalette)
-            ms_0 = int(time.time() * 1000)
+            currentPalette = (0x000000,) * len(targetPalette)
             blendCallRunning = False
             paletteSwapCallRunning = False
 
@@ -503,10 +536,10 @@ class LEDLoops:
             if self.checkBreak():
                 return True
 
-            nonlocal hasVariableChange
             nonlocal blendCallRunning, paletteSwapCallRunning, currentPalette, targetPalette, ms_0
             
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+            nonlocal _twinkleSpeed, _twinkleDensity, _secondsPerPallette, _coolLikeIncandescent
             if isinstance(twinkleSpeed, ctk.IntVar):
                 _twinkleSpeed = twinkleSpeed.get()
             if isinstance(twinkleDensity, ctk.IntVar):
@@ -607,7 +640,7 @@ class LEDLoops:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
         def uiMaker(ui: CommandUI):
-            nonlocal hasVariableChange, twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+            nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
 
 
             _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=20, pady=20, sticky="new")
@@ -617,7 +650,7 @@ class LEDLoops:
                    root=_frame.getInstance(),
                    text="Speed (1-8):",
                    font=("Arial", 20)
-                   ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+                ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_speed",
                    root=_frame.getInstance(),
                    from_=1,
@@ -625,13 +658,13 @@ class LEDLoops:
                    number_of_steps=7,
                    height=30,
                    variable=twinkleSpeed,
-                   ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
+                ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
         
             ui.add(ctk.CTkLabel, "l_density",
                    root=_frame.getInstance(),
                    text="Density (1-8):",
                    font=("Arial", 20)
-                   ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
+                ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_density",
                    root=_frame.getInstance(),
                    from_=1,
@@ -639,13 +672,13 @@ class LEDLoops:
                    number_of_steps=7,
                    height=30,
                    variable=twinkleDensity,
-                   ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
+                ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
             ui.add(ctk.CTkLabel, "l_seconds",
                    root=_frame.getInstance(),
                    text="Palette Time:",
                    font=("Arial", 20)
-                   ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
+                ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_seconds",
                    root=_frame.getInstance(),
                    from_=1,
@@ -653,9 +686,8 @@ class LEDLoops:
                    number_of_steps=119,
                    height=30,
                    variable=secondsPerPallette,
-                   ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
+                ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
-
         return LEDLoop(_name, target, init, settingsUIFactory=uiMaker)
 
 class Palette:

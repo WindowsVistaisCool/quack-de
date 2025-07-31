@@ -128,16 +128,17 @@ class LEDsPage(NavigationPage):
             def make_long_press_callback(loop: 'LEDLoop'):
                 def exception_wrapper():
                     try:
+                        self.ledService.setLoop(loop)
                         self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
                     except:
                         self.ui.exceptionCallback(traceback.format_exc())
                 return exception_wrapper
             
             # Create normal command for this theme
-            def make_normal_command(led_loop):
+            def make_normal_command(loop):
                 def exception_wrapper():
                     try:
-                        self.ledService.setLoop(led_loop)
+                        self.ledService.setLoop(loop)
                     except:
                         self.ui.exceptionCallback(traceback.format_exc())
                 return exception_wrapper
