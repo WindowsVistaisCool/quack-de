@@ -254,7 +254,7 @@ class LEDLoops:
     def _checkLoopExists(self, loop_id: str):
         assert loop_id not in self.loops.keys(), f"LED loop '{loop_id}' already exists"
 
-    def rainbow(self, iterations=1, *, _name = "rainbow"):
+    def rainbow(self, iterations=50, *, _name = "rainbow"):
         self._checkLoopExists(_name)
 
         def target(loop: 'LEDLoop'):
@@ -342,7 +342,9 @@ class LEDLoops:
 
                     time.sleep(delay / 1000)
                 doReverse = not doReverse
-        return LEDLoop(_name, target)
+        def uiMaker(ui: CommandUI):
+            pass
+        return LEDLoop(_name, target, settingsUIFactory=uiMaker)
 
     def ocean(self, *, _name = "ocean"):
         self._checkLoopExists(_name)
@@ -461,11 +463,10 @@ class LEDLoops:
                 ]),
         )
 
-        twinkleSpeed = 5 # 1-8
-        twinkleDensity = 4 # 1-8
-        secondsPerPallette = 60 # seconds
-        autoSelectBackgroundColor = False
-        coolLikeIncandescent = True
+        twinkleSpeed = ctk.IntVar(value=5)  # 1-8
+        twinkleDensity = ctk.IntVar(value=4)  # 1-8
+        secondsPerPallette = ctk.IntVar(value=60)  # seconds
+        coolLikeIncandescent = ctk.BooleanVar(value=True)
 
         rawPalettes = [p.get() for p in palettes]
         currentIndex = 0
@@ -485,24 +486,55 @@ class LEDLoops:
             rawPalettes = [p.get() for p in palettes]
             currentIndex = 0
             targetPalette = rawPalettes[currentIndex]
-            currentPalette = (0x000000,) * len(targetPalette)
+            currentPalette = rawPalettes[currentIndex]
+            # currentPalette = (0x000000,) * len(targetPalette)
             ms_0 = int(time.time() * 1000)
             blendCallRunning = False
             paletteSwapCallRunning = False
+
         def target(self: 'LEDLoop'):
+            # Early exit check - this should make switching faster
+            if self.checkBreak():
+                return True
+
             nonlocal blendCallRunning, paletteSwapCallRunning, currentPalette, targetPalette, ms_0
+            nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+
+            _twinkleSpeed = 1
+            if isinstance(twinkleSpeed, ctk.IntVar):
+                _twinkleSpeed = twinkleSpeed.get()
+            elif isinstance(twinkleSpeed, int):
+                _twinkleSpeed = int(twinkleSpeed)
+            _twinkleSpeed = max(1, min(8, _twinkleSpeed))  # Ensure it's between 1 and 8
+            _twinkleDensity = 1
+            if isinstance(twinkleDensity, ctk.IntVar):
+                _twinkleDensity = twinkleDensity.get()
+            elif isinstance(twinkleDensity, int):
+                _twinkleDensity = int(twinkleDensity)
+            _twinkleDensity = max(1, min(8, _twinkleDensity))  # Ensure it's between 1 and 8
+            _secondsPerPallette = 60
+            if isinstance(secondsPerPallette, ctk.IntVar):
+                _secondsPerPallette = secondsPerPallette.get()
+            elif isinstance(secondsPerPallette, int):
+                _secondsPerPallette = int(secondsPerPallette)
+            _secondsPerPallette = max(1, _secondsPerPallette)  # Ensure it's at least 1 second
+            _coolLikeIncandescent = True
+            if isinstance(coolLikeIncandescent, ctk.BooleanVar):
+                _coolLikeIncandescent = coolLikeIncandescent.get()
+            elif isinstance(coolLikeIncandescent, bool):
+                _coolLikeIncandescent = bool(coolLikeIncandescent)
 
             def swap_palette():
                 if self.checkBreak():
-                    return
+                    return True
                 nonlocal currentIndex, targetPalette
                 currentIndex = (currentIndex + 1) % len(rawPalettes)
                 targetPalette = rawPalettes[currentIndex]
-                self.after(1000 * secondsPerPallette, swap_palette)
+                self.after(1000 * _secondsPerPallette, swap_palette)
 
             def blend_target():
                 if self.checkBreak():
-                    return
+                    return True
                 nonlocal currentPalette, targetPalette
                 currentPalette = FastLEDFunctions.nblendPaletteTowardPalette(currentPalette, targetPalette, 12)
                 self.after(10, blend_target)
@@ -511,23 +543,19 @@ class LEDLoops:
                 blend_target()
                 blendCallRunning = True
             if not paletteSwapCallRunning:
-                self.after(1000 * secondsPerPallette, swap_palette)
+                self.after(1000 * _secondsPerPallette, swap_palette)
                 paletteSwapCallRunning = True
 
             rng_16b = 11337
             clock_32b = (int)(time.time() * 1000) - ms_0
 
-            bg = None
-            if (autoSelectBackgroundColor):
-                pass # TODO: implement?
-            else:
-                bg = (0, 0, 0)
+            bg = (0, 0, 0)
 
             bgBrightness_8b = FastLEDFunctions.getAverageLight(bg) & 0xFF
 
+            if self.checkBreak():
+                return True
             for i in range(self.leds.numPixels()):
-                if self.checkBreak():
-                    return True
                 
                 rng_16b = (rng_16b * 2053) + 1384
                 rng_16b &= 0xFFFF  # Ensure PRNG16 is 16 bits
@@ -543,7 +571,7 @@ class LEDLoops:
                 ms_32b = clock30_32b & 0xFFFFFFFF
                 salt = unique_8b
 
-                ticks_16b = (ms_32b >> (8 - twinkleSpeed)) & 0xFFFF
+                ticks_16b = (ms_32b >> (8 - _twinkleSpeed)) & 0xFFFF
                 fastCycle_8b = ticks_16b & 0xFF
                 slowCycle_16b = ((ticks_16b >> 8) + salt) & 0xFFFF
 
@@ -554,7 +582,7 @@ class LEDLoops:
                 slowCycle_8b = ((slowCycle_16b & 0xFF) + (slowCycle_16b >> 8)) & 0xFF
 
                 bright_8b = 0
-                if (slowCycle_8b & 0x0E) / 2 < twinkleDensity:
+                if (slowCycle_8b & 0x0E) / 2 < _twinkleDensity:
                     copy = fastCycle_8b
                     if ( copy < 86 ):
                         bright_8b = copy * 3
@@ -570,7 +598,7 @@ class LEDLoops:
                 outputColor = (0, 0, 0)
                 if bright_8b > 0:
                     outputColor = FastLEDFunctions.ColorFromPalette(currentPalette, hue_8b, bright_8b)
-                    if coolLikeIncandescent:
+                    if _coolLikeIncandescent:
                         if fastCycle_8b >= 128:
                             cooling = ((fastCycle_8b - 128) >> 4) & 0xFF
                             g = max(outputColor[1] - cooling, 0)
@@ -587,7 +615,53 @@ class LEDLoops:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
         def uiMaker(ui: CommandUI):
-            ui.add(ctk.CTkLabel, "ben", text="Twinkle Settings").grid(row=1, column=0, padx=10, pady=10)
+            nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+
+            _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=20, pady=20, sticky="new")
+            _frame.getInstance().grid_columnconfigure(0, weight=0)
+            _frame.getInstance().grid_columnconfigure(1, weight=1)
+            ui.add(ctk.CTkLabel, "l_speed",
+                   root=_frame.getInstance(),
+                   text="Speed (1-8):",
+                   font=("Arial", 20)
+                   ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_speed",
+                   root=_frame.getInstance(),
+                   from_=1,
+                   to=8,
+                   number_of_steps=7,
+                   height=30,
+                   variable=twinkleSpeed
+                   ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
+        
+            ui.add(ctk.CTkLabel, "l_density",
+                   root=_frame.getInstance(),
+                   text="Density (1-8):",
+                   font=("Arial", 20)
+                   ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_density",
+                   root=_frame.getInstance(),
+                   from_=1,
+                   to=8,
+                   number_of_steps=7,
+                   height=30,
+                   variable=twinkleDensity
+                   ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            
+            ui.add(ctk.CTkLabel, "l_seconds",
+                   root=_frame.getInstance(),
+                   text="Palette Time:",
+                   font=("Arial", 20)
+                   ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_seconds",
+                   root=_frame.getInstance(),
+                   from_=1,
+                   to=120,
+                   number_of_steps=119,
+                   height=30,
+                   variable=secondsPerPallette
+                   ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            
 
         return LEDLoop(_name, target, init, settingsUIFactory=uiMaker)
 

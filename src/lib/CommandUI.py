@@ -68,6 +68,7 @@ class CommandUIItem(list, Generic[T]):
             self.instance.grid(**kwargs)
         elif self.gridProperties.keys().__len__() > 0:
             self.instance.grid(**self.gridProperties)
+        return self
     
     def withPlaceProperties(self, **kwargs):
         self.placeProperties.update(kwargs)

@@ -63,7 +63,7 @@ class LEDsPage(NavigationPage):
                                    corner_radius=12,
                                    ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
-        # self.tabview.getInstance().add("Effects")
+        self.tabview.getInstance().add("FX")
         self.tabview.getInstance().add("Solid Color")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget("unselected_color")
@@ -157,7 +157,7 @@ class LEDsPage(NavigationPage):
                          image=PhotoImage(file=image_path),
                          command=make_normal_command(loop),
                          longpress_callback=make_long_press_callback(loop),
-                         longpress_threshold=550
+                         longpress_threshold=450
                          ).grid(row=0, column=0, padx=10, pady=10)
 
         solidColorsTab = self.tabview.getInstance().tab("Solid Color")

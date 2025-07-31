@@ -58,14 +58,14 @@ class LEDService:
 
     def _ledLoopTarget(self):
         self._isInLoop = True
-        self.loop.passApp(self.appRoot, self.appRoot.navigation)
+        self.loop.passApp(self.appRoot)
         self.loop.passArgs(self.leds, self._breakLoopEvent)
         self.loop.runInit()
         while not self._breakLoopEvent.is_set():
             time.sleep(0.005)  # Sleep to prevent busy waiting
             try:
                 stat = self.loop.runLoop()
-                if stat == 1:
+                if stat is not None:
                     # print("finished " + self.loop.id)
                     self._breakLoopEvent.set()
                     break

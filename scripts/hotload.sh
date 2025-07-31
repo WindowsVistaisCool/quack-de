@@ -38,7 +38,7 @@ if ! timeout 1s xset q &>/dev/null; then
     DISPLAY=:0 xhost + #allow local user to access X server
     DISPLAY=:0 sudo python3 ./main.py & # launch new app
 
-    sleep 4
+    sleep 5
     DISPLAY=:0 xhost - # disallow local user to access X server
 
     echo "Launched successfully."
