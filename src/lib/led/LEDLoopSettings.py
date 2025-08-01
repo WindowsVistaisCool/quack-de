@@ -20,7 +20,8 @@ class LEDLoopSettings(EphemeralNavigationPage):
         
         if uiFactory:
             self.ui.get("null_desc").drop()
-            uiFactory(self.ui)
+
+            uiFactory(CommandUI(self.ui.get("f_main").getInstance()))
 
     def _initUI(self):
 
@@ -47,6 +48,10 @@ class LEDLoopSettings(EphemeralNavigationPage):
                     font=(self.appRoot.FONT_NAME, 16),
                     justify="left"
                     ).grid(row=1, column=0, padx=30, pady=(0, 30), sticky="nw")
+    
+        _frame = self.ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=20, pady=20, sticky="new")
+        _frame.getInstance().columnconfigure(0, weight=0)
+        _frame.getInstance().columnconfigure(1, weight=1)
     
     def _initCommands(self):
         self.ui.get("return").setCommand(self.navigator.navigateBack)

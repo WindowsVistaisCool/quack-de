@@ -218,10 +218,11 @@ class LEDLoops:
             "null": LEDLoops.null()
         } # needs to init like this because `self._checkLoopExists` references it
         self.loops = {
-            "rainbow": self.rainbow(_name="rainbow"),
+            "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
             "twinkle": self.twinkle(),
+            "pacifica": self.pacifica(),
         }
 
     @classmethod
@@ -254,24 +255,72 @@ class LEDLoops:
     def _checkLoopExists(self, loop_id: str):
         assert loop_id not in self.loops.keys(), f"LED loop '{loop_id}' already exists"
 
-    def rainbow(self, iterations=50, *, _name = "rainbow"):
+    def rainbow(self, *, _name = "rainbow"):
         self._checkLoopExists(_name)
 
-        def target(loop: 'LEDLoop'):
-            _iterations = 1
-            if isinstance(iterations, ctk.IntVar):
-                _iterations = iterations.get()
-            elif isinstance(iterations, int):
-                _iterations = int(iterations)
+        iterations = ctk.IntVar(value=10)
+        _iterations = iterations.get()
+        delay = ctk.IntVar(value=30)
+        _delay = delay.get()
+        step_size = ctk.IntVar(value=4)
+        _step_size = step_size.get()
 
-            for j in range(256):
+        def target(loop: 'LEDLoop'):
+            nonlocal _iterations, _delay, _step_size
+
+            for j in range(0, 256, max(1, _step_size)):  # Use step_size to skip colors
                 if loop.checkBreak():
                     return 1
+                if isinstance(iterations, ctk.IntVar):
+                    _iterations = max(1, iterations.get())  # Prevent division by zero
+                if isinstance(delay, ctk.IntVar):
+                    _delay = delay.get()
+                if isinstance(step_size, ctk.IntVar):
+                    if _step_size != step_size.get():
+                        _step_size = max(1, step_size.get())  # Ensure step_size is at least 1
+                        return None # return but keep loop running
                 for i in range(loop.leds.numPixels()):
                     loop.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
                 loop.leds.show()
-                time.sleep(20 / 1000.0)  # 20 ms delay
-        return LEDLoop(_name, target)
+                if _delay > 0:  # Only sleep if delay is greater than 0
+                    time.sleep(_delay / 1000.0)  # Convert ms to seconds properly
+        def uiMaker(ui: CommandUI):
+            ui.add(ctk.CTkLabel, "l_iterations",
+                   text="Pattern Density",
+                   font=("Arial", 20)
+                ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_iterations",
+                   variable=iterations,
+                   from_=1,
+                   to=50,  # Reduced max for faster effects
+                   number_of_steps=49,
+                   height=30
+                ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            
+            ui.add(ctk.CTkLabel, "l_step_size",
+                   text="Speed Multiplier",
+                   font=("Arial", 20)
+                ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(ctk.CTkSlider, "s_step_size",
+                   variable=step_size,
+                   from_=1,
+                   to=32,
+                   number_of_steps=31,
+                   height=30
+                ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            
+            # ui.add(ctk.CTkLabel, "l_delay",
+            #          text="Frame Delay (ms)",
+            #          font=("Arial", 20)
+            #     ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
+            # ui.add(ctk.CTkSlider, "s_delay",
+            #        variable=delay,
+            #        from_=1,
+            #        to=50,
+            #        number_of_steps=49,
+            #        height=30
+            #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
+        return LEDLoop(_name, target, settingsUIFactory=uiMaker)
 
     def fire2012(self, cooling=30, sparking=130, reversed=False, *, _name = "fire2012"):
         self._checkLoopExists(_name)
@@ -351,16 +400,11 @@ class LEDLoops:
                     time.sleep(_delay / 10000)
 
         def uiMaker(ui: CommandUI):
-            _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=30, pady=30, sticky="new")
-            _frame.getInstance().columnconfigure(0, weight=0)
-            _frame.getInstance().columnconfigure(1, weight=1)
             ui.add(ctk.CTkLabel, "l_tailScaleFactor",
-                   root=_frame.getInstance(),
                    text="Tail Length",
                    font=("Arial", 20)
                 ).grid(row=0, column=0, padx=20, pady=20, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_tailScaleFactor",
-                   root=_frame.getInstance(),
                    variable=tailScaleFactor,
                    from_=0,
                    to=255,
@@ -368,12 +412,10 @@ class LEDLoops:
                    height=30
                 ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nsew")
             ui.add(ctk.CTkLabel, "l_delay",
-                   root=_frame.getInstance(),
                    text="Delay (ms)",
                    font=("Arial", 20)
                 ).grid(row=1, column=0, padx=20, pady=(0, 20), sticky="nsw")
             ui.add(ctk.CTkSlider, "s_delay",
-                   root=_frame.getInstance(),
                    variable=delay,
                    from_=1,
                    to=500,
@@ -382,7 +424,16 @@ class LEDLoops:
                 ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew")
         return LEDLoop(_name, target, settingsUIFactory=uiMaker).withoutSafetySleep()
 
-    def ocean(self, *, _name = "ocean"):
+    def pacifica(self, *, _name = "pacifica"):
+        """
+        //
+        //  "Pacifica"
+        //  Gentle, blue-green ocean waves.
+        //  December 2019, Mark Kriegsman and Mary Corey March.
+        //  For Dan.
+        //
+        Ported and modified by Kyle Rush
+        """
         self._checkLoopExists(_name)
 
         def target(self: 'LEDLoop'):
@@ -642,17 +693,11 @@ class LEDLoops:
         def uiMaker(ui: CommandUI):
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
 
-
-            _frame = ui.add(ctk.CTkFrame, "f_main").grid(row=1, column=0, padx=20, pady=20, sticky="new")
-            _frame.getInstance().grid_columnconfigure(0, weight=0)
-            _frame.getInstance().grid_columnconfigure(1, weight=1)
             ui.add(ctk.CTkLabel, "l_speed",
-                   root=_frame.getInstance(),
                    text="Speed (1-8):",
                    font=("Arial", 20)
                 ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_speed",
-                   root=_frame.getInstance(),
                    from_=1,
                    to=8,
                    number_of_steps=7,
@@ -661,12 +706,10 @@ class LEDLoops:
                 ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
         
             ui.add(ctk.CTkLabel, "l_density",
-                   root=_frame.getInstance(),
                    text="Density (1-8):",
                    font=("Arial", 20)
                 ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_density",
-                   root=_frame.getInstance(),
                    from_=1,
                    to=8,
                    number_of_steps=7,
@@ -675,12 +718,10 @@ class LEDLoops:
                 ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
             ui.add(ctk.CTkLabel, "l_seconds",
-                   root=_frame.getInstance(),
                    text="Palette Time:",
                    font=("Arial", 20)
                 ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_seconds",
-                   root=_frame.getInstance(),
                    from_=1,
                    to=120,
                    number_of_steps=119,

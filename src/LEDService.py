@@ -41,14 +41,16 @@ class LEDService:
         self.loop = LEDLoops.null()
 
         self._breakLoopEvent = threading.Event()
-        self._isInLoop = False
+        self._loopChangeEvent = threading.Event()
+        self._isRunning = True
         self._isChangingLoop = False
         self._hasChangeTimedOut = False
         self.loopThread = None
 
         self.errorCallback = lambda e: print(e)
 
-        self._createLoopThread()
+        # Create and start the single persistent thread
+        self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
         self.loopThread.start()
 
         LEDService._instance = self
@@ -61,18 +63,19 @@ class LEDService:
         self.loop.passApp(self.appRoot)
         self.loop.passArgs(self.leds, self._breakLoopEvent)
         self.loop.runInit()
-        shouldSleep = self.loop.getSafetySleepState()
-        while not self._breakLoopEvent.is_set():
+        shouldSleep = self.loop.getSafetySleepState() # TODO Remove
+        while not self._breakLoopEvent.is_set() and self._isInLoop:
             if shouldSleep:
                 time.sleep(0.001) # Sleep to prevent busy waiting
             try:
                 stat = self.loop.runLoop()
                 if stat is not None:
-                    # print("finished " + self.loop.id)
+                    print("finished " + self.loop.id)
                     self._breakLoopEvent.set()
                     break
             except Exception:
                 self.errorCallback(traceback.format_exc())
+                self._breakLoopEvent.set()
                 break
         self._isInLoop = False
         
@@ -94,23 +97,25 @@ class LEDService:
 
         self._isChangingLoop = True
 
-        timeout = time.time() + 0.5
-        while self._isInLoop and time.time() < timeout:
-            time.sleep(0.1)
+        self.loopThread.join(timeout=0.5)
+    
 
-        if self._isInLoop:
-            try:
-                self._hasChangeTimedOut = True
-                raise RuntimeError("LED loop is still running after 0.5 seconds. This should not happen!")
-            except:
-                self.errorCallback(traceback.format_exc())
-            return
+        self.loop = loop
+
+
+        # timeout = time.time() + 0.5
+        # while self._isInLoop and time.time() < timeout:
+        #     time.sleep(0.1)
+
+        # if self._isInLoop:
+        #     try:
+        #         self._hasChangeTimedOut = True
+        #         raise RuntimeError("LED loop is still running after 0.5 seconds. This should not happen!")
+        #     except:
+        #         self.errorCallback(traceback.format_exc())
+        #     return
 
         self._breakLoopEvent.clear()
-
-        if not loop:
-            loop = LEDLoops.null()
-        self.loop = loop
 
         self._createLoopThread()
         self.loopThread.start()
