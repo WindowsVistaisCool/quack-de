@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import math
 import time
+
 from CTkColorPicker import CTkColorPicker
 
 class QuackExtendedButton(ctk.CTkButton):
@@ -17,6 +18,9 @@ class QuackExtendedButton(ctk.CTkButton):
         self.longpress_timer_id = None
         self.normal_command = None
         
+        # Scroll detection variables
+        self.parent_is_scrolling = False
+        
         # Store the original command and replace it with our handler
         if "command" in kwargs:
             self.normal_command = kwargs["command"]
@@ -25,8 +29,8 @@ class QuackExtendedButton(ctk.CTkButton):
         super().configure(command=lambda: None)
         
         # Bind our event handlers
-        self.bind("<Button-1>", self._on_button_press, '+')
-        self.bind("<ButtonRelease-1>", self._on_button_release, '+')
+        self.bind("<Button-1>", self._on_button_press)
+        self.bind("<ButtonRelease-1>", self._on_button_release)
     
     def configure(self, **kwargs):
         """Override configure to handle command parameter"""
@@ -46,14 +50,24 @@ class QuackExtendedButton(ctk.CTkButton):
     
     def _trigger_long_press(self):
         """Triggered automatically when long press threshold is reached"""
-        self.is_long_press = True
-        if self.longpress_callback:
-            self.longpress_callback()
+        if not self.parent_is_scrolling:  # Only trigger if not scrolling
+            self.is_long_press = True
+            if self.longpress_callback:
+                self.longpress_callback()
+    
+    def _handle_parent_scroll_start(self):
+        """Called by parent TouchScrollableFrame when scrolling starts"""
+        self.parent_is_scrolling = True
+        # Cancel the long press timer since scrolling started
+        if self.longpress_timer_id is not None:
+            self.after_cancel(self.longpress_timer_id)
+            self.longpress_timer_id = None
     
     def _on_button_press(self, event):
         """Handle button press start"""
         self.press_start_time = time.time()
         self.is_long_press = False
+        self.parent_is_scrolling = False
         
         # Schedule long press trigger
         if self.longpress_callback:
@@ -72,11 +86,13 @@ class QuackExtendedButton(ctk.CTkButton):
             self.after_cancel(self.longpress_timer_id)
             self.longpress_timer_id = None
         
-        # Only execute normal command if it wasn't a long press
-        if not self.is_long_press and self.normal_command:
+        # Only execute normal command if it wasn't a long press and parent wasn't scrolling
+        if not self.is_long_press and not self.parent_is_scrolling and self.normal_command:
             self.normal_command()
         
+        # Reset state
         self.press_start_time = None
+        self.parent_is_scrolling = False
     
     def set_long_press_callback(self, callback):
         """Set the long press callback function"""
@@ -90,23 +106,39 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master=master, **kwargs)
 
-        self.bind("<Button-1>", self.start_touch)
-        self.bind("<B1-Motion>", self.on_touch_move)
-        self.bind("<ButtonRelease-1>", self.end_touch)
+        # Bind to all widgets in the frame, including children
+        self.bind_all("<Button-1>", self.start_touch_all)
+        self.bind_all("<B1-Motion>", self.on_touch_move_all)
+        self.bind_all("<ButtonRelease-1>", self.end_touch_all)
 
         self.last_touch_y = 0
         self.last_touch_time = 0
         self.velocity = 0
         self.is_touching = False
         self.momentum_after_id = None
+        self.scroll_active = False
 
         self.sensitivity = 8.0
         self.friction = 0.9
         self.momentumThreshold = 50  # Minimum velocity to start momentum scrolling
         self.updateRate = 16  # Update rate for momentum scrolling in milliseconds
 
-    def start_touch(self, event):
+    def _is_event_in_frame(self, event):
+        """Check if the event originated within this scrollable frame"""
+        widget = event.widget
+        # Walk up the widget hierarchy to see if we're inside this frame
+        while widget:
+            if widget == self:
+                return True
+            widget = widget.master
+        return False
+
+    def start_touch_all(self, event):
+        if not self._is_event_in_frame(event):
+            return
+            
         self.is_touching = True
+        self.scroll_active = False
         self.last_touch_y = event.y_root
         self.last_touch_time = time.time()
         # Cancel any existing momentum
@@ -114,40 +146,78 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
             self.after_cancel(self.momentum_after_id)
             self.momentum_after_id = None
 
-    def on_touch_move(self, event):
-        if not self.is_touching:
+    def on_touch_move_all(self, event):
+        if not self._is_event_in_frame(event) or not self.is_touching:
             return
             
         current_time = time.time()
         current_y = event.y_root
         
-        # Calculate time difference (avoid division by zero)
-        time_diff = current_time - self.last_touch_time
-        if time_diff < 0.001:  # Less than 1ms, too fast to be meaningful
-            return
-        
-        # Calculate velocity (pixels per second)
+        # Calculate movement
         y_diff = current_y - self.last_touch_y
-        self.velocity = y_diff / time_diff
-
-        # Apply immediate scrolling based on movement
-        if abs(y_diff) > 0:
-            canvas = self._parent_canvas
-            # Convert pixel movement to scroll units
-            scroll_delta = -y_diff / self.sensitivity
-            current_view = canvas.yview()[0]
-            new_view = max(0.0, min(1.0, current_view + scroll_delta / 100.0))
-            canvas.yview_moveto(new_view)
         
-        self.last_touch_y = current_y
-        self.last_touch_time = current_time
-    
-    def end_touch(self, _):
+        # If we detect significant movement, activate scrolling
+        if abs(y_diff) > 5 and not self.scroll_active:
+            self.scroll_active = True
+            # Notify any QuackExtendedButtons that scrolling has started
+            self._notify_buttons_scrolling_started(event)
+        
+        if self.scroll_active:
+            # Calculate time difference (avoid division by zero)
+            time_diff = current_time - self.last_touch_time
+            if time_diff < 0.001:  # Less than 1ms, too fast to be meaningful
+                return
+            
+            # Calculate velocity (pixels per second)
+            self.velocity = y_diff / time_diff
+
+            # Apply immediate scrolling based on movement
+            if abs(y_diff) > 0:
+                canvas = self._parent_canvas
+                # Convert pixel movement to scroll units
+                scroll_delta = -y_diff / self.sensitivity
+                current_view = canvas.yview()[0]
+                new_view = max(0.0, min(1.0, current_view + scroll_delta / 100.0))
+                canvas.yview_moveto(new_view)
+            
+            self.last_touch_y = current_y
+            self.last_touch_time = current_time
+
+    def _notify_buttons_scrolling_started(self, event):
+        """Find any QuackExtendedButtons and notify them that scrolling has started"""
+        def find_buttons(widget):
+            buttons = []
+            if isinstance(widget, QuackExtendedButton):
+                buttons.append(widget)
+            for child in widget.winfo_children():
+                buttons.extend(find_buttons(child))
+            return buttons
+        
+        buttons = find_buttons(self)
+        for button in buttons:
+            button._handle_parent_scroll_start()
+
+    def end_touch_all(self, event):
+        if not self._is_event_in_frame(event):
+            return
+            
         self.is_touching = False
 
-        # Start momentum scrolling if velocity is significant
-        if abs(self.velocity) > self.momentumThreshold:  # Minimum velocity threshold
+        # Start momentum scrolling if velocity is significant and we were actively scrolling
+        if self.scroll_active and abs(self.velocity) > self.momentumThreshold:
             self.apply_momentum()
+        
+        self.scroll_active = False
+
+    # Keep the old methods for backward compatibility
+    def start_touch(self, event):
+        self.start_touch_all(event)
+
+    def on_touch_move(self, event):
+        self.on_touch_move_all(event)
+    
+    def end_touch(self, event):
+        self.end_touch_all(event)
 
     def apply_momentum(self):
         if abs(self.velocity) < 10:  # Stop when velocity is too small
