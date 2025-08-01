@@ -130,7 +130,10 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
         while widget:
             if widget == self:
                 return True
-            widget = widget.master
+            try:
+                widget = widget.master
+            except AttributeError:
+                widget = None
         return False
 
     def start_touch_all(self, event):
