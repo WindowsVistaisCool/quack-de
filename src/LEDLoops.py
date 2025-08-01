@@ -8,7 +8,6 @@ import time
 
 from lib.CommandUI import CommandUI
 from lib.led.LEDTheme import LEDTheme
-from lib.led.LEDThemeSettings import LEDThemeSettings
 
 class FastLEDFunctions:
     """
@@ -71,6 +70,10 @@ class FastLEDFunctions:
     def scale8(value, scale):
         return ((int(value) & 0xFFFF) * ((int(scale) & 0xFFFF) + 1)) >> 8
 
+    @staticmethod
+    def scale16(value, scale):
+        return ((int(value) & 0xFFFF) * (int(scale) & 0xFFFF)) >> 16
+
     @classmethod
     def CRGB_nscale8(cls, rgb: tuple, scaledown: int):
         r = ((rgb[0]) * (scaledown + 1)) >> 8
@@ -89,22 +92,45 @@ class FastLEDFunctions:
         return int(max(0, a - b))
 
     @classmethod
-    def ColorFromPalette(cls, palette: tuple, index: int, brightness: int = 255, _: str = "NOBLEND"):
+    def ColorFromPalette(cls, palette: tuple, index: int, brightness: int = 255, blending: str = "NOBLEND"):
         if not palette:
             return (0, 0, 0)
         
-        # Extract the high 4 bits to get palette index (equivalent to index >> 4)
-        hi4 = index >> 4
-        # Clamp hi4 to valid palette range
-        palette_index = hi4 % len(palette)
-        
-        # Get the color from the palette
-        color = palette[palette_index]
-        # convert color from hex to rgb components
-        if isinstance(color, int):
-            color = ((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF)
+        if blending == "LINEARBLEND" and len(palette) > 1:
+            # Ultra-smooth linear blending with higher precision for eliminating choppiness
+            palette_scale = len(palette) - 1
+            scaled_index = (index * palette_scale * 256) / 255.0  # Higher precision calculation
+            
+            # Get the two adjacent palette entries to blend between
+            palette_index1 = int(scaled_index // 256) % len(palette)
+            palette_index2 = (palette_index1 + 1) % len(palette)
+            
+            # Calculate blend ratio with higher precision (0-255)
+            blend_ratio = int(scaled_index % 256) & 0xFF
+            
+            # Get colors and convert from hex if needed
+            color1 = palette[palette_index1]
+            color2 = palette[palette_index2]
+            
+            if isinstance(color1, int):
+                color1 = ((color1 >> 16) & 0xFF, (color1 >> 8) & 0xFF, color1 & 0xFF)
+            if isinstance(color2, int):
+                color2 = ((color2 >> 16) & 0xFF, (color2 >> 8) & 0xFF, color2 & 0xFF)
+            
+            # Blend the two colors with high precision
+            red1 = cls.blend8(color1[0], color2[0], blend_ratio)
+            green1 = cls.blend8(color1[1], color2[1], blend_ratio)
+            blue1 = cls.blend8(color1[2], color2[2], blend_ratio)
+        else:
+            # Original discrete palette lookup
+            hi4 = index >> 4
+            palette_index = hi4 % len(palette)
+            
+            color = palette[palette_index]
+            if isinstance(color, int):
+                color = ((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF)
 
-        red1, green1, blue1 = int(color[0]), int(color[1]), int(color[2])
+            red1, green1, blue1 = int(color[0]), int(color[1]), int(color[2])
         
         # Apply brightness scaling if not full brightness
         if brightness != 255:
@@ -195,6 +221,89 @@ class FastLEDFunctions:
             color[2] = 0
         return tuple(color)
 
+    @classmethod
+    def beat88(cls, bpm_88, timebase_32b=0):
+        bpm_88 &= 0xFFFF
+        timebase_32b &= 0xFFFFFFFF
+        return (((int(time.time() * 1000) - timebase_32b) * bpm_88 * 280) >> 16) & 0xFFFF
+
+    @classmethod
+    def beat16(cls, bpm_88, timebase_32b=0):
+        return cls.beat88(bpm_88, timebase_32b)
+
+    @classmethod
+    def beat8(cls, bpm_88, timebase_32b=0):
+        return cls.beat16(bpm_88, timebase_32b) >> 8
+
+    # Pre-computed sine lookup tables for performance
+    _sin16_table = None
+    _sin8_table = None
+    
+    @classmethod
+    def _init_sin_tables(cls):
+        if cls._sin16_table is None:
+            cls._sin16_table = [int(math.sin((i / 65536.0) * (2 * math.pi)) * 32767) for i in range(65536)]
+        if cls._sin8_table is None:
+            cls._sin8_table = [int(math.sin((i / 256.0) * (2 * math.pi)) * 127 + 128) for i in range(256)]
+
+    @staticmethod
+    def sin16(theta):
+        """
+        Fast 16-bit sine using lookup table.
+        """
+        if FastLEDFunctions._sin16_table is None:
+            FastLEDFunctions._init_sin_tables()
+        theta &= 0xFFFF
+        return FastLEDFunctions._sin16_table[theta]
+    
+    @staticmethod
+    def sin8(theta_8b):
+        """
+        Fast 8-bit sine using lookup table.
+        """
+        if FastLEDFunctions._sin8_table is None:
+            FastLEDFunctions._init_sin_tables()
+        theta_8b &= 0xFF
+        return FastLEDFunctions._sin8_table[theta_8b]
+
+    @classmethod
+    def beatsin88(cls, bpm_88, lowest_16b=0, highest_16b=0xFFFF, timebase_32b=0, phase_offset_16b=0):
+        bpm_88 &= 0xFFFF
+        lowest_16b &= 0xFFFF
+        highest_16b &= 0xFFFF
+        timebase_32b &= 0xFFFFFFFF
+        phase_offset_16b &= 0xFFFF
+
+        beat = cls.beat88(bpm_88, timebase_32b)
+        beatsin = cls.sin16(beat + phase_offset_16b) + 32768
+        scaledbeat = cls.scale16(beatsin, highest_16b - lowest_16b)
+        return (lowest_16b + scaledbeat) & 0xFFFF
+
+    @classmethod
+    def beatsin16(cls, bpm_88, lowest_16b=0, highest_16b=0xFFFF, timebase_32b=0, phase_offset_16b=0):
+        bpm_88 &= 0xFFFF
+        lowest_16b &= 0xFFFF
+        highest_16b &= 0xFFFF
+        timebase_32b &= 0xFFFFFFFF
+        phase_offset_16b &= 0xFFFF
+
+        beat = cls.beat16(bpm_88, timebase_32b)
+        beatsin = (cls.sin16(beat + phase_offset_16b) + 32768) & 0xFFFF
+        scaledbeat = cls.scale16(beatsin, highest_16b - lowest_16b) & 0xFFFF
+        return (lowest_16b + scaledbeat) & 0xFFFF
+
+    @classmethod
+    def beatsin8(cls, bpm_88, lowest_8b=0, highest_8b=0xFF, timebase_32b=0, phase_offset_8b=0):
+        bpm_88 &= 0xFFFF
+        lowest_8b &= 0xFF
+        highest_8b &= 0xFF
+        timebase_32b &= 0xFFFFFFFF
+        phase_offset_8b &= 0xFF
+
+        beat = cls.beat8(bpm_88, timebase_32b)
+        beatsin = cls.sin8(beat + phase_offset_8b)
+        scaledbeat = cls.scale8(beatsin, highest_8b - lowest_8b)
+        return (lowest_8b + scaledbeat) & 0xFF
 
     @staticmethod
     def _wheel(pos):
@@ -469,6 +578,25 @@ class LEDThemes:
         """
         self._checkThemeExists(_name)
 
+        palettes = [
+            Palette("Pacifica 1", palette=[
+                0x000507, 0x000409, 0x00030B, 0x00030D, 0x000210, 0x000212, 0x000114, 0x000117,
+                0x000019, 0x00001C, 0x000026, 0x000031, 0x00003B, 0x000046, 0x14554B, 0x28AA50
+            ]),
+            Palette("Pacifica 2", palette=[
+                0x000507, 0x000409, 0x00030B, 0x00030D, 0x000210, 0x000212, 0x000114, 0x000117,
+                0x000019, 0x00001C, 0x000026, 0x000031, 0x00003B, 0x000046, 0x0C5F52, 0x19BE5F
+            ]),
+            Palette("Pacifica 3", palette=[
+                0x000208, 0x00030E, 0x000514, 0x00061A, 0x000820, 0x000927, 0x000B2D, 0x000C33,
+                0x000E39, 0x001040, 0x001450, 0x001860, 0x001C70, 0x002080, 0x1040BF, 0x2060FF
+            ]),
+        ]
+
+        raw_palettes = [p.get() for p in palettes]
+
+        DIM_BG = (2, 6, 10)
+
         sCIStart1 = 0
         sCIStart2 = 0
         sCIStart3 = 0
@@ -477,16 +605,210 @@ class LEDThemes:
 
         ms_0 = int(time.time() * 1000)
 
+        def _waves_single_layer(self: 'LEDTheme', palette, cistart_16b, wavescale_16b, bri_8b, ioff_16b, led_buffer):
+            # Use local variables for performance and ensure 16-bit arithmetic
+            ci = int(cistart_16b) & 0xFFFF
+            waveangle = int(ioff_16b) & 0xFFFF
+            wavescale_half = ((int(wavescale_16b) & 0xFFFF) >> 1) + 20
+            num_pixels = self.leds.numPixels()
+            
+            if self.checkBreak():
+                return True
+            
+            # Calculate wave angle increment for visible but smooth transitions
+            # Balance between wave visibility and smoothness
+            base_increment = 85  # Increased for more visible waves
+            wave_increment = max(base_increment, (32768 // num_pixels)) if num_pixels > 0 else 200
+                
+            for i in range(num_pixels):
+                waveangle = (waveangle + wave_increment) & 0xFFFF  # Much smoother spatial progression
+                s16 = (FastLEDFunctions.sin16(waveangle) + 32768) & 0xFFFF
+                cs = (FastLEDFunctions.scale16(s16, wavescale_half) + wavescale_half) & 0xFFFF
+                ci = (ci + cs) & 0xFFFF  # Keep 16-bit
+                
+                # Generate much smoother color index with better resolution
+                sindex16 = (FastLEDFunctions.sin16(ci) + 32768) & 0xFFFF
+                # Use full palette range with higher precision
+                sindex8 = FastLEDFunctions.scale16(sindex16, 255) & 0xFF
+                
+                # Add more noticeable brightness variation for wave definition
+                brightness_variation = FastLEDFunctions.scale8(FastLEDFunctions.sin8((ci >> 8) & 0xFF), 35)  # Increased from 20
+                adjusted_brightness = max(20, min(255, bri_8b + brightness_variation - 15)) & 0xFF  # Wider range
+                
+                new_color = FastLEDFunctions.ColorFromPalette(palette, sindex8, adjusted_brightness, "LINEARBLEND")
+                
+                # Balanced blending - use 75% new color, 25% existing for visible waves with smoothness  
+                existing = led_buffer[i]
+                blend_factor = 192  # 75% in 8-bit (192/255) - more visible than 85%
+                r = FastLEDFunctions.blend8(existing[0], new_color[0], blend_factor)
+                g = FastLEDFunctions.blend8(existing[1], new_color[1], blend_factor)
+                b = FastLEDFunctions.blend8(existing[2], new_color[2], blend_factor)
+                led_buffer[i] = (r, g, b)
         def target(self: 'LEDTheme'):
             nonlocal ms_0, lastms_32b
+            nonlocal sCIStart1, sCIStart2, sCIStart3, sCIStart4
+            nonlocal _waves_single_layer
 
-            ms_0 = int(time.time() * 1000)
-            deltams_32b = ms_0 - lastms_32b
-            lastms_32b = ms_0
+            # Use consistent timing - don't recalculate ms_0 every frame
+            current_ms = int(time.time() * 1000)
+            if lastms_32b == 0:  # First frame
+                lastms_32b = current_ms
+                
+            deltams_32b = (current_ms - lastms_32b) & 0xFFFFFFFF
+            lastms_32b = current_ms
 
+            if self.checkBreak():
+                return True
+        
+            # Cache these calculations to avoid repeated function calls
+            speedFactor1 = FastLEDFunctions.beatsin16(3, 179, 269)
+            speedFactor2 = FastLEDFunctions.beatsin16(4, 179, 269)
+            deltams1 = ((deltams_32b * speedFactor1) >> 8) & 0xFFFFFFFF  # Use >> instead of //
+            deltams2 = ((deltams_32b * speedFactor2) >> 8) & 0xFFFFFFFF
+            deltamsAvg = ((deltams1 + deltams2) >> 1) & 0xFFFFFFFF
             
+            # Update wave positions with proper 16-bit arithmetic
+            sCIStart1 = (sCIStart1 + (deltams1 * FastLEDFunctions.beatsin88(1011, 10, 13))) & 0xFFFF
+            sCIStart2 = (sCIStart2 - (deltamsAvg * FastLEDFunctions.beatsin88(777, 8, 11))) & 0xFFFF
+            sCIStart3 = (sCIStart3 - (deltams1 * FastLEDFunctions.beatsin88(501, 5, 7))) & 0xFFFF
+            sCIStart4 = (sCIStart4 - (deltams2 * FastLEDFunctions.beatsin88(257, 4, 6))) & 0xFFFF
 
-            return 1
+            # print(f"Pacifica: {sCIStart1=}, {sCIStart2=}, {sCIStart3=}, {sCIStart4=}, {deltams_32b=}, {deltams1=}, {deltams2=}, {deltamsAvg=}")
+
+            # Create a buffer for all LED colors to avoid multiple writes per pixel
+            led_buffer = [DIM_BG for _ in range(self.leds.numPixels())]
+            
+            _waves_single_layer(
+                self,
+                raw_palettes[0],
+                sCIStart1,
+                FastLEDFunctions.beatsin16(3, 11 * 256, 14 * 256),
+                FastLEDFunctions.beatsin8(10, 70, 130),
+                0 - FastLEDFunctions.beat16(301),
+                led_buffer
+            )
+            _waves_single_layer(
+                self,
+                raw_palettes[1],
+                sCIStart2,
+                FastLEDFunctions.beatsin16(4, 6 * 256, 9 * 256),
+                FastLEDFunctions.beatsin8(17, 40, 80),
+                FastLEDFunctions.beat16(401),
+                led_buffer
+            )
+            _waves_single_layer(
+                self,
+                raw_palettes[2],
+                sCIStart3,
+                6 * 256,
+                FastLEDFunctions.beatsin8(9, 10, 38),
+                0 - FastLEDFunctions.beat16(503),
+                led_buffer
+            )
+            _waves_single_layer(
+                self,
+                raw_palettes[2],
+                sCIStart4,
+                5 * 256,
+                FastLEDFunctions.beatsin8(8, 10, 28),
+                FastLEDFunctions.beat16(601),
+                led_buffer
+            )
+
+            # add whitecaps - optimized
+            basethreshold_8b = FastLEDFunctions.beatsin8(9, 55, 65)
+            wave_8b = FastLEDFunctions.beat8(7) & 0xFF
+            num_pixels = self.leds.numPixels()
+
+            if self.checkBreak():
+                return True
+                
+            # Process whitecaps and color deepening in a single loop for efficiency
+            for i in range(num_pixels):
+                threshold_8b = (FastLEDFunctions.scale8(FastLEDFunctions.sin8(wave_8b), 20) + basethreshold_8b) & 0xFF
+                wave_8b = (wave_8b + 7) & 0xFF
+                
+                rgb = list(led_buffer[i])  # Convert to list once
+                light_8b = FastLEDFunctions.getAverageLight(rgb)
+                
+                # Apply whitecaps with smoother transitions
+                if light_8b > threshold_8b:
+                    overage_8b = light_8b - threshold_8b
+                    # Smooth the overage effect to reduce harsh transitions
+                    smooth_overage = FastLEDFunctions.scale8(overage_8b, 180)  # Reduce intensity
+                    overage2_8b = min(255, smooth_overage + (smooth_overage >> 1))
+                    overage4_8b = min(255, overage2_8b + (overage2_8b >> 1))
+                    rgb[0] = min(255, rgb[0] + smooth_overage)
+                    rgb[1] = min(255, rgb[1] + overage2_8b)
+                    rgb[2] = min(255, rgb[2] + overage4_8b)
+                
+                # Deepen colors and add minimum values with gentler scaling
+                rgb[0] = (FastLEDFunctions.scale8(rgb[0], 245) | 2) & 0xFF  # Slightly reduced scaling
+                rgb[1] = (FastLEDFunctions.scale8(rgb[1], 190) | 4) & 0xFF  # Adjusted scaling
+                rgb[2] = (FastLEDFunctions.scale8(rgb[2], 135) | 6) & 0xFF  # Adjusted scaling
+                
+                led_buffer[i] = tuple(rgb)
+
+            # Apply moderate spatial smoothing to balance wave visibility with smoothness
+            if num_pixels > 4:
+                smoothed_buffer = list(led_buffer)
+                # Use 3-point smoothing for visible waves: 25% + 50% + 25%
+                for i in range(1, num_pixels - 1):
+                    if self.checkBreak():
+                        return True
+                    
+                    # 3-point weighted average for balanced smoothness and wave visibility
+                    prev_color = led_buffer[i-1]
+                    curr_color = led_buffer[i]
+                    next_color = led_buffer[i+1]
+                    
+                    # Weights: 25% + 50% + 25% = 64 + 128 + 64 = 256
+                    smoothed_r = (prev_color[0] * 64 + curr_color[0] * 128 + next_color[0] * 64) >> 8
+                    smoothed_g = (prev_color[1] * 64 + curr_color[1] * 128 + next_color[1] * 64) >> 8
+                    smoothed_b = (prev_color[2] * 64 + curr_color[2] * 128 + next_color[2] * 64) >> 8
+                    
+                    smoothed_buffer[i] = (smoothed_r & 0xFF, smoothed_g & 0xFF, smoothed_b & 0xFF)
+                
+                # Update LED strip with balanced smoothing
+                for i in range(num_pixels):
+                    if self.checkBreak():
+                        return True
+                    rgb = smoothed_buffer[i]
+                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+            elif num_pixels > 2:
+                # 3-point smoothing for shorter strips
+                smoothed_buffer = list(led_buffer)
+                for i in range(1, num_pixels - 1):
+                    if self.checkBreak():
+                        return True
+                    
+                    prev_color = led_buffer[i - 1]
+                    curr_color = led_buffer[i]
+                    next_color = led_buffer[i + 1]
+                    
+                    # Lighter smoothing: 25% + 50% + 25%
+                    smoothed_r = (prev_color[0] + (curr_color[0] << 1) + next_color[0]) >> 2
+                    smoothed_g = (prev_color[1] + (curr_color[1] << 1) + next_color[1]) >> 2
+                    smoothed_b = (prev_color[2] + (curr_color[2] << 1) + next_color[2]) >> 2
+                    
+                    smoothed_buffer[i] = (smoothed_r & 0xFF, smoothed_g & 0xFF, smoothed_b & 0xFF)
+                
+                for i in range(num_pixels):
+                    if self.checkBreak():
+                        return True
+                    rgb = smoothed_buffer[i]
+                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+            else:
+                # For very short strips, just set colors directly
+                for i in range(num_pixels):
+                    if self.checkBreak():
+                        return True
+                    rgb = led_buffer[i]
+                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+
+            self.leds.show()
+            # More consistent frame timing - target 60 FPS
+            time.sleep(0.0167)  # ~60 FPS (16.7ms)
         return LEDTheme(
             _name,
             target,
