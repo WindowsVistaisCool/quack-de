@@ -246,7 +246,7 @@ class LEDThemes:
     @classmethod
     def getAllThemes(cls):
         cls._checkAssr()
-        return cls._instance.themes.keys()
+        return cls._instance.themes.values()
 
     @staticmethod
     def null():
@@ -320,7 +320,13 @@ class LEDThemes:
             #        number_of_steps=49,
             #        height=30
             #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
-        return LEDTheme(_name, target, settingsUIFactory=uiMaker)
+        return LEDTheme(
+            _name,
+            target,
+            settingsUIFactory=uiMaker,
+            imagePath="assets/images/rainbow.png",
+            friendlyName="Rainbow"
+        )
 
     def fire2012(self, *, _name = "fire2012"):
         self._checkThemeExists(_name)
@@ -374,7 +380,13 @@ class LEDThemes:
             if self.checkBreak():
                 return True
             self.leds.show()
-        return LEDTheme(_name, target, init)
+        return LEDTheme(
+            _name,
+            target,
+            init,
+            imagePath="assets/images/fire.png",
+            friendlyName="Fireplace",
+        )
 
     def rgbSnake(self, *, _name = "rgbSnake"):
         self._checkThemeExists(_name)
@@ -437,7 +449,13 @@ class LEDThemes:
                    number_of_steps=499,
                    height=30
                 ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew")
-        return LEDTheme(_name, target, settingsUIFactory=uiMaker)
+        return LEDTheme(
+            _name,
+            target,
+            settingsUIFactory=uiMaker,
+            imagePath="assets/images/snake.png",
+            friendlyName="Color Snake"
+        )
 
     def pacifica(self, *, _name = "pacifica"):
         """
@@ -451,9 +469,30 @@ class LEDThemes:
         """
         self._checkThemeExists(_name)
 
+        sCIStart1 = 0
+        sCIStart2 = 0
+        sCIStart3 = 0
+        sCIStart4 = 0
+        lastms_32b = 0
+
+        ms_0 = int(time.time() * 1000)
+
         def target(self: 'LEDTheme'):
+            nonlocal ms_0, lastms_32b
+
+            ms_0 = int(time.time() * 1000)
+            deltams_32b = ms_0 - lastms_32b
+            lastms_32b = ms_0
+
+            
+
             return 1
-        return LEDTheme(_name, target)
+        return LEDTheme(
+            _name,
+            target,
+            imagePath="assets/images/ocean.png",
+            friendlyName="Ocean Blue"
+        )
 
     def twinkle(self, *, _name = "twinkle"):
         """
@@ -732,19 +771,26 @@ class LEDThemes:
                    variable=twinkleDensity,
                 ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
-            ui.add(ctk.CTkLabel, "l_seconds",
-                   text="Palette Time:",
-                   font=("Arial", 20)
-                ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
-            ui.add(ctk.CTkSlider, "s_seconds",
-                   from_=1,
-                   to=120,
-                   number_of_steps=119,
-                   height=30,
-                   variable=secondsPerPallette,
-                ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            # ui.add(ctk.CTkLabel, "l_seconds",
+            #        text="Palette Time:",
+            #        font=("Arial", 20)
+            #     ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
+            # ui.add(ctk.CTkSlider, "s_seconds",
+            #        from_=1,
+            #        to=120,
+            #        number_of_steps=119,
+            #        height=30,
+            #        variable=secondsPerPallette,
+            #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
-        return LEDTheme(_name, target, init, settingsUIFactory=uiMaker)
+        return LEDTheme(
+            _name,
+            target,
+            init,
+            settingsUIFactory=uiMaker,
+            imagePath="assets/images/christmas.png",
+            friendlyName="Christmas"
+        )
 
 class Palette:
     def __init__(self, name, colors=[], palette=None):
@@ -759,3 +805,4 @@ class Palette:
     
     def get(self):
         return tuple(self.palette)
+

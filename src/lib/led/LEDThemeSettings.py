@@ -42,13 +42,13 @@ class LEDThemeSettings(EphemeralNavigationPage):
 
         self.ui.add(ctk.CTkLabel, "description",
                     root=top_frame.getInstance(),
-                    text=f"\"{self.theme.id}\" Settings",
+                    text=f"\"{self.theme.friendlyName}\" Settings",
                     font=(self.appRoot.FONT_NAME, 20, "bold"),
                     justify="left",
                     ).grid(row=0, column=1, padx=15, pady=15, sticky="w")
 
         self.ui.add(ctk.CTkLabel, "null_desc",
-                    text=f"There are no settings for \"{self.theme.id}\".",
+                    text=f"There are no settings for \"{self.theme.friendlyName }\".",
                     font=(self.appRoot.FONT_NAME, 18),
                     justify="center"
                     ).grid(row=1, column=0, padx=30, pady=(0, 30), sticky="new")

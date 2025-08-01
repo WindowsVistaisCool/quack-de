@@ -1,4 +1,3 @@
-
 import traceback
 from typing import TYPE_CHECKING
 
@@ -25,35 +24,22 @@ class LEDsPage(NavigationPage):
         self.ledService = LEDService(self.appRoot)
         self.ledService.errorCallback = self.ui.exceptionCallback
 
-        self.themeCount = 0
-        self.themes = [
-            (
-                LEDThemes.getTheme("twinkle"),
-                "assets/images/christmas.png",
-            ),
-            (
-                LEDThemes.getTheme("pacifica"),
-                "assets/images/ocean.png",
-            ),
-            (
-                LEDThemes.getTheme("rainbow"),
-                "assets/images/rainbow.png",
-            ),
-            (
-                LEDThemes.getTheme("rgbSnake"),
-                "assets/images/snake.png",
-            ),
-            (
-                LEDThemes.getTheme("fire2012"),
-                "assets/images/fire.png",
-            ),
-        ]
+        self._loadedThemeCount = 0
 
         self._initUI()
         self._initCommands()
 
-        for theme, image_path in self.themes:
-            self.addTheme(theme, image_path)
+        # defines how the themes are arranged in the UI
+        # goes (0, 0), (0, 1), (1, 0), (1, 1), etc. in grid units
+        arrangement = (
+            LEDThemes.getTheme("twinkle"),
+            LEDThemes.getTheme("pacifica"),
+            LEDThemes.getTheme("rainbow"),
+            LEDThemes.getTheme("rgbSnake"),
+            LEDThemes.getTheme("fire2012"),
+        )
+        for theme in arrangement:
+            self.addTheme(theme)
 
     def _initUI(self):
         self.grid_rowconfigure(1, weight=1)
@@ -211,11 +197,12 @@ LED Channel: {self.ledService.LED_CHANNEL}
         self.ui.get("b_config").drop()
         self.tabviewUI.setFrame("main")
         
-    def addTheme(self, theme: 'LEDTheme', image_path: str):
-        rowPos = self.themeCount // 2
-        colPos = self.themeCount & 1
-        self.themeCount += 1
+    def addTheme(self, theme: 'LEDTheme'):
+        rowPos = self._loadedThemeCount // 2
+        colPos = self._loadedThemeCount & 1
+        self._loadedThemeCount += 1
 
+        # callback for a long pres
         def longPressFactory(loop: 'LEDTheme'):
             def exception_wrapper():
                 try:
@@ -225,6 +212,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
                     self.ui.exceptionCallback(traceback.format_exc())
             return exception_wrapper
         
+        # callback for a regular press
         def commandFactory(loop):
             def exception_wrapper():
                 try:
@@ -234,14 +222,14 @@ LED Channel: {self.ledService.LED_CHANNEL}
             return exception_wrapper
 
         self.themesUI.add(QuackExtendedButton, f"b_{theme.id.lower()}",
-                        text=theme.id,
+                        text=theme.friendlyName,
                         compound="top",
                         font=(self.appRoot.FONT_NAME, 20),
                         width=200, height=150,
                         border_spacing=8,
                         border_width=0,
                         corner_radius=20,
-                        image=PhotoImage(file=image_path),
+                        image=PhotoImage(file=theme.imagePath),
                         command=commandFactory(theme),
                         longpress_callback=longPressFactory(theme),
                         longpress_threshold=450
