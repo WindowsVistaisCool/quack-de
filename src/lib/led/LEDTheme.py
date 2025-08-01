@@ -1,14 +1,12 @@
-from typing import Type
-import customtkinter as ctk
 import threading
 import rpi_ws281x as ws
 
 from lib.QuackApp import QuackApp
-from lib.led.LEDLoopSettings import LEDLoopSettings
+from lib.led.LEDThemeSettings import LEDThemeSettings
 
-class LEDLoop:
+class LEDTheme:
     """
-    LEDLoop is a class that encapsulates the logic for running a loop that controls an LED strip.
+    LEDTheme is a class that encapsulates the logic for running a theme that controls an LED strip.
     It provides mechanisms for initialization, loop execution, settings UI integration, and graceful interruption.
     Attributes:
         id (str): Unique identifier for the LED loop.
@@ -51,18 +49,7 @@ class LEDLoop:
         self.break_event: 'threading.Event' = None
         self.after = lambda delay, callback: None
 
-    def getSafetySleepState(self) -> bool:
-        """
-        Returns whether the safety sleep is disabled.
-        If True, the loop will not sleep between iterations.
-        """
-        return not self._disableSafetySleep
-
-    def withoutSafetySleep(self):
-        self._disableSafetySleep = True
-        return self
-
-    def getSettings(self, app: QuackApp) -> 'LEDLoopSettings':
+    def getSettings(self, app: QuackApp) -> 'LEDThemeSettings':
         """
         Returns the settings page associated with this LED loop.
         """
@@ -70,7 +57,7 @@ class LEDLoop:
             app = self.app
         else:
             assert isinstance(app, QuackApp), "app must be an instance of QuackApp"
-        return LEDLoopSettings(app, self, uiFactory=self.settingUIFactory)
+        return LEDThemeSettings(app, self, uiFactory=self.settingUIFactory)
 
     def passArgs(self, leds: 'ws.PixelStrip', break_event: 'threading.Event'):
         """

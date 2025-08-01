@@ -7,8 +7,8 @@ import threading
 import time
 
 from lib.CommandUI import CommandUI
-from lib.led.LEDLoop import LEDLoop
-from lib.led.LEDLoopSettings import LEDLoopSettings
+from lib.led.LEDTheme import LEDTheme
+from lib.led.LEDThemeSettings import LEDThemeSettings
 
 class FastLEDFunctions:
     """
@@ -208,16 +208,16 @@ class FastLEDFunctions:
                 pos -= 170
                 return ws.Color(0, pos * 3, 255 - pos * 3)
 
-class LEDLoops:
+class LEDThemes:
     _instance = None
 
     def __init__(self):
-        assert LEDLoops._instance is None, "LEDLoops instance already exists"
-        LEDLoops._instance = self
-        self.loops = {
-            "null": LEDLoops.null()
+        assert LEDThemes._instance is None, "LEDThemes instance already exists"
+        LEDThemes._instance = self
+        self.themes = {
+            "null": LEDThemes.null()
         } # needs to init like this because `self._checkLoopExists` references it
-        self.loops = {
+        self.themes = {
             "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
@@ -228,10 +228,10 @@ class LEDLoops:
     @classmethod
     def _checkAssr(cls):
         """
-        Check if the LEDLoops instance is initialized.
+        Check if the LEDThemes instance is initialized.
         Raises an AssertionError if not initialized.
         """
-        assert cls._instance, "LEDLoops instance not initialized"
+        assert cls._instance, "LEDThemes instance not initialized"
 
     @classmethod
     def getInstance(cls):
@@ -239,24 +239,24 @@ class LEDLoops:
         return cls._instance
 
     @classmethod
-    def getLoop(cls, loop_id: str = None):
+    def getTheme(cls, loop_id: str = None):
         cls._checkAssr()
-        return cls._instance.loops.get(loop_id)
+        return cls._instance.themes.get(loop_id)
 
     @classmethod
-    def getAllLoops(cls):
+    def getAllThemes(cls):
         cls._checkAssr()
-        return cls._instance.loops.keys()
+        return cls._instance.themes.keys()
 
     @staticmethod
     def null():
-        return LEDLoop("null")
+        return LEDTheme("null")
 
-    def _checkLoopExists(self, loop_id: str):
-        assert loop_id not in self.loops.keys(), f"LED loop '{loop_id}' already exists"
+    def _checkThemeExists(self, theme_id: str):
+        assert theme_id not in self.themes.keys(), f"LED theme '{theme_id}' already exists"
 
     def rainbow(self, *, _name = "rainbow"):
-        self._checkLoopExists(_name)
+        self._checkThemeExists(_name)
 
         iterations = ctk.IntVar(value=10)
         _iterations = iterations.get()
@@ -265,11 +265,11 @@ class LEDLoops:
         step_size = ctk.IntVar(value=4)
         _step_size = step_size.get()
 
-        def target(loop: 'LEDLoop'):
+        def target(theme: 'LEDTheme'):
             nonlocal _iterations, _delay, _step_size
 
             for j in range(0, 256, max(1, _step_size)):  # Use step_size to skip colors
-                if loop.checkBreak():
+                if theme.checkBreak():
                     return 1
                 if isinstance(iterations, ctk.IntVar):
                     _iterations = max(1, iterations.get())  # Prevent division by zero
@@ -279,26 +279,26 @@ class LEDLoops:
                     if _step_size != step_size.get():
                         _step_size = max(1, step_size.get())  # Ensure step_size is at least 1
                         return None # return but keep loop running
-                for i in range(loop.leds.numPixels()):
-                    loop.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
-                loop.leds.show()
+                for i in range(theme.leds.numPixels()):
+                    theme.leds.setPixelColor(i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255))
+                theme.leds.show()
                 if _delay > 0:  # Only sleep if delay is greater than 0
                     time.sleep(_delay / 1000.0)  # Convert ms to seconds properly
         def uiMaker(ui: CommandUI):
             ui.add(ctk.CTkLabel, "l_iterations",
-                   text="Pattern Density",
+                   text="Pattern Sparseness",
                    font=("Arial", 20)
                 ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_iterations",
                    variable=iterations,
                    from_=1,
-                   to=50,  # Reduced max for faster effects
-                   number_of_steps=49,
+                   to=100,
+                   number_of_steps=99,
                    height=30
                 ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
             ui.add(ctk.CTkLabel, "l_step_size",
-                   text="Speed Multiplier",
+                   text="Speed",
                    font=("Arial", 20)
                 ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(ctk.CTkSlider, "s_step_size",
@@ -320,28 +320,44 @@ class LEDLoops:
             #        number_of_steps=49,
             #        height=30
             #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
-        return LEDLoop(_name, target, settingsUIFactory=uiMaker)
+        return LEDTheme(_name, target, settingsUIFactory=uiMaker)
 
-    def fire2012(self, cooling=30, sparking=130, reversed=False, *, _name = "fire2012"):
-        self._checkLoopExists(_name)
+    def fire2012(self, *, _name = "fire2012"):
+        self._checkThemeExists(_name)
 
-        cooling = int(cooling)
-        sparking = int(sparking)
+        cooling = ctk.IntVar(value=30)
+        sparking = ctk.IntVar(value=130)
+        reversed = ctk.BooleanVar(value=False)
+        _cooling = cooling.get()
+        _sparking = sparking.get()
+        _reversed = reversed.get()
     
         temperatures = None
-        def target(self: 'LEDLoop'):
+        def init(self: 'LEDTheme'):
             nonlocal temperatures
+            temperatures = None
+        def target(self: 'LEDTheme'):
+            nonlocal temperatures
+
+            nonlocal _cooling, _sparking, _reversed
+            if isinstance(cooling, ctk.IntVar):
+                _cooling = cooling.get()
+            if isinstance(sparking, ctk.IntVar):
+                _sparking = sparking.get()
+            if isinstance(reversed, ctk.BooleanVar):
+                _reversed = reversed.get()
+
             if temperatures is None:
                 temperatures = [0] * self.leds.numPixels()
             # cool cells
             for i in range(self.leds.numPixels()):
-                temperatures[i] = FastLEDFunctions.qsubint(temperatures[i], FastLEDFunctions.random8(0, ((cooling * 10) / self.leds.numPixels()) + 2)) & 0xFF
+                temperatures[i] = FastLEDFunctions.qsubint(temperatures[i], FastLEDFunctions.random8(0, ((_cooling * 10) / self.leds.numPixels()) + 2)) & 0xFF
             # heat up randomly
             reversePixelsRange = list(range(self.leds.numPixels() - 1))[::-1][:-1]
             for k in reversePixelsRange:
                 temperatures[k] = int((temperatures[k - 1] + temperatures[k - 2] + temperatures[k - 2]) / 3) & 0xFF
 
-            if FastLEDFunctions.random8(0, 0xFF) < sparking:
+            if FastLEDFunctions.random8(0, 0xFF) < _sparking:
                 random_sparked = FastLEDFunctions.random8(lim=7)
                 temperatures[random_sparked] = FastLEDFunctions.qaddint(
                     temperatures[random_sparked],
@@ -351,18 +367,17 @@ class LEDLoops:
 
             for i in range(self.leds.numPixels()):
                 color = FastLEDFunctions.HeatColor(temperatures[i])
-                if reversed:
+                if _reversed:
                     self.leds.setPixelColor(self.leds.numPixels() - 1 - i, color)
                 else:
                     self.leds.setPixelColor(i, ws.Color(*color))
             if self.checkBreak():
                 return True
             self.leds.show()
-            # time.sleep(0.05)
-        return LEDLoop(_name, target)
+        return LEDTheme(_name, target, init)
 
     def rgbSnake(self, *, _name = "rgbSnake"):
-        self._checkLoopExists(_name)
+        self._checkThemeExists(_name)
 
         tailScaleFactor = ctk.IntVar(value=250)
         _tailScaleFactor = tailScaleFactor.get()
@@ -371,7 +386,7 @@ class LEDLoops:
         _delay = delay.get()
 
         hue = 0
-        def target(self: 'LEDLoop'):
+        def target(self: 'LEDTheme'):
             nonlocal hue
             nonlocal _tailScaleFactor, _delay
 
@@ -422,7 +437,7 @@ class LEDLoops:
                    number_of_steps=499,
                    height=30
                 ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew")
-        return LEDLoop(_name, target, settingsUIFactory=uiMaker).withoutSafetySleep()
+        return LEDTheme(_name, target, settingsUIFactory=uiMaker)
 
     def pacifica(self, *, _name = "pacifica"):
         """
@@ -434,11 +449,11 @@ class LEDLoops:
         //
         Ported and modified by Kyle Rush
         """
-        self._checkLoopExists(_name)
+        self._checkThemeExists(_name)
 
-        def target(self: 'LEDLoop'):
+        def target(self: 'LEDTheme'):
             return 1
-        return LEDLoop(_name, target)
+        return LEDTheme(_name, target)
 
     def twinkle(self, *, _name = "twinkle"):
         """
@@ -569,7 +584,7 @@ class LEDLoops:
         blendCallRunning = False
         paletteSwapCallRunning = False
 
-        def init(self: 'LEDLoop'):
+        def init(self: 'LEDTheme'):
             nonlocal palettes, currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
             if not palettes:
                 raise ValueError("No palettes provided for twinkle effect")
@@ -582,7 +597,7 @@ class LEDLoops:
             blendCallRunning = False
             paletteSwapCallRunning = False
 
-        def target(self: 'LEDLoop'):
+        def target(self: 'LEDTheme'):
             # Early exit check - this should make switching faster
             if self.checkBreak():
                 return True
@@ -729,7 +744,7 @@ class LEDLoops:
                    variable=secondsPerPallette,
                 ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
             
-        return LEDLoop(_name, target, init, settingsUIFactory=uiMaker)
+        return LEDTheme(_name, target, init, settingsUIFactory=uiMaker)
 
 class Palette:
     def __init__(self, name, colors=[], palette=None):

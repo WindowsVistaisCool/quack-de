@@ -6,14 +6,13 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-import time
 from tkinter import PhotoImage
 
-from LEDLoops import LEDLoops
+from LEDLoops import LEDThemes
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
-from lib.led.LEDLoop import LEDLoop
+from lib.led.LEDTheme import LEDTheme
 from lib.Navigation import NavigationPage
 from lib.CustomWidgets import QuackColorPicker, TouchScrollableFrame, QuackExtendedButton
 from lib.SwappableUI import SwappableUI
@@ -25,6 +24,8 @@ class LEDsPage(NavigationPage):
 
         self.ledService = LEDService(self.appRoot)
         self.ledService.errorCallback = self.ui.exceptionCallback
+
+        self.themeCount = 0
 
         self._initUI()
         self._initCommands()
@@ -85,81 +86,35 @@ class LEDsPage(NavigationPage):
                                     root=themesTab,
                                     fg_color=themesTab._fg_color,
                                     border_width=0,
-                                    ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
-        _scrollFrame.getInstance().grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
+                                    ).grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         _scrollFrame.getInstance().grid_columnconfigure((0, 1), weight=1)
-        _scrollFrame.grid()
-        themesUI = CommandUI(_scrollFrame.getInstance())
+        self.themesUI = CommandUI(_scrollFrame.getInstance())
 
         test_themes = [
             (
-                "Twinkle",
+                LEDThemes.getTheme("twinkle"),
                 "assets/images/christmas.png",
-                (0, 0),
-                LEDLoops.getLoop("twinkle"),
             ),
             (
-                "Rainbow",
+                LEDThemes.getTheme("pacifica"),
+                "assets/images/ocean.png",
+            ),
+            (
+                LEDThemes.getTheme("rainbow"),
                 "assets/images/rainbow.png",
-                (0, 1),
-                LEDLoops.getLoop("rainbow"),
             ),
             (
-                "Rainbow Snake",
+                LEDThemes.getTheme("rgbSnake"),
                 "assets/images/snake.png",
-                (1, 0),
-                LEDLoops.getLoop("rgbSnake"),
             ),
             (
-                "Fire 2012",
+                LEDThemes.getTheme("fire2012"),
                 "assets/images/fire.png",
-                (1, 1),
-                LEDLoops.getLoop("fire2012"),
-            )
+            ),
         ]
 
-        for theme_name, image_path, location, loop in test_themes:
-            _frame = themesUI.add(ctk.CTkFrame, f"f_{theme_name.lower()}",
-                                   corner_radius=25
-                                   ).withGridProperties(row=location[0], column=location[1], padx=(5, 10), pady=(0, 40), stick="n")
-            _frame.grid()
-            
-            # Create long press callback for this theme
-            def make_long_press_callback(loop: 'LEDLoop'):
-                def exception_wrapper():
-                    try:
-                        # self.ledService.setLoop(loop)
-                        self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
-                    except:
-                        self.ui.exceptionCallback(traceback.format_exc())
-                return exception_wrapper
-            
-            # Create normal command for this theme
-            def make_normal_command(loop):
-                def exception_wrapper():
-                    try:
-                        self.ledService.setLoop(loop)
-                    except:
-                        self.ui.exceptionCallback(traceback.format_exc())
-                return exception_wrapper
-            
-            themesUI.add(QuackExtendedButton, f"b_{theme_name.lower()}",
-                         root=_frame.getInstance(),
-                         text=theme_name,
-                         compound="top",
-                         font=(self.appRoot.FONT_NAME, 20),
-                         width=200, height=150,
-                         border_spacing=0,
-                         border_width=0,
-                         corner_radius=0,
-                         fg_color=_frame.getInstance().cget("fg_color"),
-                         bg_color=_frame.getInstance().cget("fg_color"),
-                         hover_color=_frame.getInstance().cget("fg_color"),
-                         image=PhotoImage(file=image_path),
-                         command=make_normal_command(loop),
-                         longpress_callback=make_long_press_callback(loop),
-                         longpress_threshold=450
-                         ).grid(row=0, column=0, padx=10, pady=10)
+        for tup in test_themes:
+            self.addTheme(*tup)
 
         solidColorsTab = self.tabview.getInstance().tab("Solid Color")
         solidColorsTab.grid_columnconfigure(0, weight=1)
@@ -256,3 +211,51 @@ LED Channel: {self.ledService.LED_CHANNEL}
         self.ui.get("b_config").getInstance().configure(text="Configuration")
         self.ui.get("b_config").drop()
         self.tabviewUI.setFrame("main")
+        
+    def addTheme(self, theme: 'LEDTheme', image_path: str):
+        # this determines where to put the new theme in grid units
+        rowPos = self.themeCount // 2
+        colPos = self.themeCount & 1
+        self.themeCount += 1
+
+        def longPressFactory(loop: 'LEDTheme'):
+            def exception_wrapper():
+                try:
+                    # self.ledService.setLoop(loop)
+                    self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
+                except:
+                    self.ui.exceptionCallback(traceback.format_exc())
+            return exception_wrapper
+        
+        def commandFactory(loop):
+            def exception_wrapper():
+                try:
+                    self.ledService.setLoop(loop)
+                except:
+                    self.ui.exceptionCallback(traceback.format_exc())
+            return exception_wrapper
+
+        self.themesUI.add(QuackExtendedButton, f"b_{theme.id.lower()}",
+                        # root=_frame.getInstance(),
+                        text=theme.id,
+                        compound="top",
+                        font=(self.appRoot.FONT_NAME, 20),
+                        width=200, height=150,
+                        border_spacing=8,
+                        border_width=0,
+                        corner_radius=20,
+                        # fg_color=_frame.getInstance().cget("fg_color"),
+                        # bg_color=_frame.getInstance().cget("fg_color"),
+                        # hover_color=_frame.getInstance().cget("fg_color"),
+                        image=PhotoImage(file=image_path),
+                        command=commandFactory(theme),
+                        longpress_callback=longPressFactory(theme),
+                        longpress_threshold=450
+        ).grid(
+                        row=rowPos,
+                        column=colPos,
+                        padx=(5, 10),
+                        pady=(0, 40),
+                        stick="ne" if colPos else "nw"
+                        )
+                        # ).grid(row=0, column=0, padx=10, pady=10)

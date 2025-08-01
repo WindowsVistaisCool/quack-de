@@ -4,12 +4,11 @@ from datetime import datetime
 from threading import Thread
 
 from Configurator import Configurator
-from LEDLoops import LEDLoops
+from LEDLoops import LEDThemes
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
-from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService, NotifierUI
 from lib.QuackApp import QuackApp
 
@@ -93,14 +92,14 @@ class App(QuackApp):
                     corner_radius=20
                     ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
-        if isDev():
-            self.ui.add(ctk.CTkButton, "nav_debug",
-                        root=self.navbar.getInstance(),
-                        text="Debug",
-                        font=(self.FONT_NAME, 18),
-                        width=150, height=60,
-                        corner_radius=20
-                        ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
+        # if isDev():
+        #     self.ui.add(ctk.CTkButton, "nav_debug",
+        #                 root=self.navbar.getInstance(),
+        #                 text="Debug",
+        #                 font=(self.FONT_NAME, 18),
+        #                 width=150, height=60,
+        #                 corner_radius=20
+        #                 ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
 
         self.ui.add(ctk.CTkButton, "nav_settings", 
                     root=self.navbar.getInstance(),
@@ -126,8 +125,8 @@ class App(QuackApp):
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
-        if isDev():
-            self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
+        # if isDev():
+        #     self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
         self.ui.addCommand("nav_settings", lambda: self.navigation.navigate(SettingsPage))
 
         # initilaze the clock
@@ -145,7 +144,7 @@ class App(QuackApp):
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
-        DebugPage(self.navigation, self, self.content_root.getInstance())
+        # DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())
@@ -197,6 +196,6 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     app.toggleFullAccess(True)
     app.navigation.navigate(LEDsPage)
-    LEDService.getInstance().setLoop(LEDLoops.getLoop("twinkle"))
+    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
     app.mainloop()
 
