@@ -26,9 +26,34 @@ class LEDsPage(NavigationPage):
         self.ledService.errorCallback = self.ui.exceptionCallback
 
         self.themeCount = 0
+        self.themes = [
+            (
+                LEDThemes.getTheme("twinkle"),
+                "assets/images/christmas.png",
+            ),
+            (
+                LEDThemes.getTheme("pacifica"),
+                "assets/images/ocean.png",
+            ),
+            (
+                LEDThemes.getTheme("rainbow"),
+                "assets/images/rainbow.png",
+            ),
+            (
+                LEDThemes.getTheme("rgbSnake"),
+                "assets/images/snake.png",
+            ),
+            (
+                LEDThemes.getTheme("fire2012"),
+                "assets/images/fire.png",
+            ),
+        ]
 
         self._initUI()
         self._initCommands()
+
+        for theme, image_path in self.themes:
+            self.addTheme(theme, image_path)
 
     def _initUI(self):
         self.grid_rowconfigure(1, weight=1)
@@ -89,32 +114,6 @@ class LEDsPage(NavigationPage):
                                     ).grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         _scrollFrame.getInstance().grid_columnconfigure((0, 1), weight=1)
         self.themesUI = CommandUI(_scrollFrame.getInstance())
-
-        test_themes = [
-            (
-                LEDThemes.getTheme("twinkle"),
-                "assets/images/christmas.png",
-            ),
-            (
-                LEDThemes.getTheme("pacifica"),
-                "assets/images/ocean.png",
-            ),
-            (
-                LEDThemes.getTheme("rainbow"),
-                "assets/images/rainbow.png",
-            ),
-            (
-                LEDThemes.getTheme("rgbSnake"),
-                "assets/images/snake.png",
-            ),
-            (
-                LEDThemes.getTheme("fire2012"),
-                "assets/images/fire.png",
-            ),
-        ]
-
-        for tup in test_themes:
-            self.addTheme(*tup)
 
         solidColorsTab = self.tabview.getInstance().tab("Solid Color")
         solidColorsTab.grid_columnconfigure(0, weight=1)
@@ -213,7 +212,6 @@ LED Channel: {self.ledService.LED_CHANNEL}
         self.tabviewUI.setFrame("main")
         
     def addTheme(self, theme: 'LEDTheme', image_path: str):
-        # this determines where to put the new theme in grid units
         rowPos = self.themeCount // 2
         colPos = self.themeCount & 1
         self.themeCount += 1
@@ -236,7 +234,6 @@ LED Channel: {self.ledService.LED_CHANNEL}
             return exception_wrapper
 
         self.themesUI.add(QuackExtendedButton, f"b_{theme.id.lower()}",
-                        # root=_frame.getInstance(),
                         text=theme.id,
                         compound="top",
                         font=(self.appRoot.FONT_NAME, 20),
@@ -244,18 +241,14 @@ LED Channel: {self.ledService.LED_CHANNEL}
                         border_spacing=8,
                         border_width=0,
                         corner_radius=20,
-                        # fg_color=_frame.getInstance().cget("fg_color"),
-                        # bg_color=_frame.getInstance().cget("fg_color"),
-                        # hover_color=_frame.getInstance().cget("fg_color"),
                         image=PhotoImage(file=image_path),
                         command=commandFactory(theme),
                         longpress_callback=longPressFactory(theme),
                         longpress_threshold=450
-        ).grid(
+                    ).grid(
                         row=rowPos,
                         column=colPos,
                         padx=(5, 10),
                         pady=(0, 40),
                         stick="ne" if colPos else "nw"
                         )
-                        # ).grid(row=0, column=0, padx=10, pady=10)
