@@ -55,29 +55,48 @@ class LEDService:
 
         LEDService._instance = self
 
-    def _createLoopThread(self):
-        self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
-
     def _ledLoopTarget(self):
-        self._isInLoop = True
-        self.loop.passApp(self.appRoot)
-        self.loop.passArgs(self.leds, self._breakLoopEvent)
-        self.loop.runInit()
-        shouldSleep = self.loop.getSafetySleepState() # TODO Remove
-        while not self._breakLoopEvent.is_set() and self._isInLoop:
-            if shouldSleep:
-                time.sleep(0.001) # Sleep to prevent busy waiting
+        while self._isRunning:
+            # Wait for a loop to be set or service to stop
+            if self.loop is None or self.loop.id == "null":
+                time.sleep(0.01)
+                continue
+            
+            # Ensure we're not in the middle of a loop change
+            if self._isChangingLoop:
+                time.sleep(0.01)
+                continue
+                
+            # Initialize the current loop safely
             try:
-                stat = self.loop.runLoop()
-                if stat is not None:
-                    print("finished " + self.loop.id)
+                self.loop.passApp(self.appRoot)
+                self.loop.passArgs(self.leds, self._breakLoopEvent)
+                self.loop.runInit()
+                shouldSleep = self.loop.getSafetySleepState()
+            except Exception:
+                self.errorCallback(f"Failed to initialize loop {self.loop.id}: {traceback.format_exc()}")
+                time.sleep(0.1)
+                self.setLoop(LEDLoops.null())  # Reset to null loop on error
+                continue
+            
+            # Run the loop until break or loop change
+            while not self._breakLoopEvent.is_set() and self._isRunning and not self._loopChangeEvent.is_set():
+                if shouldSleep:
+                    time.sleep(0.001)
+                try:
+                    stat = self.loop.runLoop()
+                    if stat is not None:
+                        print("finished " + self.loop.id)
+                        self._breakLoopEvent.set()
+                        break
+                except Exception:
+                    self.errorCallback(traceback.format_exc())
                     self._breakLoopEvent.set()
                     break
-            except Exception:
-                self.errorCallback(traceback.format_exc())
-                self._breakLoopEvent.set()
-                break
-        self._isInLoop = False
+            
+            # Clear events for next loop
+            self._breakLoopEvent.clear()
+            self._loopChangeEvent.clear()
         
     def setLoop(self, loop: 'LEDLoop' = None):
         # ensure this is not called multiple times
@@ -90,35 +109,20 @@ class LEDService:
         if loop.id == self.loop.id and not self._isChangingLoop:
             return
         
+        self._isChangingLoop = True
+        
+        # Signal current loop to stop
         self._breakLoopEvent.set()
+        self._loopChangeEvent.set()
+        
+        # Wait a bit longer for current loop iteration to finish cleanly
+        time.sleep(0.05)
+        
+        # Set new loop
+        self.loop = loop
         
         if self._hasChangeTimedOut:
             self._hasChangeTimedOut = False
-
-        self._isChangingLoop = True
-
-        self.loopThread.join(timeout=0.5)
-    
-
-        self.loop = loop
-
-
-        # timeout = time.time() + 0.5
-        # while self._isInLoop and time.time() < timeout:
-        #     time.sleep(0.1)
-
-        # if self._isInLoop:
-        #     try:
-        #         self._hasChangeTimedOut = True
-        #         raise RuntimeError("LED loop is still running after 0.5 seconds. This should not happen!")
-        #     except:
-        #         self.errorCallback(traceback.format_exc())
-        #     return
-
-        self._breakLoopEvent.clear()
-
-        self._createLoopThread()
-        self.loopThread.start()
 
         self._isChangingLoop = False
 
@@ -127,15 +131,21 @@ class LEDService:
         self.leds.show()
 
     def setSolid(self, r: int, g: int, b: int):
-        if self.loopThread:
-            if self.loopThread.is_alive():
-                self.setLoop(LEDLoops.null())
+        self.setLoop(LEDLoops.null())  # Switch to null loop to stop current loop
         for i in range(self.LED_COUNT):
             self.leds.setPixelColor(i, ws.Color(r, g, b))
         self.leds.show()
     
     def off(self):
         self.setSolid(0, 0, 0)
+    
+    def shutdown(self):
+        """Gracefully shutdown the LED service"""
+        self._isRunning = False
+        self._breakLoopEvent.set()
+        self._loopChangeEvent.set()
+        if self.loopThread and self.loopThread.is_alive():
+            self.loopThread.join(timeout=1.0)
 
     @classmethod
     def getInstance(cls):
