@@ -419,6 +419,11 @@ class LEDThemes:
         step_size = ctk.IntVar(value=4)
         _step_size = step_size.get()
 
+        def init(self: "LEDTheme"):
+            data = self.getData()
+            iterations.set(data.get("iterations", _iterations))
+            delay.set(data.get("delay", _delay))
+            step_size.set(data.get("stepSize", _step_size))
         def target(theme: "LEDTheme"):
             nonlocal _iterations, _delay, _step_size
 
@@ -443,7 +448,7 @@ class LEDThemes:
                 if _delay > 0:  # Only sleep if delay is greater than 0
                     time.sleep(_delay / 1000.0)  # Convert ms to seconds properly
 
-        def uiMaker(ui: CommandUI, saveTrigger: callable):
+        def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
                 ctk.CTkLabel,
                 "l_iterations",
@@ -458,12 +463,17 @@ class LEDThemes:
                 to=100,
                 number_of_steps=99,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
-
-            ui.add(ctk.CTkLabel, "l_step_size", text="Speed", font=("Arial", 20)).grid(
-                row=1, column=0, padx=20, pady=15, sticky="nsw"
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("iterations", iterations.get())
+                )
             )
+            ui.add(
+                ctk.CTkLabel,
+                "l_stepSize",
+                text="Step Size",
+                font=("Arial", 20),
+            ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(
                 ctk.CTkSlider,
                 "s_step_size",
@@ -472,24 +482,16 @@ class LEDThemes:
                 to=32,
                 number_of_steps=31,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
-
-            # ui.add(ctk.CTkLabel, "l_delay",
-            #          text="Frame Delay (ms)",
-            #          font=("Arial", 20)
-            #     ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
-            # ui.add(ctk.CTkSlider, "s_delay",
-            #        variable=delay,
-            #        from_=1,
-            #        to=50,
-            #        number_of_steps=49,
-            #        height=30
-            #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("stepSize", step_size.get())
+                )
+            )
 
         return LEDTheme(
             _name,
             target,
+            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/rainbow.png",
             friendlyName="Rainbow",
@@ -505,14 +507,19 @@ class LEDThemes:
         _sparking = sparking.get()
         _reversed = reversed.get()
 
-        temperatures = None
+        temps = None
 
         def init(self: "LEDTheme"):
-            nonlocal temperatures
-            temperatures = None
+            data = self.getData()
+            cooling.set(data.get("cooling", _cooling))
+            sparking.set(data.get("sparking", _sparking))
+            reversed.set(data.get("reversed", _reversed))
+
+            nonlocal temps
+            temps = None
 
         def target(self: "LEDTheme"):
-            nonlocal temperatures
+            nonlocal temps
 
             nonlocal _cooling, _sparking, _reversed
             if isinstance(cooling, ctk.IntVar):
@@ -522,13 +529,13 @@ class LEDThemes:
             if isinstance(reversed, ctk.BooleanVar):
                 _reversed = reversed.get()
 
-            if temperatures is None:
-                temperatures = [0] * self.leds.numPixels()
+            if temps is None:
+                temps = [0] * self.leds.numPixels()
             # cool cells
             for i in range(self.leds.numPixels()):
-                temperatures[i] = (
+                temps[i] = (
                     FastLEDFunctions.qsubint(
-                        temperatures[i],
+                        temps[i],
                         FastLEDFunctions.random8(
                             0, ((_cooling * 10) / self.leds.numPixels()) + 2
                         ),
@@ -538,12 +545,12 @@ class LEDThemes:
             # heat up randomly
             reversePixelsRange = list(range(self.leds.numPixels() - 1))[::-1][:-1]
             for k in reversePixelsRange:
-                temperatures[k] = (
+                temps[k] = (
                     int(
                         (
-                            temperatures[k - 1]
-                            + temperatures[k - 2]
-                            + temperatures[k - 2]
+                            temps[k - 1]
+                            + temps[k - 2]
+                            + temps[k - 2]
                         )
                         / 3
                     )
@@ -552,14 +559,14 @@ class LEDThemes:
 
             if FastLEDFunctions.random8(0, 0xFF) < _sparking:
                 random_sparked = FastLEDFunctions.random8(lim=7)
-                temperatures[random_sparked] = FastLEDFunctions.qaddint(
-                    temperatures[random_sparked],
+                temps[random_sparked] = FastLEDFunctions.qaddint(
+                    temps[random_sparked],
                     FastLEDFunctions.random8(160, 255),
                     0xFF,
                 )
 
             for i in range(self.leds.numPixels()):
-                color = FastLEDFunctions.HeatColor(temperatures[i])
+                color = FastLEDFunctions.HeatColor(temps[i])
                 if _reversed:
                     self.leds.setPixelColor(self.leds.numPixels() - 1 - i, color)
                 else:
@@ -568,7 +575,7 @@ class LEDThemes:
                 return True
             self.leds.show()
 
-        def uiMaker(ui: CommandUI, saveTrigger: callable):
+        def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(ctk.CTkLabel, "l_cooling", text="Cooling", font=("Arial", 20)).grid(
                 row=0, column=0, padx=20, pady=15, sticky="nsw"
             )
@@ -580,8 +587,11 @@ class LEDThemes:
                 to=255,
                 number_of_steps=254,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("cooling", cooling.get())
+                )
+            )
 
             ui.add(
                 ctk.CTkLabel, "l_sparking", text="Sparking", font=("Arial", 20)
@@ -594,16 +604,22 @@ class LEDThemes:
                 to=255,
                 number_of_steps=254,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("sparking", sparking.get())
+                )
+            )
 
             ui.add(
                 ctk.CTkCheckBox,
                 "c_reversed",
                 variable=reversed,
                 text="Reverse",
-                command=saveTrigger,
-            ).grid(row=2, columnspan=2, padx=(20, 20), pady=(0, 15), sticky="nsew")
+            ).grid(row=2, columnspan=2, padx=(20, 20), pady=(0, 15), sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("reversed", reversed.get())
+                )
+            )
 
         return LEDTheme(
             _name,
@@ -624,7 +640,10 @@ class LEDThemes:
         _delay = delay.get()
 
         hue = 0
-
+        def init(self: "LEDTheme"):
+            data = self.getData()
+            tailScaleFactor.set(data.get("tailScaleFactor", _tailScaleFactor))
+            delay.set(data.get("delay", _delay))
         def target(self: "LEDTheme"):
             nonlocal hue
             nonlocal _tailScaleFactor, _delay
@@ -662,7 +681,7 @@ class LEDThemes:
                     self.leds.show()
                     time.sleep(_delay / 10000)
 
-        def uiMaker(ui: CommandUI, saveTrigger: callable):
+        def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
                 ctk.CTkLabel,
                 "l_tailScaleFactor",
@@ -677,8 +696,11 @@ class LEDThemes:
                 to=255,
                 number_of_steps=249,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nsew")
+            ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("tailScaleFactor", tailScaleFactor.get())
+                )
+            )
             ui.add(ctk.CTkLabel, "l_delay", text="Delay (ms)", font=("Arial", 20)).grid(
                 row=1, column=0, padx=20, pady=(0, 20), sticky="nsw"
             )
@@ -690,12 +712,16 @@ class LEDThemes:
                 to=500,
                 number_of_steps=499,
                 height=30,
-                command=saveTrigger,
-            ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew")
+            ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("delay", delay.get())
+                )
+            )
 
         return LEDTheme(
             _name,
             target,
+            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/snake.png",
             friendlyName="Color Snake",
@@ -1337,9 +1363,15 @@ class LEDThemes:
         paletteSwapCallRunning = False
 
         def init(self: "LEDTheme"):
-            nonlocal palettes, currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
+            nonlocal currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
             if not palettes:
                 raise ValueError("No palettes provided for twinkle effect")
+
+            data = self.getData()
+            twinkleSpeed.set(data.get("twinkleSpeed", _twinkleSpeed))
+            twinkleDensity.set(data.get("twinkleDensity", _twinkleDensity))
+            secondsPerPallette.set(data.get("secondsPerPallette", _secondsPerPallette))
+            coolLikeIncandescent.set(data.get("coolLikeIncandescent", _coolLikeIncandescent))
 
             # Initialize the first palette
             rawPalettes = [p.get() for p in palettes]
@@ -1475,7 +1507,7 @@ class LEDThemes:
                     self.leds.setPixelColor(i, ws.Color(*bg))
             self.leds.show()
 
-        def uiMaker(ui: CommandUI, saveTrigger: callable):
+        def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
 
             ui.add(
@@ -1489,8 +1521,11 @@ class LEDThemes:
                 number_of_steps=7,
                 height=30,
                 variable=twinkleSpeed,
-                command=saveTrigger,
-            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("twinkleSpeed", twinkleSpeed.get())
+                )
+            )
 
             ui.add(
                 ctk.CTkLabel, "l_density", text="Density (1-8):", font=("Arial", 20)
@@ -1503,20 +1538,12 @@ class LEDThemes:
                 number_of_steps=7,
                 height=30,
                 variable=twinkleDensity,
-                command=saveTrigger,
-            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew")
+            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("twinkleDensity", twinkleDensity.get())
+                )
+            )
 
-            # ui.add(ctk.CTkLabel, "l_seconds",
-            #        text="Palette Time:",
-            #        font=("Arial", 20)
-            #     ).grid(row=2, column=0, padx=20, pady=15, sticky="nsw")
-            # ui.add(ctk.CTkSlider, "s_seconds",
-            #        from_=1,
-            #        to=120,
-            #        number_of_steps=119,
-            #        height=30,
-            #        variable=secondsPerPallette,
-            #     ).grid(row=2, column=1, padx=(0, 20), pady=15, sticky="nsew")
 
         return LEDTheme(
             _name,

@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 import customtkinter as ctk
 import os
-from Configurator import Configurator
+from lib.Configurator import Configurator
 
 from lib.Navigation import NavigationPage
 from lib.Notifier import NotifierService

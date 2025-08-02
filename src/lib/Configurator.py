@@ -1,5 +1,6 @@
 import json
 import os
+
 from lib.Themes import Theme
 
 """
@@ -12,9 +13,23 @@ class Configurator:
 
     _SCHEMA_VER = 1
 
-    def __init__(self, appName: str):
+    DEFAULT_SETTINGS = {
+        "schema": _SCHEMA_VER,
+        "appearance_mode": "dark",
+        "theme": Theme.Cherry.value,
+    }
+
+    def __init__(self, appName: str, schemaVer: int=None):
+        if Configurator._INSTANCE is not None:
+            raise Exception("Configurator is a singleton and has already been initialized.")
+
+        if not schemaVer:
+            schemaVer = self._SCHEMA_VER
+
+        self.schemaVer = schemaVer
+        self.DEFAULT_SETTINGS["schema"] = schemaVer
         self.settings = {
-            "schema": self._SCHEMA_VER,
+            "schema": schemaVer,
         }
 
         self._defaultSettings()
@@ -34,6 +49,11 @@ class Configurator:
                     json.dump(self.settings, config_file, indent=4)
 
         self.loadSettings()
+    
+    def _defaultSettings(self, settings=None):
+        if settings is None:
+            settings = self.DEFAULT_SETTINGS.copy()
+        self.settings = settings
 
     def loadSettings(self):
         try:
@@ -41,10 +61,10 @@ class Configurator:
                 file_contents = json.load(config_file)
                 if (
                     "schema" not in file_contents
-                    or file_contents["schema"] != self._SCHEMA_VER
+                    or file_contents["schema"] != self.schemaVer
                 ):
                     print(
-                        f"Configuration schema mismatch. Expected {self._SCHEMA_VER}, found {file_contents.get('schema', 'unknown')}. Using default settings."
+                        f"Configuration schema mismatch. Expected {self.schemaVer}, found {file_contents.get('schema', 'unknown')}. Using default settings."
                     )
                     self._defaultSettings()
                     self.saveSettings()
@@ -64,15 +84,14 @@ class Configurator:
         except Exception as e:
             print(f"Error saving configuration: {e}")
 
-    def _defaultSettings(self):
-        self.settings = {
-            "schema": self._SCHEMA_VER,
-            "appearance_mode": "dark",
-            "theme": Theme.Cherry.value,
-        }
+    def get(self, key: str, default=None):
+        return self.settings.get(key, default)
+
+    def set(self, key: str, value):
+        self.settings[key] = value
 
     def getAppearanceMode(self):
-        return self.settings["appearance_mode"]
+        return self.get("appearance_mode")
 
     def setAppearanceMode(self, mode: str):
         if mode.lower() in ["dark", "light", "system"]:
@@ -83,7 +102,7 @@ class Configurator:
             )
 
     def getTheme(self):
-        return self.settings["theme"]
+        return self.get("theme")
 
     def setTheme(self, theme: Theme):
         self.settings["theme"] = theme.value
@@ -100,6 +119,6 @@ class Configurator:
             cls._INSTANCE = Configurator(appName)
         return cls._INSTANCE
 
-    @staticmethod
-    def getSchemaVersion() -> int:
-        return Configurator._SCHEMA_VER
+    @classmethod
+    def setSchemaVersion(cls, schemaVer: int):
+        cls._SCHEMA_VER = schemaVer

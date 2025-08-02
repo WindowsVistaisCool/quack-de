@@ -37,9 +37,17 @@ class LEDThemeSettings(EphemeralNavigationPage):
             self.ui.get("null_desc").drop()
             self.ui.get("f_main").grid()
 
+            def cmdWrapper(command):
+                def tgt(*args, **kwargs):
+                    self.ui.get("save").grid()
+                    command(*args, **kwargs)
+
+                return tgt
+
             uiFactory(
+                theme=self.theme,
                 ui=CommandUI(self.ui.get("f_main").getInstance()),
-                saveTrigger=lambda *_: self.ui.get("save").grid(),
+                withShowSaveButton=cmdWrapper,
             )
 
     def _initUI(self):
@@ -102,7 +110,7 @@ class LEDThemeSettings(EphemeralNavigationPage):
             NotifierService.notify(
                 f"{self.theme.friendlyName} settings saved successfully.", 1500
             )
-            # self.theme.saveSettings()
+            self.theme.saveData()
             self.appRoot.navigation.navigateBack()
 
         self.ui.get("return").setCommand(self.navigator.navigateBack)

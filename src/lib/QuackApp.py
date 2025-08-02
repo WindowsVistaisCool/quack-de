@@ -1,13 +1,21 @@
 import customtkinter as ctk
 
 from lib.CommandUI import CommandUI
+from lib.Configurator import Configurator
 from lib.Navigation import NavigationManager
 from lib.Notifier import NotifierService
 
 
 class QuackApp(ctk.CTk):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, appTitle="QuackApp", *args, **kwargs):
+        self.appTitle = appTitle
+        Configurator.initialize(appTitle)
+        ctk.set_appearance_mode(Configurator.getInstance().getAppearanceMode())
+        ctk.set_default_color_theme(Configurator.getInstance().getTheme())
+
         super().__init__(*args, **kwargs)
+
+        self.title(self.appTitle)
 
         self.ui = CommandUI(self)
 

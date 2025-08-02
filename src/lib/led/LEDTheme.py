@@ -1,6 +1,7 @@
 import threading
 import rpi_ws281x as ws
 
+from lib.Configurator import Configurator
 from lib.QuackApp import QuackApp
 from lib.led.LEDThemeSettings import LEDThemeSettings
 
@@ -18,14 +19,14 @@ class LEDTheme:
 
         self.imagePath = imagePath
 
+        self.data = Configurator.getInstance().get(self.id, {})
+
         self.loopTarget = loopTarget
         self.initTarget = initTarget
 
         self.settingUIFactory = settingsUIFactory
 
         self.app: 'QuackApp' = None
-
-        self._disableSafetySleep = False
 
         self.leds: 'ws.PixelStrip' = None
         self.break_event: 'threading.Event' = None
@@ -40,6 +41,21 @@ class LEDTheme:
         else:
             assert isinstance(app, QuackApp), "app must be an instance of QuackApp"
         return LEDThemeSettings(app, self, uiFactory=self.settingUIFactory)
+    
+    def getData(self) -> dict:
+        return self.data
+
+    def setData(self, key, value):
+        """
+        Sets a value in the LED theme data.
+        """
+        self.data[key] = value
+
+    def saveData(self, data: dict=None):
+        if not data:
+            data = self.getData()
+        Configurator.getInstance().set(self.id, data)
+        Configurator.getInstance().saveSettings()
 
     def passArgs(self, leds: 'ws.PixelStrip', break_event: 'threading.Event'):
         """
@@ -63,12 +79,6 @@ class LEDTheme:
         Returns True if the loop should stop, False otherwise.
         """
         return self.break_event.is_set()
-
-    def setFinished(self):
-        self._isFinished = True
-
-    def isFinished(self) -> bool:
-        return self._isFinished
 
     def runInit(self):
         """

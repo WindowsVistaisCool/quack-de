@@ -25,7 +25,7 @@ else:
         return datetime.datetime.now() - datetime.datetime.fromtimestamp(boot_time)
 
 
-from Configurator import Configurator
+from lib.Configurator import Configurator
 
 from lib.Navigation import EphemeralNavigationPage
 

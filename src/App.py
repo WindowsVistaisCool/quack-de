@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from threading import Thread
 
-from Configurator import Configurator
+from lib.Configurator import Configurator
 from LEDLoops import LEDThemes
 from LEDService import LEDService
 
@@ -25,12 +25,9 @@ class App(QuackApp):
     FONT_NAME = "Ubuntu Mono"
 
     def __init__(self):
-        Configurator.initialize(self.APP_TITLE)
-        ctk.set_appearance_mode(Configurator.getInstance().getAppearanceMode())
-        ctk.set_default_color_theme(Configurator.getInstance().getTheme())
+        Configurator.setSchemaVersion(2)
 
-        super().__init__()
-        self.title(self.APP_TITLE)
+        super().__init__(appTitle=self.APP_TITLE)
         self.geometry("800x480")
         self.resizable(False, False)
 
