@@ -14,6 +14,7 @@ class StatImg(EphemeralNavigationPage):
         self.image = img
 
         self._initUI()
+        self._initCommands()
 
     def _initUI(self):
         self.grid_rowconfigure(0, weight=1)
@@ -21,8 +22,12 @@ class StatImg(EphemeralNavigationPage):
 
         # add image
         self.ui.add(
-            ctk.CTkLabel,
+            ctk.CTkButton,
             "stat_img",
             image=self.image,
             text="",
-        ).grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+            border_width=0,
+        ).grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
+
+    def _initCommands(self):
+        self.ui.get("stat_img").setCommand(self.navigator.navigateBack)

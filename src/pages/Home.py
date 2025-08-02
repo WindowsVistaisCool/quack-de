@@ -32,15 +32,15 @@ class HomePage(NavigationPage):
         self.ui.add(
             ctk.CTkButton,
             "test",
-            text=f"click to goy",
-            font=(self.appRoot.FONT_NAME, 16),
-        ).place(x=30, y=85)
-        # ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
+            text=f"steven here",
+            font=(self.appRoot.FONT_NAME, 40),
+        ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
 
     def _initCommands(self):
         def test_tgt():
+            # self.appRoot.toggleNav(False)
             self.appRoot.navigation.navigateEphemeral(
-                StatImg(self.appRoot, img=PhotoImage(file="assets/images/goy.png"))
+                StatImg(self.appRoot, img=PhotoImage(file="assets/images/bashar.png"))
             )
 
         self.ui.get("test").setCommand(test_tgt)

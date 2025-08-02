@@ -56,8 +56,6 @@ Architecture: {platform.architecture()[0]}
 Hostname: {platform.node()}
 IP Address: {self.getPlatformIP()}
 Uptime: {getBootTime()}
-
-Configurator Schema: v{Configurator.getSchemaVersion()}
 """
 
         self._initUI()
