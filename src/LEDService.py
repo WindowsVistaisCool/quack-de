@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from App import App
 
@@ -10,6 +11,7 @@ import rpi_ws281x as ws
 from LEDLoops import LEDThemes
 from lib.led.LEDTheme import LEDTheme
 
+
 class LEDService:
     _instance = None
 
@@ -17,13 +19,15 @@ class LEDService:
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
-    LED_BRIGHTNESS = 255 # 0-255
+    LED_BRIGHTNESS = 255  # 0-255
     LED_INVERT = False
     LED_CHANNEL = 0
 
-    def __init__(self, appRoot: 'App'):
+    def __init__(self, appRoot: "App"):
         if LEDService._instance is not None:
-            raise RuntimeError("LEDService is a singleton and cannot be instantiated multiple times.")
+            raise RuntimeError(
+                "LEDService is a singleton and cannot be instantiated multiple times."
+            )
         self.leds = ws.PixelStrip(
             self.LED_COUNT,
             self.LED_PIN,
@@ -31,13 +35,13 @@ class LEDService:
             self.LED_DMA,
             self.LED_INVERT,
             self.LED_BRIGHTNESS,
-            self.LED_CHANNEL
+            self.LED_CHANNEL,
         )
         self.leds.begin()
 
-        self.appRoot: 'App' = appRoot
+        self.appRoot: "App" = appRoot
 
-        LEDThemes() # initialize all LED loops
+        LEDThemes()  # initialize all LED loops
         self.loop = LEDThemes.null()
 
         self._breakLoopEvent = threading.Event()
@@ -61,25 +65,31 @@ class LEDService:
             if self.loop is None or self.loop.id == "null":
                 time.sleep(0.01)
                 continue
-            
+
             # Ensure we're not in the middle of a loop change
             if self._isChangingLoop:
                 time.sleep(0.01)
                 continue
-                
+
             # Initialize the current loop safely
             try:
                 self.loop.passApp(self.appRoot)
                 self.loop.passArgs(self.leds, self._breakLoopEvent)
                 self.loop.runInit()
             except Exception:
-                self.errorCallback(f"Failed to initialize loop {self.loop.id}: {traceback.format_exc()}")
+                self.errorCallback(
+                    f"Failed to initialize loop {self.loop.id}: {traceback.format_exc()}"
+                )
                 time.sleep(0.1)
                 self.setLoop(LEDThemes.null())  # Reset to null loop on error
                 continue
-            
+
             # Run the loop until break or loop change
-            while not self._breakLoopEvent.is_set() and self._isRunning and not self._loopChangeEvent.is_set():
+            while (
+                not self._breakLoopEvent.is_set()
+                and self._isRunning
+                and not self._loopChangeEvent.is_set()
+            ):
                 time.sleep(0.001)
                 try:
                     stat = self.loop.runLoop()
@@ -90,41 +100,41 @@ class LEDService:
                     self.errorCallback(traceback.format_exc())
                     self._breakLoopEvent.set()
                     break
-            
+
             # Clear events for next loop
             self._breakLoopEvent.clear()
             self._loopChangeEvent.clear()
-        
-    def setLoop(self, loop: 'LEDTheme' = None):
+
+    def setLoop(self, loop: "LEDTheme" = None):
         # ensure this is not called multiple times
         if self._isChangingLoop and not self._hasChangeTimedOut:
             return
-        
+
         if not loop:
             loop = LEDThemes.null()
 
         if loop.id == self.loop.id and not self._isChangingLoop:
             return
-        
+
         self._isChangingLoop = True
-        
+
         # Signal current loop to stop
         self._breakLoopEvent.set()
         self._loopChangeEvent.set()
-        
+
         # Wait a bit longer for current loop iteration to finish cleanly
         time.sleep(0.05)
-        
+
         # Set new loop
         self.loop = loop
-        
+
         if self._hasChangeTimedOut:
             self._hasChangeTimedOut = False
 
         self._isChangingLoop = False
 
     def setBrightness(self, brightness: int):
-        self.leds.setBrightness(int(brightness) & 0xFF) # constrain brightness to 0-255
+        self.leds.setBrightness(int(brightness) & 0xFF)  # constrain brightness to 0-255
         self.leds.show()
 
     def setSolid(self, r: int, g: int, b: int):
@@ -132,10 +142,10 @@ class LEDService:
         for i in range(self.LED_COUNT):
             self.leds.setPixelColor(i, ws.Color(r, g, b))
         self.leds.show()
-    
+
     def off(self):
         self.setSolid(0, 0, 0)
-    
+
     def shutdown(self):
         """Gracefully shutdown the LED service"""
         self._isRunning = False

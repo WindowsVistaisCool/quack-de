@@ -1,14 +1,16 @@
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
 from lib.Navigation import NavigationPage
 
+
 class HomePage(NavigationPage):
-    def __init__(self, navigator, appRoot: 'App', master, **kwargs):
+    def __init__(self, navigator, appRoot: "App", master, **kwargs):
         super().__init__(navigator, master, title="Home", **kwargs)
-        self.appRoot: 'App' = appRoot
+        self.appRoot: "App" = appRoot
 
         self.greetingText = ctk.StringVar(value=f"🏠 Home")
 
@@ -16,17 +18,21 @@ class HomePage(NavigationPage):
         self._initCommands()
 
     def _initUI(self):
-        self.ui.add(ctk.CTkLabel, "title",
-                    textvariable=self.greetingText,
-                    font=(self.appRoot.FONT_NAME, 32, "bold")
-                    ).grid(row=0, column=0, padx=30, pady=(35, 10), sticky="nw")
+        self.ui.add(
+            ctk.CTkLabel,
+            "title",
+            textvariable=self.greetingText,
+            font=(self.appRoot.FONT_NAME, 32, "bold"),
+        ).grid(row=0, column=0, padx=30, pady=(35, 10), sticky="nw")
 
-        self.ui.add(ctk.CTkLabel, "description",
-                    text=f"idk what to put here uhhh shrug ig",
-                    font=(self.appRoot.FONT_NAME, 16),
-                    justify="left"
-                    ).place(x=30, y=85)
-                    # ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
+        self.ui.add(
+            ctk.CTkLabel,
+            "description",
+            text=f"idk what to put here uhhh shrug ig",
+            font=(self.appRoot.FONT_NAME, 16),
+            justify="left",
+        ).place(x=30, y=85)
+        # ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
 
     def _initCommands(self):
         pass

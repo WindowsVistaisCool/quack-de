@@ -6,13 +6,13 @@ from lib.led.LEDThemeSettings import LEDThemeSettings
 
 class LEDTheme:
     def __init__(self,
-                 id: str, loopTarget=lambda *_: 1,
-                 initTarget=lambda *_: None,
-                 settingsUIFactory: callable = None,
-                 *,
-                 imagePath: str = "assets/images/missing.png",
-                 friendlyName: str = None,
-                ):
+            id: str, loopTarget=lambda *_: 1,
+            initTarget=lambda *_: None,
+            settingsUIFactory: callable = None,
+            *,
+            imagePath: str = "assets/images/missing.png",
+            friendlyName: str = None,
+        ):
         self.id = id
         self.friendlyName = friendlyName or self.id
 

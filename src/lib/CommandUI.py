@@ -2,12 +2,14 @@ import traceback
 import customtkinter as ctk
 from typing import Generic, TypeVar
 
-T = TypeVar('T', bound=ctk.CTkBaseClass)
+T = TypeVar("T", bound=ctk.CTkBaseClass)
 
 """
 so uhhhhhh yeah this is kinda poopy and a mess
 [TODO]
 """
+
+
 class CommandUIItem(list, Generic[T]):
     def __init__(self, root, className, instance: T, command, exceptionCallback):
         super().__init__([root, className, instance, command, exceptionCallback])
@@ -15,7 +17,9 @@ class CommandUIItem(list, Generic[T]):
         self.placeProperties = {}
 
     def __new__(cls, root, className, instance, command, exceptionCallback):
-        return super().__new__(cls, [root, className, instance, command, exceptionCallback])
+        return super().__new__(
+            cls, [root, className, instance, command, exceptionCallback]
+        )
 
     @property
     def root(self):
@@ -28,7 +32,7 @@ class CommandUIItem(list, Generic[T]):
     @property
     def instance(self) -> T:
         return self[2]
-    
+
     @property
     def command(self):
         return self[3]
@@ -36,7 +40,7 @@ class CommandUIItem(list, Generic[T]):
     @property
     def exceptionCallback(self):
         return self[4]
-    
+
     def getInstance(self) -> T:
         return self.instance
 
@@ -48,6 +52,7 @@ class CommandUIItem(list, Generic[T]):
                 ex = f"{traceback.format_exc()}"
                 print(ex)
                 self.exceptionCallback(ex)
+
         self[3] = commandWrapper
         if command and callable(command):
             self.instance.configure(command=commandWrapper)
@@ -57,11 +62,11 @@ class CommandUIItem(list, Generic[T]):
 
     def setExceptionCallback(self, exceptionCallback):
         self[4] = exceptionCallback
-    
+
     def withGridProperties(self, **kwargs):
         self.gridProperties.update(kwargs)
         return self
-    
+
     def grid(self, **kwargs):
         if kwargs.__len__() != 0:
             self.gridProperties = kwargs
@@ -69,7 +74,7 @@ class CommandUIItem(list, Generic[T]):
         elif self.gridProperties.keys().__len__() > 0:
             self.instance.grid(**self.gridProperties)
         return self
-    
+
     def withPlaceProperties(self, **kwargs):
         self.placeProperties.update(kwargs)
         return self
@@ -102,15 +107,14 @@ class CommandUI:
     This class is useful for creating collections of UI elements that can be easily managed.
 
     """
+
     def __init__(self, master):
         self.master = master
-        self.items = {
-            "root": CommandUIItem(None, None, master, None, None)
-        }
+        self.items = {"root": CommandUIItem(None, None, master, None, None)}
         self.exceptionUI: CommandUIItem = None
         self.exceptionCallback = lambda e: print(e)
 
-    def add(self, className, id: str, root = None, **kwargs):
+    def add(self, className, id: str, root=None, **kwargs):
         if id in self.items:
             raise ValueError(f"UI element '{id}' already exists.")
         if not root:
@@ -120,7 +124,8 @@ class CommandUI:
             className,
             className(master=root, **kwargs),
             None if not kwargs.get("command") else kwargs["command"],
-            self.exceptionCallback)
+            self.exceptionCallback,
+        )
         return self.items[id]
 
     # [TODO] what was i smoking when i wrote this?
@@ -136,7 +141,7 @@ class CommandUI:
     #         None if not kwargs.get("command") else kwargs["command"],
     #         self.exceptionCallback)
     #     return self.items[id]
-    
+
     # def addExceptionUI(self, className, root=None, **kwargs):
     #     if self.exceptionUI is not None:
     #         raise ValueError("Exception UI already exists.")
@@ -148,7 +153,9 @@ class CommandUI:
     def addCommand(self, id: str, command):
         if id not in self.items:
             raise ValueError(f"UI element '{id}' does not exist.")
-        self.items[id].setExceptionCallback(self.exceptionCallback) # re-add the exception callback
+        self.items[id].setExceptionCallback(
+            self.exceptionCallback
+        )  # re-add the exception callback
         self.items[id].command = command
 
     def setExceptionCallback(self, callback):
@@ -162,7 +169,7 @@ class CommandUI:
     def gridAll(self):
         for item in self.items.values():
             item.grid()
-    
+
     def dropAll(self):
         for item in self.items.values():
             if item.className is None:

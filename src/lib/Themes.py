@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import enum
 
+
 class Theme(enum.Enum):
     Cherry = "./assets/themes/cherry.json"
     Midnight = "./assets/themes/midnight.json"
@@ -12,4 +13,3 @@ class Theme(enum.Enum):
     @classmethod
     def getThemeNames(cls):
         return [theme.name for theme in cls]
-

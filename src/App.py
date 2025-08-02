@@ -17,6 +17,7 @@ from pages.LEDs import LEDsPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
 
+
 class App(QuackApp):
     VERSION = f"v1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
@@ -38,11 +39,11 @@ class App(QuackApp):
         self._fullAccessMode = False
         self._fullAccessTimerID = None
         self._fullAccessLockCallbacks = []
-    
+
         self._initUI()
         self._initCommands()
         self._addPages()
-    
+
     def _initUI(self):
         # init grid
         self.grid_columnconfigure(0, weight=0)
@@ -56,41 +57,49 @@ class App(QuackApp):
         self.content_root.getInstance().grid_columnconfigure(0, weight=1)
 
         # init nav sidebar
-        self.navbar = self.ui.add(ctk.CTkFrame, "sb_main",
-                              width=800,
-                              corner_radius=0)
+        self.navbar = self.ui.add(ctk.CTkFrame, "sb_main", width=800, corner_radius=0)
         self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
         self.navbar.getInstance().grid_rowconfigure(3, weight=1)
 
         self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
-        self.ui.add(ctk.CTkLabel, "app_title",
-                    root=self.navbar.getInstance(),
-                    textvariable=self._fullAccessText,
-                    font=(self.FONT_NAME, 28, "bold"),
-                    ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
+        self.ui.add(
+            ctk.CTkLabel,
+            "app_title",
+            root=self.navbar.getInstance(),
+            textvariable=self._fullAccessText,
+            font=(self.FONT_NAME, 28, "bold"),
+        ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
 
         self.clock_label = ctk.StringVar(value="12:00 AM")
-        self.ui.add(ctk.CTkLabel, "clock",
-                    root=self.navbar.getInstance(),
-                    textvariable=self.clock_label,
-                    font=(self.FONT_NAME, 16),
-                    ).grid(row=1, column=0, padx=20, pady=(0, 10), sticky="new")
+        self.ui.add(
+            ctk.CTkLabel,
+            "clock",
+            root=self.navbar.getInstance(),
+            textvariable=self.clock_label,
+            font=(self.FONT_NAME, 16),
+        ).grid(row=1, column=0, padx=20, pady=(0, 10), sticky="new")
 
-        self.ui.add(ctk.CTkButton, "nav_home",
-                    root=self.navbar.getInstance(),
-                    text="Home", 
-                    font=(self.FONT_NAME, 18),
-                    width=150, height=60,
-                    corner_radius=20
-                    ).grid(row=2, column=0, padx=20, pady=(15, 0), sticky="new")
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_home",
+            root=self.navbar.getInstance(),
+            text="Home",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=2, column=0, padx=20, pady=(15, 0), sticky="new")
 
-        self.ui.add(ctk.CTkButton, "nav_leds",
-                    root=self.navbar.getInstance(),
-                    text="LEDs",
-                    font=(self.FONT_NAME, 18),
-                    width=150, height=60,
-                    corner_radius=20
-                    ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_leds",
+            root=self.navbar.getInstance(),
+            text="LEDs",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
         # if isDev():
         #     self.ui.add(ctk.CTkButton, "nav_debug",
@@ -101,36 +110,46 @@ class App(QuackApp):
         #                 corner_radius=20
         #                 ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
 
-        self.ui.add(ctk.CTkButton, "nav_settings", 
-                    root=self.navbar.getInstance(),
-                    text="Settings",
-                    font=(self.FONT_NAME, 18),
-                    width=150, height=60, 
-                    corner_radius=20
-                    ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="sew")
-        
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_settings",
+            root=self.navbar.getInstance(),
+            text="Settings",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="sew")
+
         self.notifierUI = CommandUI(self)
-        self.notifierBase = self.notifierUI.add(ctk.CTkFrame, "notifier_base",
-                                                fg_color="transparent",
-                                                bg_color="transparent",
-                                                ).withGridProperties(row=1, column=1, padx=0, pady=0, sticky="sew")
+        self.notifierBase = self.notifierUI.add(
+            ctk.CTkFrame,
+            "notifier_base",
+            fg_color="transparent",
+            bg_color="transparent",
+        ).withGridProperties(row=1, column=1, padx=0, pady=0, sticky="sew")
         self.notifierBase.getInstance().grid_columnconfigure(0, weight=1)
         self.notifierBase.getInstance().grid_rowconfigure(0, weight=1)
         self.notifierBase.grid()
 
         self.notifier = NotifierUI(self.notifierBase.getInstance(), self.notifierUI)
         NotifierService.setActiveUI(self.notifier)
-        NotifierService.notify("", 100) # display a blank notification to initialize sizing properly
+        NotifierService.notify(
+            "", 100
+        )  # display a blank notification to initialize sizing properly
 
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
         # if isDev():
         #     self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
-        self.ui.addCommand("nav_settings", lambda: self.navigation.navigate(SettingsPage))
+        self.ui.addCommand(
+            "nav_settings", lambda: self.navigation.navigate(SettingsPage)
+        )
 
         # initilaze the clock
         self.clock_enabled = True
+
         def clock_worker():
             now = None
             while self.clock_enabled:
@@ -139,6 +158,7 @@ class App(QuackApp):
                 if now.minute % 60 == 0 and now.second == 0:
                     self.navigation.getPage(HomePage).updateGreeting(now)
                 time.sleep(1)
+
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
 
     def _addPages(self):
@@ -168,13 +188,16 @@ class App(QuackApp):
         self._fullAccessMode = enable
         if enable:
             self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
-            self._fullAccessTimerID = self.after((1 * 60 * 1000) if isDev() else (5 * 60 * 1000), self._disableFullAccessCallback)
+            self._fullAccessTimerID = self.after(
+                (1 * 60 * 1000) if isDev() else (5 * 60 * 1000),
+                self._disableFullAccessCallback,
+            )
         elif not enable and self._fullAccessTimerID is not None:
             self.after_cancel(self._fullAccessTimerID)
             [call() for call in self._fullAccessLockCallbacks]
             self._fullAccessText.set(f"{self.APP_TITLE}")
             self._fullAccessTimerID = None
-    
+
     def hasFullAccess(self) -> bool:
         """Returns whether full access mode is enabled."""
         return self._fullAccessMode
@@ -183,12 +206,14 @@ class App(QuackApp):
         """Resets the full access timer, if it is running."""
         if self._fullAccessTimerID is not None:
             self.after_cancel(self._fullAccessTimerID)
-            self._fullAccessTimerID = self.after(5 * 60 * 1000, self._disableFullAccessCallback)
-        
+            self._fullAccessTimerID = self.after(
+                5 * 60 * 1000, self._disableFullAccessCallback
+            )
+
     def addLockCallback(self, callback):
         """Adds a callback to be called when the lock is activated."""
         self._fullAccessLockCallbacks.append(callback)
-        
+
 
 if __name__ == "__main__":
     app = App()
@@ -198,4 +223,3 @@ if __name__ == "__main__":
     app.navigation.navigate(LEDsPage)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
     app.mainloop()
-
