@@ -1,9 +1,13 @@
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
+from tkinter import PhotoImage
+from pages.ephemeral.StatImg import StatImg
+
 from lib.Navigation import NavigationPage
 
 
@@ -26,16 +30,20 @@ class HomePage(NavigationPage):
         ).grid(row=0, column=0, padx=30, pady=(35, 10), sticky="nw")
 
         self.ui.add(
-            ctk.CTkLabel,
-            "description",
-            text=f"idk what to put here uhhh shrug ig",
+            ctk.CTkButton,
+            "test",
+            text=f"click to goy",
             font=(self.appRoot.FONT_NAME, 16),
-            justify="left",
         ).place(x=30, y=85)
         # ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
 
     def _initCommands(self):
-        pass
+        def test_tgt():
+            self.appRoot.navigation.navigateEphemeral(
+                StatImg(self.appRoot, img=PhotoImage(file="assets/images/goy.png"))
+            )
+
+        self.ui.get("test").setCommand(test_tgt)
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 5 and datetime.hour < 12:
