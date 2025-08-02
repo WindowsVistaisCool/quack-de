@@ -46,6 +46,8 @@ class HomePage(NavigationPage):
         self.ui.get("test").setCommand(test_tgt)
 
     def updateGreeting(self, datetime):
+        if datetime.hour >= 2 and datetime.hour < 5:
+            self.greetingText.set("What are you still doing awake?! 😴")
         if datetime.hour >= 5 and datetime.hour < 12:
             self.greetingText.set("Good Morning! 🌄")
         elif datetime.hour >= 12 and datetime.hour < 18:
