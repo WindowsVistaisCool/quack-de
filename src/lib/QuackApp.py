@@ -11,7 +11,7 @@ class QuackApp(ctk.CTk):
         self.ui = CommandUI(self)
 
         NotifierService.setDelayFuncs(
-            lambda delay_ms, end_call: self.after(delay_ms, end_call),
+            self.after,
             self.after_cancel
         )
         NotifierService.init()
