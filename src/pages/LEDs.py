@@ -38,7 +38,7 @@ class LEDsPage(NavigationPage):
         # goes (0, 0), (0, 1), (1, 0), (1, 1), etc. in grid units
         arrangement = (
             LEDThemes.getTheme("twinkle"),
-            LEDThemes.getTheme("pacifica"),
+            # LEDThemes.getTheme("pacifica"),
             LEDThemes.getTheme("rainbow"),
             LEDThemes.getTheme("rgbSnake"),
             LEDThemes.getTheme("fire2012"),

@@ -3,15 +3,16 @@ import time
 from datetime import datetime
 from threading import Thread
 
-from lib.Configurator import Configurator
 from LEDLoops import LEDThemes
 from LEDService import LEDService
 
+from lib.Configurator import Configurator
 from lib.CommandUI import CommandUI
 from lib.DevChecks import isDev
 from lib.Notifier import NotifierService, NotifierUI
 from lib.QuackApp import QuackApp
 
+from pages.Calendar import CalendarPage
 from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
 from pages.Home import HomePage
@@ -56,7 +57,7 @@ class App(QuackApp):
         # init nav sidebar
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main", width=800, corner_radius=0)
         self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
-        self.navbar.getInstance().grid_rowconfigure(3, weight=1)
+        self.navbar.getInstance().grid_rowconfigure(5, weight=1)
 
         self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
         self.ui.add(
@@ -98,14 +99,16 @@ class App(QuackApp):
             corner_radius=20,
         ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
-        # if isDev():
-        #     self.ui.add(ctk.CTkButton, "nav_debug",
-        #                 root=self.navbar.getInstance(),
-        #                 text="Debug",
-        #                 font=(self.FONT_NAME, 18),
-        #                 width=150, height=60,
-        #                 corner_radius=20
-        #                 ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="sew")
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_calendar",
+            root=self.navbar.getInstance(),
+            text="Calendar",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -113,11 +116,12 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             text="Settings",
             font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
+            width=140,
+            height=50,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="sew")
+        ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="s")
 
+        # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
         self.notifierBase = self.notifierUI.add(
             ctk.CTkFrame,
@@ -138,8 +142,7 @@ class App(QuackApp):
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
-        # if isDev():
-        #     self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
+        self.ui.addCommand("nav_calendar", lambda: self.navigation.navigate(CalendarPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
         )
@@ -161,7 +164,7 @@ class App(QuackApp):
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
-        # DebugPage(self.navigation, self, self.content_root.getInstance())
+        CalendarPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())

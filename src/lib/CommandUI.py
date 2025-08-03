@@ -93,11 +93,12 @@ class CommandUIItem(list, Generic[T]):
 
     @command.setter
     def command(self, value):
-        self[3] = value
-        if value and callable(value):
-            self.instance.configure(command=value)
-        else:
-            self.instance.configure(command=None)
+        self.setCommand(value)
+        # self[3] = value
+        # if value and callable(value):
+        #     self.instance.configure(command=value)
+        # else:
+        #     self.instance.configure(command=None)
 
 
 class CommandUI:
