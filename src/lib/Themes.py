@@ -3,12 +3,13 @@ import enum
 
 
 class Theme(enum.Enum):
-    Cherry = "./assets/themes/cherry.json"
-    Midnight = "./assets/themes/midnight.json"
-    Metal = "./assets/themes/metal.json"
-    Sky = "./assets/themes/sky.json"
-    Violet = "./assets/themes/violet.json"
-    Yellow = "./assets/themes/yellow.json"
+    AUTUMN = "./assets/themes/autumn.json"
+    BREEZE = "./assets/themes/breeze.json"
+    CHERRY = "./assets/themes/cherry.json"
+    COFFEE = "./assets/themes/coffee.json"
+    MARSH = "./assets/themes/marsh.json"
+    MIDNIGHT = "./assets/themes/midnight.json"
+    ROSE = "./assets/themes/rose.json"
 
     @classmethod
     def getThemeNames(cls):

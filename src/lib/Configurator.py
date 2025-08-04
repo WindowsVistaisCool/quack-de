@@ -16,7 +16,7 @@ class Configurator:
     DEFAULT_SETTINGS = {
         "schema": _SCHEMA_VER,
         "appearance_mode": "dark",
-        "theme": Theme.Cherry.value,
+        "theme": Theme.BREEZE.value,
     }
 
     def __init__(self, appName: str, schemaVer: int=None):
