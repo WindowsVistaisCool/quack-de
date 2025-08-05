@@ -107,6 +107,7 @@ class CommandUI:
 
     This class is useful for creating collections of UI elements that can be easily managed.
 
+    TODO: add warning when item is added without gridding/placing/packing it
     """
 
     def __init__(self, master):

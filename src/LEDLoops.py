@@ -7,6 +7,7 @@ import threading
 import time
 
 from lib.CommandUI import CommandUI
+from lib.SwappableUI import SwappableUI
 from lib.led.LEDTheme import LEDTheme
 
 
@@ -424,6 +425,7 @@ class LEDThemes:
             iterations.set(data.get("iterations", _iterations))
             delay.set(data.get("delay", _delay))
             step_size.set(data.get("stepSize", _step_size))
+
         def target(theme: "LEDTheme"):
             nonlocal _iterations, _delay, _step_size
 
@@ -545,17 +547,7 @@ class LEDThemes:
             # heat up randomly
             reversePixelsRange = list(range(self.leds.numPixels() - 1))[::-1][:-1]
             for k in reversePixelsRange:
-                temps[k] = (
-                    int(
-                        (
-                            temps[k - 1]
-                            + temps[k - 2]
-                            + temps[k - 2]
-                        )
-                        / 3
-                    )
-                    & 0xFF
-                )
+                temps[k] = int((temps[k - 1] + temps[k - 2] + temps[k - 2]) / 3) & 0xFF
 
             if FastLEDFunctions.random8(0, 0xFF) < _sparking:
                 random_sparked = FastLEDFunctions.random8(lim=7)
@@ -568,7 +560,9 @@ class LEDThemes:
             for i in range(self.leds.numPixels()):
                 color = FastLEDFunctions.HeatColor(temps[i])
                 if _reversed:
-                    self.leds.setPixelColor(self.leds.numPixels() - 1 - i, color)
+                    self.leds.setPixelColor(
+                        self.leds.numPixels() - 1 - i, ws.Color(*color)
+                    )
                 else:
                     self.leds.setPixelColor(i, ws.Color(*color))
             if self.checkBreak():
@@ -588,9 +582,7 @@ class LEDThemes:
                 number_of_steps=254,
                 height=30,
             ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
-                withShowSaveButton(
-                    lambda *_: theme.setData("cooling", cooling.get())
-                )
+                withShowSaveButton(lambda *_: theme.setData("cooling", cooling.get()))
             )
 
             ui.add(
@@ -605,9 +597,7 @@ class LEDThemes:
                 number_of_steps=254,
                 height=30,
             ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
-                withShowSaveButton(
-                    lambda *_: theme.setData("sparking", sparking.get())
-                )
+                withShowSaveButton(lambda *_: theme.setData("sparking", sparking.get()))
             )
 
             ui.add(
@@ -615,10 +605,10 @@ class LEDThemes:
                 "c_reversed",
                 variable=reversed,
                 text="Reverse",
-            ).grid(row=2, columnspan=2, padx=(20, 20), pady=(0, 15), sticky="nsew").setCommand(
-                withShowSaveButton(
-                    lambda *_: theme.setData("reversed", reversed.get())
-                )
+            ).grid(
+                row=2, columnspan=2, padx=(20, 20), pady=(0, 15), sticky="nsew"
+            ).setCommand(
+                withShowSaveButton(lambda *_: theme.setData("reversed", reversed.get()))
             )
 
         return LEDTheme(
@@ -636,32 +626,41 @@ class LEDThemes:
         tailScaleFactor = ctk.IntVar(value=250)
         _tailScaleFactor = tailScaleFactor.get()
 
-        delay = ctk.IntVar(value=10)  # ms
-        _delay = delay.get()
+        step_size = ctk.IntVar(value=1)  # pixels to skip
+        _step_size = step_size.get()
 
         hue = 0
+
         def init(self: "LEDTheme"):
             data = self.getData()
             tailScaleFactor.set(data.get("tailScaleFactor", _tailScaleFactor))
-            delay.set(data.get("delay", _delay))
+            step_size.set(data.get("stepSize", _step_size))
+
         def target(self: "LEDTheme"):
             nonlocal hue
-            nonlocal _tailScaleFactor, _delay
+            nonlocal _tailScaleFactor, _step_size
 
-            rangeList = list(range(0, self.leds.numPixels()))
+            rangeList = list(
+                range(0, self.leds.numPixels(), max(1, _step_size))
+            )  # Use step_size to skip pixels
             for k in range(2):
                 if k % 2 != 0:
                     rangeList.reverse()
                 for i in rangeList:
                     if self.checkBreak():
                         return True
-                    hue += 1
+                    hue += 4
                     hue &= 0xFF
-                    self.leds.setPixelColor(
-                        i, ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255))
-                    )
-                    # self.leds.setPixelColor(i - 1 & self.leds.numPixels(), ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)))
 
+                    # Set multiple pixels if step_size > 1 to fill gaps
+                    for offset in range(min(_step_size, self.leds.numPixels() - i)):
+                        if i + offset < self.leds.numPixels():
+                            self.leds.setPixelColor(
+                                i + offset,
+                                ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
+                            )
+
+                    # Apply tail fading - ensure all pixels get faded for consistent tail effect
                     for k in range(self.leds.numPixels()):
                         if self.checkBreak():
                             return True
@@ -674,12 +673,15 @@ class LEDThemes:
                                 )
                             ),
                         )
+
                     if isinstance(tailScaleFactor, ctk.IntVar):
                         _tailScaleFactor = tailScaleFactor.get()
-                    if isinstance(delay, ctk.IntVar):
-                        _delay = delay.get()
+                    if isinstance(step_size, ctk.IntVar):
+                        if _step_size != step_size.get():
+                            _step_size = max(1, step_size.get())
+                            return None  # return but keep loop running
                     self.leds.show()
-                    time.sleep(_delay / 10000)
+                    time.sleep(10 / 1000)
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
@@ -687,7 +689,7 @@ class LEDThemes:
                 "l_tailScaleFactor",
                 text="Tail Length",
                 font=("Arial", 20),
-            ).grid(row=0, column=0, padx=20, pady=20, sticky="nsw")
+            ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(
                 ctk.CTkSlider,
                 "s_tailScaleFactor",
@@ -696,25 +698,28 @@ class LEDThemes:
                 to=255,
                 number_of_steps=249,
                 height=30,
-            ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nsew").setCommand(
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
                 withShowSaveButton(
                     lambda *_: theme.setData("tailScaleFactor", tailScaleFactor.get())
                 )
             )
-            ui.add(ctk.CTkLabel, "l_delay", text="Delay (ms)", font=("Arial", 20)).grid(
-                row=1, column=0, padx=20, pady=(0, 20), sticky="nsw"
-            )
+            ui.add(
+                ctk.CTkLabel,
+                "l_step_size",
+                text="Snake Speed",
+                font=("Arial", 20),
+            ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
             ui.add(
                 ctk.CTkSlider,
-                "s_delay",
-                variable=delay,
+                "s_step_size",
+                variable=step_size,
                 from_=1,
-                to=500,
-                number_of_steps=499,
+                to=7,
+                number_of_steps=8,
                 height=30,
-            ).grid(row=1, column=1, padx=(0, 20), pady=(0, 20), sticky="nsew").setCommand(
+            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
                 withShowSaveButton(
-                    lambda *_: theme.setData("delay", delay.get())
+                    lambda *_: theme.setData("stepSize", step_size.get())
                 )
             )
 
@@ -1096,7 +1101,7 @@ class LEDThemes:
         [TODO] describe
         Originally wrote for Arduino but adapted for Python.
         """
-        palettes = (
+        palettes = [
             Palette(
                 "C9",
                 {
@@ -1342,7 +1347,7 @@ class LEDThemes:
                     "Ice_Blue3",
                 ],
             ),
-        )
+        ]
 
         twinkleSpeed = ctk.IntVar(value=5)  # 1-8
         twinkleDensity = ctk.IntVar(value=4)  # 1-8
@@ -1364,19 +1369,19 @@ class LEDThemes:
 
         def init(self: "LEDTheme"):
             nonlocal currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
-            if not palettes:
-                raise ValueError("No palettes provided for twinkle effect")
 
             data = self.getData()
             twinkleSpeed.set(data.get("twinkleSpeed", _twinkleSpeed))
             twinkleDensity.set(data.get("twinkleDensity", _twinkleDensity))
             secondsPerPallette.set(data.get("secondsPerPallette", _secondsPerPallette))
-            coolLikeIncandescent.set(data.get("coolLikeIncandescent", _coolLikeIncandescent))
+            coolLikeIncandescent.set(
+                data.get("coolLikeIncandescent", _coolLikeIncandescent)
+            )
 
             # Initialize the first palette
             rawPalettes = [p.get() for p in palettes]
             currentIndex = 0
-            targetPalette = rawPalettes[currentIndex]
+            targetPalette = rawPalettes[currentIndex] if rawPalettes else [(0, 0, 0)] * 16
             currentPalette = (0x000000,) * len(targetPalette)
             blendCallRunning = False
             paletteSwapCallRunning = False
@@ -1509,41 +1514,105 @@ class LEDThemes:
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
+            nonlocal palettes
 
+            sui = SwappableUI(ui.master)
+            sui.grid(row=0, column=0, columnspan=2, padx=20, pady=5, sticky="nsew")
+            f_sliders = sui.addFrame("sliders")
+            f_sliders.grid_columnconfigure(0, weight=0)
+            f_sliders.grid_columnconfigure(1, weight=1)
             ui.add(
-                ctk.CTkLabel, "l_speed", text="Speed (1-8):", font=("Arial", 20)
-            ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+                ctk.CTkLabel,
+                "l_speed",
+                root=f_sliders,
+                text="Speed (1-8):",
+                font=("Arial", 20),
+            ).grid(row=0, column=0, padx=(0, 20), pady=15, sticky="nsw")
             ui.add(
                 ctk.CTkSlider,
                 "s_speed",
+                root=f_sliders,
                 from_=1,
                 to=8,
                 number_of_steps=7,
                 height=30,
                 variable=twinkleSpeed,
-            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+            ).grid(row=0, column=1, padx=0, pady=15, sticky="nsew").setCommand(
                 withShowSaveButton(
                     lambda *_: theme.setData("twinkleSpeed", twinkleSpeed.get())
                 )
             )
-
             ui.add(
-                ctk.CTkLabel, "l_density", text="Density (1-8):", font=("Arial", 20)
-            ).grid(row=1, column=0, padx=20, pady=15, sticky="nsw")
+                ctk.CTkLabel,
+                "l_density",
+                root=f_sliders,
+                text="Density (1-8):",
+                font=("Arial", 20),
+            ).grid(row=1, column=0, padx=(0, 20), pady=15, sticky="nsw")
             ui.add(
                 ctk.CTkSlider,
                 "s_density",
+                root=f_sliders,
                 from_=1,
                 to=8,
                 number_of_steps=7,
                 height=30,
                 variable=twinkleDensity,
-            ).grid(row=1, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+            ).grid(row=1, column=1, padx=0, pady=15, sticky="nsew").setCommand(
                 withShowSaveButton(
                     lambda *_: theme.setData("twinkleDensity", twinkleDensity.get())
                 )
             )
+            ui.add(
+                ctk.CTkButton,
+                "b_palettes",
+                root=f_sliders,
+                text="Palettes",
+                command=lambda: sui.setFrame("palettes"),
+            ).grid(row=2, column=0, columnspan=2, padx=20, pady=15, sticky="nsew")
 
+            f_palettes = sui.addFrame("palettes")
+            ui.add(
+                ctk.CTkButton,
+                "b_back",
+                root=f_palettes,
+                text="Back",
+                command=lambda: sui.setFrame("sliders"),
+            ).grid(row=0, column=0, padx=20, pady=15, sticky="nsew")
+            ui.add(
+                ctk.CTkButton,
+                "b_add_random",
+                root=f_palettes,
+                text="Add Random Palette",
+                command=lambda: (
+                    palettes.append(
+                        Palette(
+                            "Random Palette",
+                            palette=[
+                                FastLEDFunctions.fromHSV(
+                                    random.randint(0, 255),  # hue
+                                    random.randint(220, 255),  # saturation (avoid white)
+                                    random.randint(160, 255),  # value (avoid black)
+                                )
+                                for _ in range(16)
+                            ],
+                        ),
+                    ),
+                    theme.runInit(),
+                )
+            ).grid(row=1, column=0, padx=20, pady=15, sticky="nsew")
+            ui.add(
+                ctk.CTkButton,
+                "b_clear",
+                root=f_palettes,
+                text="Clear Palettes",
+                command=lambda: (
+                    palettes.clear(),
+                    theme.runInit(),
+                )
+            ).grid(row=2, column=0, padx=20, pady=15, sticky="nsew")
+
+            sui.setFrame("sliders")
 
         return LEDTheme(
             _name,

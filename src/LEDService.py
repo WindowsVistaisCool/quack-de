@@ -98,6 +98,7 @@ class LEDService:
                         break
                 except Exception:
                     self.errorCallback(traceback.format_exc())
+                    self.setLoop(LEDThemes.null())  # Reset to null loop on error
                     self._breakLoopEvent.set()
                     break
 

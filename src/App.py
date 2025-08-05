@@ -99,16 +99,16 @@ class App(QuackApp):
             corner_radius=20,
         ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
-        self.ui.add(
-            ctk.CTkButton,
-            "nav_calendar",
-            root=self.navbar.getInstance(),
-            text="Calendar",
-            font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
-            corner_radius=20,
-        ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
+        # self.ui.add(
+        #     ctk.CTkButton,
+        #     "nav_calendar",
+        #     root=self.navbar.getInstance(),
+        #     text="Calendar",
+        #     font=(self.FONT_NAME, 18),
+        #     width=150,
+        #     height=60,
+        #     corner_radius=20,
+        # ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -142,7 +142,7 @@ class App(QuackApp):
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
-        self.ui.addCommand("nav_calendar", lambda: self.navigation.navigate(CalendarPage))
+        # self.ui.addCommand("nav_calendar", lambda: self.navigation.navigate(CalendarPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
         )
@@ -164,7 +164,7 @@ class App(QuackApp):
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
-        CalendarPage(self.navigation, self, self.content_root.getInstance())
+        # CalendarPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())
