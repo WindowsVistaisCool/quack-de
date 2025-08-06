@@ -3,7 +3,6 @@ import colorsys
 import math
 import random
 import rpi_ws281x as ws
-import threading
 import time
 
 from lib.CommandUI import CommandUI
@@ -1367,8 +1366,18 @@ class LEDThemes:
         blendCallRunning = False
         paletteSwapCallRunning = False
 
-        def init(self: "LEDTheme"):
+        def init(self: "LEDTheme", isRefreshOnly = False):
             nonlocal currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
+            nonlocal palettes, rawPalettes
+
+            # Initialize the first palette
+            rawPalettes = [p.get() for p in palettes]
+            currentIndex = 0
+            targetPalette = rawPalettes[currentIndex] if rawPalettes else [(0, 0, 0)] * 16
+            currentPalette = (0x000000,) * len(targetPalette)
+
+            if isRefreshOnly:
+                return
 
             data = self.getData()
             twinkleSpeed.set(data.get("twinkleSpeed", _twinkleSpeed))
@@ -1378,11 +1387,6 @@ class LEDThemes:
                 data.get("coolLikeIncandescent", _coolLikeIncandescent)
             )
 
-            # Initialize the first palette
-            rawPalettes = [p.get() for p in palettes]
-            currentIndex = 0
-            targetPalette = rawPalettes[currentIndex] if rawPalettes else [(0, 0, 0)] * 16
-            currentPalette = (0x000000,) * len(targetPalette)
             blendCallRunning = False
             paletteSwapCallRunning = False
 
@@ -1589,16 +1593,21 @@ class LEDThemes:
                         Palette(
                             "Random Palette",
                             palette=[
-                                FastLEDFunctions.fromHSV(
-                                    random.randint(0, 255),  # hue
-                                    random.randint(220, 255),  # saturation (avoid white)
-                                    random.randint(160, 255),  # value (avoid black)
+                                (
+                                    (r << 16) & 0xFF | (g << 8) & 0xFF | b & 0xFF
                                 )
-                                for _ in range(16)
-                            ],
+                                for (r, g, b) in [
+                                    FastLEDFunctions.fromHSV(
+                                        random.randint(0, 255),  # hue
+                                        random.randint(230, 255),  # saturation (avoid white)
+                                        random.randint(160, 230),  # value (avoid black)
+                                    )
+                                    for _ in range(4)
+                                ]
+                            ] * 4,
                         ),
                     ),
-                    theme.runInit(),
+                    theme.initTarget(theme, True),
                 )
             ).grid(row=1, column=0, padx=20, pady=15, sticky="nsew")
             ui.add(
@@ -1608,7 +1617,7 @@ class LEDThemes:
                 text="Clear Palettes",
                 command=lambda: (
                     palettes.clear(),
-                    theme.runInit(),
+                    theme.initTarget(theme, True),
                 )
             ).grid(row=2, column=0, padx=20, pady=15, sticky="nsew")
 
