@@ -1599,8 +1599,8 @@ class LEDThemes:
                                 for (r, g, b) in [
                                     FastLEDFunctions.fromHSV(
                                         random.randint(0, 255),  # hue
-                                        random.randint(230, 255),  # saturation (avoid white)
-                                        random.randint(160, 230),  # value (avoid black)
+                                        random.randint(220, 255),  # saturation (avoid white)
+                                        random.randint(160, 220),  # value (avoid black)
                                     )
                                     for _ in range(4)
                                 ]
