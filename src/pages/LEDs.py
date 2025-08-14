@@ -5,9 +5,9 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from tkinter import PhotoImage
+from PIL import Image
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
@@ -91,8 +91,8 @@ class LEDsPage(NavigationPage):
             corner_radius=12,
         ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
-        self.tabview.getInstance().add("FX")
         self.tabview.getInstance().add("Solid Color")
+        self.tabview.getInstance().add("Segments")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget(
             "unselected_color"
@@ -129,13 +129,20 @@ class LEDsPage(NavigationPage):
             root=solidColorsTab,
             width=380,
         ).grid(row=0, column=0, padx=0, pady=0, sticky="")
-        # TODO: set the slider to like 50% at startup
 
-        # TODO: figure where to put this lol
-        # self.ui.add(ctk.CTkButton , "b_rainbow",
-        #             root=QuackColorPicker,
-        #             text="Rainbow",
-        #             ).grid(row=1, column=0, padx=20, pady=(10, 0), sticky="nse")
+        """ Segment Tab """
+        segmentTab = self.tabview.getInstance().tab("Segments")
+        segmentTab.grid_columnconfigure(0, weight=1)
+        segmentTab.grid_rowconfigure(0, weight=1)
+        self.ui.add(
+            ctk.CTkLabel,
+            "segments_desc",
+            root=segmentTab,
+            text="Control individual segments of the LED strip.",
+            font=(self.appRoot.FONT_NAME, 16),
+            justify="left",
+
+        ).grid(row=0, column=0, padx=20, pady=(0, 20), sticky="nw")
 
         configUI = CommandUI(self.configFrame)
         self.configFrame.grid_rowconfigure((0, 1, 2), weight=1)
@@ -265,12 +272,12 @@ LED Channel: {self.ledService.LED_CHANNEL}
             text=theme.friendlyName,
             compound="top",
             font=(self.appRoot.FONT_NAME, 20),
-            width=200,
-            height=150,
+            # width=200,
+            # height=150,
             border_spacing=8,
             border_width=0,
             corner_radius=20,
-            image=PhotoImage(file=theme.imagePath),
+            image=ctk.CTkImage(Image.open(theme.imagePath), size=(200, 150)),
             command=commandFactory(theme),
             longpress_callback=longPressFactory(theme),
             longpress_threshold=450,

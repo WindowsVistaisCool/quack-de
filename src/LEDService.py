@@ -8,8 +8,9 @@ import time
 import traceback
 import rpi_ws281x as ws
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from lib.led.LEDTheme import LEDTheme
+from lib.led.WSExtensions import SegmentedPixelStrip
 
 
 class LEDService:
@@ -28,7 +29,7 @@ class LEDService:
             raise RuntimeError(
                 "LEDService is a singleton and cannot be instantiated multiple times."
             )
-        self.leds = ws.PixelStrip(
+        self.leds = SegmentedPixelStrip(
             self.LED_COUNT,
             self.LED_PIN,
             self.LED_FREQ_HZ,
@@ -38,122 +39,134 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
+        self.leds.addSubStrip(0, 150)
+        self.leds.addSubStrip(150, 300)
 
         self.appRoot: "App" = appRoot
 
-        LEDThemes()  # initialize all LED loops
-        self.loop = LEDThemes.null()
+        # initialize themes registry
+        LEDThemes()  # themes are initialized in this constructor
 
-        self._breakLoopEvent = threading.Event()
-        self._loopChangeEvent = threading.Event()
+        # active_loops maps a strip key (int for sub-strip index, or None for full-strip)
+        # to a dict containing: theme, thread, break_event
+        self.active_loops = {}
+
         self._isRunning = True
-        self._isChangingLoop = False
-        self._hasChangeTimedOut = False
-        self.loopThread = None
 
         self.errorCallback = lambda e: print(e)
 
-        # Create and start the single persistent thread
-        self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
-        self.loopThread.start()
-
         LEDService._instance = self
 
-    def _ledLoopTarget(self):
-        while self._isRunning:
-            # Wait for a loop to be set or service to stop
-            if self.loop is None or self.loop.id == "null":
-                time.sleep(0.01)
-                continue
-
-            # Ensure we're not in the middle of a loop change
-            if self._isChangingLoop:
-                time.sleep(0.01)
-                continue
-
-            # Initialize the current loop safely
-            try:
-                self.loop.passApp(self.appRoot)
-                self.loop.passArgs(self.leds, self._breakLoopEvent)
-                self.loop.runInit()
-            except Exception:
-                self.errorCallback(
-                    f"Failed to initialize loop {self.loop.id}: {traceback.format_exc()}"
-                )
-                time.sleep(0.1)
-                self.setLoop(LEDThemes.null())  # Reset to null loop on error
-                continue
-
-            # Run the loop until break or loop change
-            while (
-                not self._breakLoopEvent.is_set()
-                and self._isRunning
-                and not self._loopChangeEvent.is_set()
-            ):
-                time.sleep(0.001)
-                try:
-                    stat = self.loop.runLoop()
-                    if stat is not None:
-                        self._breakLoopEvent.set()
-                        break
-                except Exception:
-                    self.errorCallback(traceback.format_exc())
-                    self.setLoop(LEDThemes.null())  # Reset to null loop on error
-                    self._breakLoopEvent.set()
-                    break
-
-            # Clear events for next loop
-            self._breakLoopEvent.clear()
-            self._loopChangeEvent.clear()
-
-    def setLoop(self, loop: "LEDTheme" = None):
-        # ensure this is not called multiple times
-        if self._isChangingLoop and not self._hasChangeTimedOut:
+    def _ledLoopTarget(
+        self, theme: "LEDTheme", break_event: threading.Event, subStrip=None
+    ):
+        """
+        Thread target for running a single LEDTheme on its assigned strip (or full strip).
+        """
+        try:
+            theme.passApp(self.appRoot)
+            theme.passArgs(self.leds, break_event, subStrip=subStrip)
+            theme.runInit()
+        except Exception:
+            self.errorCallback(
+                f"Failed to initialize loop {theme.id}: {traceback.format_exc()}"
+            )
             return
 
+        while not break_event.is_set() and self._isRunning:
+            time.sleep(0.001)
+            try:
+                stat = theme.runLoop()
+                if stat is not None:
+                    break_event.set()
+                    break
+            except Exception:
+                self.errorCallback(traceback.format_exc())
+                break_event.set()
+                break
+
+    def setLoop(self, loop: "LEDTheme" = None, subStrip=None):
+        """
+        Start or replace a loop. If the theme has a stripID, it will run on that sub-strip
+        (one thread per sub-strip). If stripID is None, it runs on the full strip (key=None).
+
+        Passing None will set the null theme (which does not spawn a thread) for the key.
+        """
         if not loop:
             loop = LEDThemes.null()
 
-        if loop.id == self.loop.id and not self._isChangingLoop:
+        # key is the sub-strip index; None represents the full strip
+        key = subStrip if subStrip is not None else None
+
+        # If the same loop is already running for this key, do nothing
+        existing = self.active_loops.get(key)
+        if existing and existing.get("theme") and loop.id == existing["theme"].id:
             return
 
-        self._isChangingLoop = True
+        # Stop any existing loop on this key
+        if existing:
+            try:
+                existing["break_event"].set()
+                # give loop a moment to exit
+                existing["thread"].join(timeout=0.2)
+            except Exception:
+                pass
+            finally:
+                self.active_loops.pop(key, None)
 
-        # Signal current loop to stop
-        self._breakLoopEvent.set()
-        self._loopChangeEvent.set()
+        if loop.id == LEDThemes.null().id:
+            return
 
-        # Wait a bit longer for current loop iteration to finish cleanly
-        time.sleep(0.05)
-
-        # Set new loop
-        self.loop = loop
-
-        if self._hasChangeTimedOut:
-            self._hasChangeTimedOut = False
-
-        self._isChangingLoop = False
+        break_event = threading.Event()
+        t = threading.Thread(
+            target=self._ledLoopTarget, args=(loop, break_event, subStrip), daemon=True
+        )
+        self.active_loops[key] = {
+            "theme": loop,
+            "thread": t,
+            "break_event": break_event,
+            "subStrip": subStrip,
+        }
+        t.start()
 
     def setBrightness(self, brightness: int):
         self.leds.setBrightness(int(brightness) & 0xFF)  # constrain brightness to 0-255
         self.leds.show()
 
-    def setSolid(self, r: int, g: int, b: int):
-        self.setLoop(LEDThemes.null())  # Switch to null loop to stop current loop
-        for i in range(self.LED_COUNT):
-            self.leds.setPixelColor(i, ws.Color(r, g, b))
+    def setSolid(self, r: int, g: int, b: int, subStrip=None):
+        self.setLoop(LEDThemes.null(), subStrip)
+        lim = self.leds.numPixels()
+        if subStrip is not None:
+            subStrip = self.leds.getSubStrip(subStrip)
+            lim = subStrip.numPixels()
+        for i in range(lim):
+            if subStrip is not None:
+                subStrip.setPixelColorRGB(i, r, g, b)
+            else:
+                self.leds.setPixelColor(i, ws.Color(r, g, b))
         self.leds.show()
 
     def off(self):
+        for loop in self.active_loops.values():
+            loop["break_event"].set()
+
+        for i in range(self.leds.subStrips.__len__()):
+            self.setLoop(LEDThemes.null(), subStrip=i)
+
         self.setSolid(0, 0, 0)
 
     def shutdown(self):
         """Gracefully shutdown the LED service"""
         self._isRunning = False
-        self._breakLoopEvent.set()
-        self._loopChangeEvent.set()
-        if self.loopThread and self.loopThread.is_alive():
-            self.loopThread.join(timeout=1.0)
+        # signal and join all active loops
+        for key, info in list(self.active_loops.items()):
+            try:
+                info["break_event"].set()
+                if info["thread"].is_alive():
+                    info["thread"].join(timeout=1.0)
+            except Exception:
+                pass
+        self.active_loops.clear()
 
     @classmethod
     def getInstance(cls):
