@@ -15,7 +15,6 @@ class LEDTheme:
             *,
             imagePath: str = "assets/images/missing.png",
             friendlyName: str = None,
-            stripID = None,
         ):
         self.id = id
         self._loopTarget = loopTarget
@@ -23,7 +22,6 @@ class LEDTheme:
         self.settingUIFactory = settingsUIFactory
         self.imagePath = imagePath
         self.friendlyName = friendlyName or self.id
-        self.stripID = stripID
 
         self.themeData = Configurator.getInstance().get(self.id, {})
 
@@ -34,9 +32,6 @@ class LEDTheme:
 
         self.break_event: 'threading.Event' = None
         self.after = lambda delay, callback: None
-
-    def setStripID(self, id: int):
-        self.stripID = id
 
     def getSettings(self, app: QuackApp) -> 'LEDThemeSettings':
         """
@@ -63,12 +58,12 @@ class LEDTheme:
         Configurator.getInstance().set(self.id, data)
         Configurator.getInstance().saveSettings()
 
-    def passArgs(self, leds: 'ws.PixelStrip', break_event: 'threading.Event'):
+    def passArgs(self, leds: 'ws.PixelStrip', break_event: 'threading.Event', subStrip=None):
         """
         Passes the LED strip and break event to the loop.
         """
         self.leds = leds
-        self.strip = self.leds.getSubStrip(self.stripID) if self.stripID is not None else self.leds
+        self.strip = self.leds.getSubStrip(subStrip) if subStrip is not None else self.leds
         self.break_event = break_event
 
     def passApp(self, app: QuackApp):

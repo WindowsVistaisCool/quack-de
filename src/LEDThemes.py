@@ -1366,14 +1366,16 @@ class LEDThemes:
         blendCallRunning = False
         paletteSwapCallRunning = False
 
-        def init(self: "LEDTheme", isRefreshOnly = False):
+        def init(self: "LEDTheme", isRefreshOnly=False):
             nonlocal currentIndex, targetPalette, currentPalette, blendCallRunning, paletteSwapCallRunning
             nonlocal palettes, rawPalettes
 
             # Initialize the first palette
             rawPalettes = [p.get() for p in palettes]
             currentIndex = 0
-            targetPalette = rawPalettes[currentIndex] if rawPalettes else [(0, 0, 0)] * 16
+            targetPalette = (
+                rawPalettes[currentIndex] if rawPalettes else [(0, 0, 0)] * 16
+            )
             currentPalette = (0x000000,) * len(targetPalette)
 
             if isRefreshOnly:
@@ -1593,22 +1595,23 @@ class LEDThemes:
                         Palette(
                             "Random Palette",
                             palette=[
-                                (
-                                    (r << 16) & 0xFF | (g << 8) & 0xFF | b & 0xFF
-                                )
+                                ((r << 16) & 0xFF | (g << 8) & 0xFF | b & 0xFF)
                                 for (r, g, b) in [
                                     FastLEDFunctions.fromHSV(
                                         random.randint(0, 255),  # hue
-                                        random.randint(220, 255),  # saturation (avoid white)
+                                        random.randint(
+                                            220, 255
+                                        ),  # saturation (avoid white)
                                         random.randint(160, 220),  # value (avoid black)
                                     )
                                     for _ in range(4)
                                 ]
-                            ] * 4,
+                            ]
+                            * 4,
                         ),
                     ),
                     theme._initTarget(theme, True),
-                )
+                ),
             ).grid(row=1, column=0, padx=20, pady=15, sticky="nsew")
             ui.add(
                 ctk.CTkButton,
@@ -1618,7 +1621,7 @@ class LEDThemes:
                 command=lambda: (
                     palettes.clear(),
                     theme._initTarget(theme, True),
-                )
+                ),
             ).grid(row=2, column=0, padx=20, pady=15, sticky="nsew")
 
             sui.setFrame("sliders")
@@ -1630,7 +1633,6 @@ class LEDThemes:
             settingsUIFactory=uiMaker,
             imagePath="assets/images/christmas.png",
             friendlyName="Christmas",
-            stripID=0
         )
 
 
