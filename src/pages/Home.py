@@ -29,21 +29,8 @@ class HomePage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 32, "bold"),
         ).grid(row=0, column=0, padx=30, pady=(35, 10), sticky="nw")
 
-        self.ui.add(
-            ctk.CTkButton,
-            "test",
-            text=f"steven here",
-            font=(self.appRoot.FONT_NAME, 40),
-        ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nsw")
-
     def _initCommands(self):
-        def test_tgt():
-            # self.appRoot.toggleNav(False)
-            self.appRoot.navigation.navigateEphemeral(
-                StatImg(self.appRoot, img=PhotoImage(file="assets/images/bashar.png"))
-            )
-
-        self.ui.get("test").setCommand(test_tgt)
+        pass
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:
