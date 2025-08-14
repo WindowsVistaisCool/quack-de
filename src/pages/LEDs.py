@@ -5,9 +5,9 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from tkinter import PhotoImage
+from PIL import Image
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
@@ -91,7 +91,7 @@ class LEDsPage(NavigationPage):
             corner_radius=12,
         ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
-        self.tabview.getInstance().add("FX")
+        self.tabview.getInstance().add("Segments")
         self.tabview.getInstance().add("Solid Color")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget(
@@ -265,12 +265,12 @@ LED Channel: {self.ledService.LED_CHANNEL}
             text=theme.friendlyName,
             compound="top",
             font=(self.appRoot.FONT_NAME, 20),
-            width=200,
-            height=150,
+            # width=200,
+            # height=150,
             border_spacing=8,
             border_width=0,
             corner_radius=20,
-            image=PhotoImage(file=theme.imagePath),
+            image=ctk.CTkImage(Image.open(theme.imagePath), size=(200, 150)),
             command=commandFactory(theme),
             longpress_callback=longPressFactory(theme),
             longpress_threshold=450,

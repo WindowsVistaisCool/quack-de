@@ -4,33 +4,39 @@ import rpi_ws281x as ws
 from lib.Configurator import Configurator
 from lib.QuackApp import QuackApp
 from lib.led.LEDThemeSettings import LEDThemeSettings
+from lib.led.WSExtensions import SegmentedPixelStrip, SubStrip
 
 class LEDTheme:
     def __init__(self,
-            id: str, loopTarget=lambda *_: 1,
+            id: str,
+            loopTarget=lambda *_: 1,
             initTarget=lambda *_: None,
             settingsUIFactory: callable = None,
             *,
             imagePath: str = "assets/images/missing.png",
             friendlyName: str = None,
+            stripID = None,
         ):
         self.id = id
-        self.friendlyName = friendlyName or self.id
-
-        self.imagePath = imagePath
-
-        self.data = Configurator.getInstance().get(self.id, {})
-
-        self.loopTarget = loopTarget
-        self.initTarget = initTarget
-
+        self._loopTarget = loopTarget
+        self._initTarget = initTarget
         self.settingUIFactory = settingsUIFactory
+        self.imagePath = imagePath
+        self.friendlyName = friendlyName or self.id
+        self.stripID = stripID
+
+        self.themeData = Configurator.getInstance().get(self.id, {})
 
         self.app: 'QuackApp' = None
 
-        self.leds: 'ws.PixelStrip' = None
+        self.leds: 'SegmentedPixelStrip' = None
+        self.strip: 'SubStrip' = None
+
         self.break_event: 'threading.Event' = None
         self.after = lambda delay, callback: None
+
+    def setStripID(self, id: int):
+        self.stripID = id
 
     def getSettings(self, app: QuackApp) -> 'LEDThemeSettings':
         """
@@ -43,13 +49,13 @@ class LEDTheme:
         return LEDThemeSettings(app, self, uiFactory=self.settingUIFactory)
     
     def getData(self) -> dict:
-        return self.data
+        return self.themeData
 
     def setData(self, key, value):
         """
         Sets a value in the LED theme data.
         """
-        self.data[key] = value
+        self.themeData[key] = value
 
     def saveData(self, data: dict=None):
         if not data:
@@ -62,6 +68,7 @@ class LEDTheme:
         Passes the LED strip and break event to the loop.
         """
         self.leds = leds
+        self.strip = self.leds.getSubStrip(self.stripID) if self.stripID is not None else self.leds
         self.break_event = break_event
 
     def passApp(self, app: QuackApp):
@@ -84,9 +91,9 @@ class LEDTheme:
         """
         Runs the initialization target function.
         """
-        assert self.initTarget, "LEDLoop must have initTarget set before running."
+        assert self._initTarget, "LEDLoop must have initTarget set before running."
 
-        return self.initTarget(self)
+        return self._initTarget(self)
 
     def runLoop(self):
         """
@@ -96,4 +103,4 @@ class LEDTheme:
         assert self.break_event, "LEDLoop must have break_event set before running."
         assert self.after, "LEDLoop target requires after method to be set."
 
-        return self.loopTarget(self)
+        return self._loopTarget(self)

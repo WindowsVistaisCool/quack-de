@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
+from LEDService import LEDService
+
 
 if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from tkinter import PhotoImage
-from pages.ephemeral.StatImg import StatImg
 
 from lib.Navigation import NavigationPage
 
@@ -29,8 +29,14 @@ class HomePage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 32, "bold"),
         ).grid(row=0, column=0, padx=30, pady=(35, 10), sticky="nw")
 
+        self.ui.add(
+            ctk.CTkButton,
+            "test",
+            text="test"
+        ).grid(row=1, column=0, padx=30, pady=(10, 10), sticky="nw")
+
     def _initCommands(self):
-        pass
+        self.ui.get("test").setCommand(lambda: LEDService.getInstance().test())
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:

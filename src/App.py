@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from threading import Thread
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from LEDService import LEDService
 
 from lib.Configurator import Configurator

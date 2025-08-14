@@ -531,20 +531,20 @@ class LEDThemes:
                 _reversed = reversed.get()
 
             if temps is None:
-                temps = [0] * self.leds.numPixels()
+                temps = [0] * self.strip.numPixels()
             # cool cells
-            for i in range(self.leds.numPixels()):
+            for i in range(self.strip.numPixels()):
                 temps[i] = (
                     FastLEDFunctions.qsubint(
                         temps[i],
                         FastLEDFunctions.random8(
-                            0, ((_cooling * 10) / self.leds.numPixels()) + 2
+                            0, ((_cooling * 10) / self.strip.numPixels()) + 2
                         ),
                     )
                     & 0xFF
                 )
             # heat up randomly
-            reversePixelsRange = list(range(self.leds.numPixels() - 1))[::-1][:-1]
+            reversePixelsRange = list(range(self.strip.numPixels() - 1))[::-1][:-1]
             for k in reversePixelsRange:
                 temps[k] = int((temps[k - 1] + temps[k - 2] + temps[k - 2]) / 3) & 0xFF
 
@@ -556,17 +556,17 @@ class LEDThemes:
                     0xFF,
                 )
 
-            for i in range(self.leds.numPixels()):
+            for i in range(self.strip.numPixels()):
                 color = FastLEDFunctions.HeatColor(temps[i])
                 if _reversed:
-                    self.leds.setPixelColor(
-                        self.leds.numPixels() - 1 - i, ws.Color(*color)
+                    self.strip.setPixelColor(
+                        self.strip.numPixels() - 1 - i, ws.Color(*color)
                     )
                 else:
-                    self.leds.setPixelColor(i, ws.Color(*color))
+                    self.strip.setPixelColor(i, ws.Color(*color))
             if self.checkBreak():
                 return True
-            self.leds.show()
+            self.strip.show()
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(ctk.CTkLabel, "l_cooling", text="Cooling", font=("Arial", 20)).grid(
@@ -640,7 +640,7 @@ class LEDThemes:
             nonlocal _tailScaleFactor, _step_size
 
             rangeList = list(
-                range(0, self.leds.numPixels(), max(1, _step_size))
+                range(0, self.strip.numPixels(), max(1, _step_size))
             )  # Use step_size to skip pixels
             for k in range(2):
                 if k % 2 != 0:
@@ -652,19 +652,19 @@ class LEDThemes:
                     hue &= 0xFF
 
                     # Set multiple pixels if step_size > 1 to fill gaps
-                    for offset in range(min(_step_size, self.leds.numPixels() - i)):
-                        if i + offset < self.leds.numPixels():
-                            self.leds.setPixelColor(
+                    for offset in range(min(_step_size, self.strip.numPixels() - i)):
+                        if i + offset < self.strip.numPixels():
+                            self.strip.setPixelColor(
                                 i + offset,
                                 ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
                             )
 
                     # Apply tail fading - ensure all pixels get faded for consistent tail effect
-                    for k in range(self.leds.numPixels()):
+                    for k in range(self.strip.numPixels()):
                         if self.checkBreak():
                             return True
-                        rgbw = self.leds.getPixelColorRGB(k)
-                        self.leds.setPixelColor(
+                        rgbw = self.strip.getPixelColorRGB(k)
+                        self.strip.setPixelColor(
                             k,
                             ws.Color(
                                 *FastLEDFunctions.CRGB_nscale8(
@@ -679,7 +679,7 @@ class LEDThemes:
                         if _step_size != step_size.get():
                             _step_size = max(1, step_size.get())
                             return None  # return but keep loop running
-                    self.leds.show()
+                    self.strip.show()
                     time.sleep(10 / 1000)
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
@@ -834,7 +834,7 @@ class LEDThemes:
             ci = int(cistart_16b) & 0xFFFF
             waveangle = int(ioff_16b) & 0xFFFF
             wavescale_half = ((int(wavescale_16b) & 0xFFFF) >> 1) + 20
-            num_pixels = self.leds.numPixels()
+            num_pixels = self.strip.numPixels()
 
             if self.checkBreak():
                 return True
@@ -923,7 +923,7 @@ class LEDThemes:
             # print(f"Pacifica: {sCIStart1=}, {sCIStart2=}, {sCIStart3=}, {sCIStart4=}, {deltams_32b=}, {deltams1=}, {deltams2=}, {deltamsAvg=}")
 
             # Create a buffer for all LED colors to avoid multiple writes per pixel
-            led_buffer = [DIM_BG for _ in range(self.leds.numPixels())]
+            led_buffer = [DIM_BG for _ in range(self.strip.numPixels())]
 
             _waves_single_layer(
                 self,
@@ -965,7 +965,7 @@ class LEDThemes:
             # add whitecaps - optimized
             basethreshold_8b = FastLEDFunctions.beatsin8(9, 55, 65)
             wave_8b = FastLEDFunctions.beat8(7) & 0xFF
-            num_pixels = self.leds.numPixels()
+            num_pixels = self.strip.numPixels()
 
             if self.checkBreak():
                 return True
@@ -1042,7 +1042,7 @@ class LEDThemes:
                     if self.checkBreak():
                         return True
                     rgb = smoothed_buffer[i]
-                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+                    self.strip.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
             elif num_pixels > 2:
                 # 3-point smoothing for shorter strips
                 smoothed_buffer = list(led_buffer)
@@ -1075,16 +1075,16 @@ class LEDThemes:
                     if self.checkBreak():
                         return True
                     rgb = smoothed_buffer[i]
-                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+                    self.strip.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
             else:
                 # For very short strips, just set colors directly
                 for i in range(num_pixels):
                     if self.checkBreak():
                         return True
                     rgb = led_buffer[i]
-                    self.leds.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
+                    self.strip.setPixelColorRGB(i, rgb[0], rgb[1], rgb[2])
 
-            self.leds.show()
+            self.strip.show()
             # More consistent frame timing - target 60 FPS
             time.sleep(0.0167)  # ~60 FPS (16.7ms)
 
@@ -1439,7 +1439,7 @@ class LEDThemes:
 
             bgBrightness_8b = FastLEDFunctions.getAverageLight(bg) & 0xFF
 
-            for i in range(self.leds.numPixels()):
+            for i in range(self.strip.numPixels()):
                 if self.checkBreak():
                     return True
 
@@ -1504,17 +1504,17 @@ class LEDThemes:
                 )
                 deltaBright_8b = (outputBrightAvg_8b - bgBrightness_8b) & 0xFF
                 if deltaBright_8b >= 32 or not bg:
-                    self.leds.setPixelColor(i, ws.Color(*outputColor))
+                    self.strip.setPixelColor(i, ws.Color(*outputColor))
                 elif deltaBright_8b > 0:
-                    self.leds.setPixelColor(
+                    self.strip.setPixelColor(
                         i,
                         ws.Color(
                             *FastLEDFunctions.blend(bg, outputColor, deltaBright_8b * 8)
                         ),
                     )
                 else:
-                    self.leds.setPixelColor(i, ws.Color(*bg))
-            self.leds.show()
+                    self.strip.setPixelColor(i, ws.Color(*bg))
+            self.strip.show()
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             nonlocal twinkleSpeed, twinkleDensity, secondsPerPallette, coolLikeIncandescent
@@ -1607,7 +1607,7 @@ class LEDThemes:
                             ] * 4,
                         ),
                     ),
-                    theme.initTarget(theme, True),
+                    theme._initTarget(theme, True),
                 )
             ).grid(row=1, column=0, padx=20, pady=15, sticky="nsew")
             ui.add(
@@ -1617,7 +1617,7 @@ class LEDThemes:
                 text="Clear Palettes",
                 command=lambda: (
                     palettes.clear(),
-                    theme.initTarget(theme, True),
+                    theme._initTarget(theme, True),
                 )
             ).grid(row=2, column=0, padx=20, pady=15, sticky="nsew")
 
@@ -1630,6 +1630,7 @@ class LEDThemes:
             settingsUIFactory=uiMaker,
             imagePath="assets/images/christmas.png",
             friendlyName="Christmas",
+            stripID=0
         )
 
 

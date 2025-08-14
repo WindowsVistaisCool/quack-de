@@ -8,8 +8,9 @@ import time
 import traceback
 import rpi_ws281x as ws
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from lib.led.LEDTheme import LEDTheme
+from lib.led.WSExtensions import SegmentedPixelStrip
 
 
 class LEDService:
@@ -28,7 +29,7 @@ class LEDService:
             raise RuntimeError(
                 "LEDService is a singleton and cannot be instantiated multiple times."
             )
-        self.leds = ws.PixelStrip(
+        self.leds = SegmentedPixelStrip(
             self.LED_COUNT,
             self.LED_PIN,
             self.LED_FREQ_HZ,
@@ -38,10 +39,13 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
+        self.leds.addSubStrip(0, 100)
+        self.leds.addSubStrip(100, 200)
+        self.leds.addSubStrip(200, 300)
 
         self.appRoot: "App" = appRoot
 
-        LEDThemes()  # initialize all LED loops
+        LEDThemes() # themes are initialized in this constructor
         self.loop = LEDThemes.null()
 
         self._breakLoopEvent = threading.Event()
@@ -53,7 +57,6 @@ class LEDService:
 
         self.errorCallback = lambda e: print(e)
 
-        # Create and start the single persistent thread
         self.loopThread = threading.Thread(target=self._ledLoopTarget, daemon=True)
         self.loopThread.start()
 
@@ -66,12 +69,10 @@ class LEDService:
                 time.sleep(0.01)
                 continue
 
-            # Ensure we're not in the middle of a loop change
             if self._isChangingLoop:
                 time.sleep(0.01)
                 continue
 
-            # Initialize the current loop safely
             try:
                 self.loop.passApp(self.appRoot)
                 self.loop.passArgs(self.leds, self._breakLoopEvent)
@@ -81,10 +82,9 @@ class LEDService:
                     f"Failed to initialize loop {self.loop.id}: {traceback.format_exc()}"
                 )
                 time.sleep(0.1)
-                self.setLoop(LEDThemes.null())  # Reset to null loop on error
+                self.setLoop(LEDThemes.null())
                 continue
 
-            # Run the loop until break or loop change
             while (
                 not self._breakLoopEvent.is_set()
                 and self._isRunning
@@ -98,11 +98,10 @@ class LEDService:
                         break
                 except Exception:
                     self.errorCallback(traceback.format_exc())
-                    self.setLoop(LEDThemes.null())  # Reset to null loop on error
+                    self.setLoop(LEDThemes.null())
                     self._breakLoopEvent.set()
                     break
 
-            # Clear events for next loop
             self._breakLoopEvent.clear()
             self._loopChangeEvent.clear()
 
@@ -119,14 +118,12 @@ class LEDService:
 
         self._isChangingLoop = True
 
-        # Signal current loop to stop
         self._breakLoopEvent.set()
         self._loopChangeEvent.set()
 
         # Wait a bit longer for current loop iteration to finish cleanly
         time.sleep(0.05)
 
-        # Set new loop
         self.loop = loop
 
         if self._hasChangeTimedOut:
@@ -138,14 +135,29 @@ class LEDService:
         self.leds.setBrightness(int(brightness) & 0xFF)  # constrain brightness to 0-255
         self.leds.show()
 
-    def setSolid(self, r: int, g: int, b: int):
-        self.setLoop(LEDThemes.null())  # Switch to null loop to stop current loop
-        for i in range(self.LED_COUNT):
-            self.leds.setPixelColor(i, ws.Color(r, g, b))
+    def setSolid(self, r: int, g: int, b: int, subStrip=None):
+        if subStrip is None:
+            self.setLoop(LEDThemes.null())  # Switch to null loop to stop current loop
+        lim = self.leds.numPixels()
+        if subStrip is not None:
+            subStrip = self.leds.getSubStrip(subStrip)
+            lim = subStrip.numPixels()
+        for i in range(lim):
+            if subStrip is not None:
+
+
+                subStrip.setPixelColorRGB(i, r, g, b)
+            else:
+                self.leds.setPixelColor(i, ws.Color(r, g, b))
         self.leds.show()
 
     def off(self):
         self.setSolid(0, 0, 0)
+    
+    def test(self):
+        self.setSolid(255, 0, 0, subStrip=0)
+        self.setSolid(0, 255, 0, subStrip=1)
+        self.setSolid(0, 0, 255, subStrip=2)
 
     def shutdown(self):
         """Gracefully shutdown the LED service"""
