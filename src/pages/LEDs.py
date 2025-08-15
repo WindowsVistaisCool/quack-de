@@ -141,8 +141,9 @@ class LEDsPage(NavigationPage):
             text="Control individual segments of the LED strip.",
             font=(self.appRoot.FONT_NAME, 16),
             justify="left",
-
         ).grid(row=0, column=0, padx=20, pady=(0, 20), sticky="nw")
+
+        
 
         configUI = CommandUI(self.configFrame)
         self.configFrame.grid_rowconfigure((0, 1, 2), weight=1)

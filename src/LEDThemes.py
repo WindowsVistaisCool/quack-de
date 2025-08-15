@@ -373,6 +373,7 @@ class LEDThemes:
             "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
+            "purple": self.purple(),
             "twinkle": self.twinkle(),
             "pacifica": self.pacifica(),
         }
@@ -729,6 +730,18 @@ class LEDThemes:
             settingsUIFactory=uiMaker,
             imagePath="assets/images/snake.png",
             friendlyName="Color Snake",
+        )
+
+    def purple(self):
+        self._checkThemeExists("purple")
+
+        def target(self):
+            pass
+
+        return LEDTheme(
+            "purple",
+            target,
+            friendlyName="Purple",
         )
 
     def pacifica(self, *, _name="pacifica"):
