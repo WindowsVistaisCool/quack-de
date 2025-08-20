@@ -138,12 +138,12 @@ class LEDsPage(NavigationPage):
             ctk.CTkLabel,
             "segments_desc",
             root=segmentTab,
-            text="Control individual segments of the LED strip.",
+            text="Control individual segments of the LED strip.\nCurrently, I'm too lazy to actually implement this,\nso it will be available from the API only.",
             font=(self.appRoot.FONT_NAME, 16),
             justify="left",
         ).grid(row=0, column=0, padx=20, pady=(0, 20), sticky="nw")
 
-        
+
 
         configUI = CommandUI(self.configFrame)
         self.configFrame.grid_rowconfigure((0, 1, 2), weight=1)
@@ -187,9 +187,9 @@ LED Channel: {self.ledService.LED_CHANNEL}
 
         configUI.add(
             ctk.CTkLabel,
-            "cfg_brightness_label",
+            "brightness_label",
             root=self.configFrame,
-            text="Brightness",
+            text="Brightness\n(Master)",
             font=(self.appRoot.FONT_NAME, 16),
         ).grid(row=1, column=0, padx=(20, 20), pady=(0, 20), sticky="nsw")
         configUI.add(
@@ -243,7 +243,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
 
     def addTheme(self, theme: "LEDTheme"):
         rowPos = self._loadedThemeCount // 2
-        colPos = self._loadedThemeCount & 1
+        colPos = self._loadedThemeCount & 1 # will always be either col 0 or 1
         self._loadedThemeCount += 1
 
         # callback for a long pres
