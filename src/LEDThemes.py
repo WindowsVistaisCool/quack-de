@@ -442,11 +442,11 @@ class LEDThemes:
                             1, step_size.get()
                         )  # Ensure step_size is at least 1
                         return None  # return but keep loop running
-                for i in range(theme.leds.numPixels()):
-                    theme.leds.setPixelColor(
+                for i in range(theme.strip.numPixels()):
+                    theme.strip.setPixelColor(
                         i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255)
                     )
-                theme.leds.show()
+                theme.strip.show()
                 if _delay > 0:  # Only sleep if delay is greater than 0
                     time.sleep(_delay / 1000.0)  # Convert ms to seconds properly
 

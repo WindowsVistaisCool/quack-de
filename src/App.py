@@ -68,7 +68,7 @@ class App(QuackApp):
             font=(self.FONT_NAME, 28, "bold"),
         ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
 
-        self.clock_label = ctk.StringVar(value="12:00 AM")
+        self.clock_label = ctk.StringVar(value="Unknown Time")
         self.ui.add(
             ctk.CTkLabel,
             "clock",
@@ -189,7 +189,7 @@ class App(QuackApp):
         if enable:
             self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
             self._fullAccessTimerID = self.after(
-                (1 * 60 * 1000) if isDev() else (5 * 60 * 1000),
+                5 * 60 * 1000,
                 self._disableFullAccessCallback,
             )
         elif not enable and self._fullAccessTimerID is not None:
@@ -219,7 +219,8 @@ if __name__ == "__main__":
     app = App()
     if not isDev():
         app.setFullscreen(True)
-    app.toggleFullAccess(True)
+    else:
+        app.toggleFullAccess(True)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip=0)
-    LEDService.getInstance().setLoop(LEDThemes.getTheme("rgbSnake"), subStrip=1)
+    LEDService.getInstance().setSolid(0, 128, 128, subStrip=1)
     app.mainloop()

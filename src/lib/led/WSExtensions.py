@@ -39,6 +39,7 @@ class SubStrip:
     def configure(self, start: int, end: int):
         self.start = start
         self.end = end
+        self.rangeStr = f"{start}-{end}"
 
     def numPixels(self):
         return self.end - self.start
