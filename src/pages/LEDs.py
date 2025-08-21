@@ -5,9 +5,9 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from tkinter import PhotoImage
+from PIL import Image
 
-from LEDLoops import LEDThemes
+from LEDThemes import LEDThemes
 from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
@@ -38,17 +38,17 @@ class LEDsPage(NavigationPage):
         # goes (0, 0), (0, 1), (1, 0), (1, 1), etc. in grid units
         arrangement = (
             LEDThemes.getTheme("twinkle"),
-            # LEDThemes.getTheme("pacifica"),
             LEDThemes.getTheme("rainbow"),
             LEDThemes.getTheme("rgbSnake"),
             LEDThemes.getTheme("fire2012"),
+            LEDThemes.getTheme("pacifica"),
         )
         for theme in arrangement:
             self.addTheme(theme)
 
     def _initUI(self):
         self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(3, weight=1)
 
         self.ui.add(
             ctk.CTkLabel,
@@ -57,31 +57,48 @@ class LEDsPage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 32, "bold"),
         ).grid(row=0, column=0, padx=(20, 0), pady=(20, 0), sticky="nsw")
 
+        # self.ui.add(
+        #     ctk.CTkButton,
+        #     "b_config",
+        #     text="Configuration",
+        #     font=(self.appRoot.FONT_NAME, 18),
+        #     height=40,
+        #     corner_radius=12,
+        # ).withGridProperties(row=0, column=1, padx=(0, 10), pady=(20, 0), sticky="w")
+
         self.ui.add(
-            ctk.CTkButton,
-            "b_config",
-            text="Configuration",
+            ctk.CTkLabel,
+            "l_currentSeg",
+            text="Sublength: ",
+            font=(self.appRoot.FONT_NAME, 18, "bold"),
+        ).grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+
+        self.tv_segmentNum = ctk.IntVar(value=-1)
+        self.tv_segmentLabel = ctk.StringVar(value="All")
+        self.ui.add(
+            ctk.CTkLabel,
+            "currentSegment",
+            textvariable=self.tv_segmentLabel,
             font=(self.appRoot.FONT_NAME, 18),
-            height=40,
-            corner_radius=12,
-        ).withGridProperties(row=0, column=1, padx=(0, 10), pady=(20, 0), sticky="w")
+        ).grid(row=0, column=2, padx=(0, 20), pady=(20, 0), sticky="nsew")
 
         self.ui.add(
             ctk.CTkButton,
-            "toggle_leds",
-            text="Turn Off",
+            "segments",
+            text="Segments",
             font=(self.appRoot.FONT_NAME, 18),
             width=120,
             height=50,
             corner_radius=12,
-        ).grid(row=0, column=2, padx=20, pady=(20, 0), sticky="nse")
+        ).grid(row=0, column=3, padx=20, pady=(20, 0), sticky="nse")
 
         self.tabviewUI = SwappableUI(self)
         self.tabviewUI.grid(
-            row=1, column=0, columnspan=3, padx=20, pady=(10, 20), sticky="nsew"
+            row=1, column=0, columnspan=4, padx=20, pady=(10, 20), sticky="nsew"
         )
         self.tabviewFrame = self.tabviewUI.addFrame("main")
         self.configFrame = self.tabviewUI.addFrame("config")
+        self.segmentsFrame = self.tabviewUI.addFrame("segments")
         self.tabviewUI.setFrame("main")
 
         self.tabview = self.ui.add(
@@ -91,7 +108,6 @@ class LEDsPage(NavigationPage):
             corner_radius=12,
         ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
-        self.tabview.getInstance().add("FX")
         self.tabview.getInstance().add("Solid Color")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget(
@@ -129,14 +145,8 @@ class LEDsPage(NavigationPage):
             root=solidColorsTab,
             width=380,
         ).grid(row=0, column=0, padx=0, pady=0, sticky="")
-        # TODO: set the slider to like 50% at startup
 
-        # TODO: figure where to put this lol
-        # self.ui.add(ctk.CTkButton , "b_rainbow",
-        #             root=QuackColorPicker,
-        #             text="Rainbow",
-        #             ).grid(row=1, column=0, padx=20, pady=(10, 0), sticky="nse")
-
+        """Config Ui page"""
         configUI = CommandUI(self.configFrame)
         self.configFrame.grid_rowconfigure((0, 1, 2), weight=1)
         self.configFrame.grid_rowconfigure(3, weight=1)
@@ -179,9 +189,9 @@ LED Channel: {self.ledService.LED_CHANNEL}
 
         configUI.add(
             ctk.CTkLabel,
-            "cfg_brightness_label",
+            "brightness_label",
             root=self.configFrame,
-            text="Brightness",
+            text="Brightness\n(Master)",
             font=(self.appRoot.FONT_NAME, 16),
         ).grid(row=1, column=0, padx=(20, 20), pady=(0, 20), sticky="nsw")
         configUI.add(
@@ -198,44 +208,115 @@ LED Channel: {self.ledService.LED_CHANNEL}
             self.ledService.LED_BRIGHTNESS
         )
 
+        """Segments Page"""
+        self.segmentsUI = CommandUI(self.segmentsFrame)
+        self.segmentsFrame.grid_columnconfigure(0, weight=1)
+        self.segmentsFrame.grid_columnconfigure(1, weight=0)
+        self.segmentsFrame.grid_rowconfigure(0, weight=0)
+
+        self.segmentsUI.add(
+            ctk.CTkLabel,
+            "l_ab",
+            text="Currently Selected Segment:",
+            font=(self.appRoot.FONT_NAME, 20, "bold"),
+        ).grid(row=0, column=0, padx=(20, 0), pady=20, sticky="nw")
+        self.segmentsUI.add(
+            ctk.CTkLabel,
+            "segmentNo",
+            textvariable=self.tv_segmentLabel,
+            font=(self.appRoot.FONT_NAME, 20),
+        ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nw")
+        _segmentsFrameOverlay = (
+            self.segmentsUI.add(
+                ctk.CTkFrame,
+                "frame_overlay",
+                corner_radius=12,
+            )
+            .grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+            .getInstance()
+        )
+        _segmentsFrameOverlay.grid_columnconfigure(0, weight=1)
+        _segmentsFrameOverlay.grid_rowconfigure(0, weight=1)
+        self.segmentsUI.add(
+            ctk.CTkSegmentedButton,
+            "selector",
+            root=_segmentsFrameOverlay,
+            values=["0-150", "150-300"],
+            corner_radius=12,
+            height=40,
+        ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.segmentsUI.add(
+            ctk.CTkButton,
+            "selectall",
+            root=_segmentsFrameOverlay,
+            text="Select Whole Strip",
+            font=(self.appRoot.FONT_NAME, 20),
+            height=40,
+        ).grid(row=1, column=0, padx=10, pady=10, sticky="ns")
+
     def _initCommands(self):
         def lockPage():
             self.tabviewUI.setFrame("main")
-            self.ui.get("b_config").getInstance().configure(text="Configuration")
-            self.ui.get("b_config").drop()
+            # self.ui.get("b_config").getInstance().configure(text="Configuration")
+            # self.ui.get("b_config").drop()
 
         self.appRoot.addLockCallback(lockPage)
 
-        def showConfig():
-            if self.tabviewUI.getCurrentFrameName() == "main":
-                self.ui.get("b_config").getInstance().configure(text="Back to LEDs")
-                self.tabviewUI.setFrame("config")
-            else:
-                self.ui.get("b_config").getInstance().configure(text="Configuration")
+        # def showConfig():
+        #     if self.tabviewUI.getCurrentFrameName() != "main":
+        #         self.ui.get("b_config").getInstance().configure(text="Configuration")
+        #         self.ui.get("segments").getInstance().configure(text="Segments")
+        #         self.tabviewUI.setFrame("main")
+        #     else:
+        #         self.ui.get("b_config").getInstance().configure(text="Back to LEDs")
+        #         self.tabviewUI.setFrame("config")
+
+        # self.ui.get("b_config").setCommand(showConfig)
+
+        def showSegments():
+            if self.tabviewUI.getCurrentFrameName() != "main":
+                # self.ui.get("b_config").getInstance().configure(text="Configuration")
+                self.ui.get("segments").getInstance().configure(text="Segments")
                 self.tabviewUI.setFrame("main")
+            else:
+                self.ui.get("segments").getInstance().configure(text="Back to LEDs")
+                self.tabviewUI.setFrame("segments")
 
-        self.ui.get("b_config").setCommand(showConfig)
+        self.ui.get("segments").setCommand(showSegments)
 
-        self.ui.get("toggle_leds").setCommand(self.ledService.off)
+        def selector_callback(value):
+            if value == -1:
+                self.tv_segmentNum.set(-1)
+                self.tv_segmentLabel.set("All")
+                self.segmentsUI.get("selector").getInstance().set(-1)
+                return
+            for index, substrip in enumerate(self.ledService.leds.subStrips):
+                if substrip.rangeStr == value:
+                    self.tv_segmentNum.set(index)
+                    self.tv_segmentLabel.set(substrip.rangeStr)
+                    break
 
-        def solid_color_command(rgb):
-            self.ledService.setSolid(*rgb)
+        self.segmentsUI.get("selector").setCommand(selector_callback)
+        self.segmentsUI.get("selectall").setCommand(lambda: selector_callback(-1))
 
-        self.ui.get("color_picker").setCommand(solid_color_command)
+        self.ui.get("color_picker").setCommand(
+            lambda rgb: self.ledService.setSolid(*rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)
+        )
 
     def onShow(self):
-        if self.appRoot.hasFullAccess():
-            self.ui.get("b_config").getInstance().configure(text="Configuration")
-            self.ui.get("b_config").grid()
+        pass
+        # if self.appRoot.hasFullAccess():
+        # self.ui.get("b_config").getInstance().configure(text="Configuration")
+        # self.ui.get("b_config").grid()
 
     def onHide(self):
-        self.ui.get("b_config").getInstance().configure(text="Configuration")
-        self.ui.get("b_config").drop()
+        # self.ui.get("b_config").getInstance().configure(text="Configuration")
+        # self.ui.get("b_config").drop()
         self.tabviewUI.setFrame("main")
 
     def addTheme(self, theme: "LEDTheme"):
         rowPos = self._loadedThemeCount // 2
-        colPos = self._loadedThemeCount & 1
+        colPos = self._loadedThemeCount & 1  # will always be either col 0 or 1
         self._loadedThemeCount += 1
 
         # callback for a long pres
@@ -253,7 +334,14 @@ LED Channel: {self.ledService.LED_CHANNEL}
         def commandFactory(loop):
             def exception_wrapper():
                 try:
-                    self.ledService.setLoop(loop)
+                    self.ledService.setLoop(
+                        loop,
+                        subStrip=(
+                            self.tv_segmentNum.get()
+                            if self.tv_segmentNum.get() != -1
+                            else None
+                        ),
+                    )
                 except:
                     self.ui.exceptionCallback(traceback.format_exc())
 
@@ -265,12 +353,12 @@ LED Channel: {self.ledService.LED_CHANNEL}
             text=theme.friendlyName,
             compound="top",
             font=(self.appRoot.FONT_NAME, 20),
-            width=200,
-            height=150,
+            # width=200,
+            # height=150,
             border_spacing=8,
             border_width=0,
             corner_radius=20,
-            image=PhotoImage(file=theme.imagePath),
+            image=ctk.CTkImage(Image.open(theme.imagePath), size=(200, 150)),
             command=commandFactory(theme),
             longpress_callback=longPressFactory(theme),
             longpress_threshold=450,
