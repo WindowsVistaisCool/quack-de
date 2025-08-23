@@ -27,7 +27,7 @@ class LEDsPage(NavigationPage):
         self.appRoot: "App" = appRoot
 
         self.ledService = LEDService(self.appRoot)
-        self.ledService.errorCallback = self.ui.exceptionCallback
+        self.ledService._errorCallback = self.ui.exceptionCallback
 
         self._loadedThemeCount = 0
 

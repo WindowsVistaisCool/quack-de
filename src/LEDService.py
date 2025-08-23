@@ -53,7 +53,7 @@ class LEDService:
 
         self._isRunning = True
 
-        self.errorCallback = lambda e: print(e)
+        self._errorCallback = lambda e: print(e)
 
         LEDService._instance = self
 
@@ -68,7 +68,7 @@ class LEDService:
             theme.passArgs(self.leds, break_event, subStrip=subStrip)
             theme.runInit()
         except Exception:
-            self.errorCallback(
+            self._errorCallback(
                 f"Failed to initialize loop {theme.id}: {traceback.format_exc()}"
             )
             return
@@ -81,7 +81,7 @@ class LEDService:
                     break_event.set()
                     break
             except Exception:
-                self.errorCallback(traceback.format_exc())
+                self._errorCallback(traceback.format_exc())
                 break_event.set()
                 break
 
