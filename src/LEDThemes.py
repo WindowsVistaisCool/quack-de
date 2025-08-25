@@ -1154,6 +1154,37 @@ class LEDThemes:
         """
         palettes = [
             Palette(
+                "Purple",
+                {
+                    "purple1": 0x7A0DAF,
+                    "purple2": 0x9B2BFF,
+                    "purple3": 0xD466FF,
+                    "pink1": 0xFF66CC,
+                    "pink2": 0xFF33AA,
+                    "violet": 0x7F00FF,
+                    "magenta": 0xFF00FF,
+                    "deep_purple": 0x3A0060,
+                },
+                [
+                    "purple1",
+                    "purple3",
+                    "pink1",
+                    "magenta",
+                    "pink2",
+                    "purple2",
+                    "violet",
+                    "deep_purple",
+                    "magenta",
+                    "pink1",
+                    "purple3",
+                    "pink2",
+                    "purple1",
+                    "violet",
+                    "magenta",
+                    "purple2",
+                ],
+            ),
+            Palette(
                 "C9",
                 {
                     "red": 0xBB80400,

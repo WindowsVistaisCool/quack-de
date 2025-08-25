@@ -42,7 +42,7 @@ class LEDsPage(NavigationPage):
             LEDThemes.getTheme("rgbSnake"),
             LEDThemes.getTheme("fire2012"),
             LEDThemes.getTheme("pacifica"),
-            LEDThemes.getTheme("ledSelector"),
+            # LEDThemes.getTheme("ledSelector"),
         )
         for theme in arrangement:
             self.addTheme(theme)
