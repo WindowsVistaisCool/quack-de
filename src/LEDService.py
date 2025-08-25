@@ -39,8 +39,10 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
-        self.leds.addSubStrip(0, 150)
-        self.leds.addSubStrip(150, 300)
+        self.leds.addSubStrip(0, 124)
+        self.leds.addSubStrip(124, 324)
+        self.leds.addSubStrip(324, 534)
+        self.leds.addSubStrip(534, 600)
 
         self.appRoot: "App" = appRoot
 

@@ -42,6 +42,7 @@ class LEDsPage(NavigationPage):
             LEDThemes.getTheme("rgbSnake"),
             LEDThemes.getTheme("fire2012"),
             LEDThemes.getTheme("pacifica"),
+            LEDThemes.getTheme("ledSelector"),
         )
         for theme in arrangement:
             self.addTheme(theme)
@@ -232,7 +233,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
             ctk.CTkSegmentedButton,
             "selector",
             root=_segmentsFrameOverlay,
-            values=["0-150", "150-300"],
+            values=self.ledService.leds.getSubStripRangesStr(),
             corner_radius=12,
             height=40,
         ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")

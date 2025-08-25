@@ -370,6 +370,7 @@ class LEDThemes:
             "null": LEDThemes.null()
         }  # needs to init like this because `self._checkLoopExists` references it
         self.themes = {
+            "ledSelector": self.ledSelector(),
             "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
@@ -409,6 +410,44 @@ class LEDThemes:
         assert (
             theme_id not in self.themes.keys()
         ), f"LED theme '{theme_id}' already exists"
+
+    def ledSelector(self):
+        self._checkThemeExists("ledSelector")
+
+        num = ctk.IntVar(value=0)
+
+        def target(theme: "LEDTheme"):
+            for i in range(theme.strip.numPixels()):
+                c = 255 if i == num.get() else 0
+                theme.strip.setPixelColor(i, ws.Color(c, c, c))
+            theme.strip.show()
+
+        def uiMaker(theme: "LEDTheme", ui: CommandUI, withShowSaveButton: callable):
+            ui.add(
+                ctk.CTkLabel,
+                "l_num",
+                textvariable=num,
+                font=("Arial", 20),
+            ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(
+                ctk.CTkSlider,
+                "s_num",
+                variable=num,
+                from_=0,
+                to=theme.leds.numPixels() - 1,
+                number_of_steps=theme.leds.numPixels() - 2,
+                height=30,
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("num", num.get())
+                )
+            )
+
+        return LEDTheme(
+            "ledSelector",
+            target,
+            settingsUIFactory=uiMaker
+        )
 
     def rainbow(self, *, _name="rainbow"):
         self._checkThemeExists(_name)
@@ -1258,31 +1297,31 @@ class LEDThemes:
                     0x0007F9,
                 ],
             ),
-            Palette(
-                "Red and White",
-                {
-                    "red": 0xFF0000,
-                    "gray": 0x808080,
-                },
-                [
-                    "red",
-                    "red",
-                    "red",
-                    "red",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "red",
-                    "red",
-                    "red",
-                    "red",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "gray",
-                ],
-            ),
+            # Palette(
+            #     "Red and White",
+            #     {
+            #         "red": 0xFF0000,
+            #         "gray": 0x808080,
+            #     },
+            #     [
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #     ],
+            # ),
             # Palette(
             #     "Snow",
             #     {
