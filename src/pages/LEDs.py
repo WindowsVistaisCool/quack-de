@@ -57,14 +57,14 @@ class LEDsPage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 32, "bold"),
         ).grid(row=0, column=0, padx=(20, 0), pady=(20, 0), sticky="nsw")
 
-        # self.ui.add(
-        #     ctk.CTkButton,
-        #     "b_config",
-        #     text="Configuration",
-        #     font=(self.appRoot.FONT_NAME, 18),
-        #     height=40,
-        #     corner_radius=12,
-        # ).withGridProperties(row=0, column=1, padx=(0, 10), pady=(20, 0), sticky="w")
+        self.ui.add(
+            ctk.CTkButton,
+            "b_config",
+            text="Configuration",
+            font=(self.appRoot.FONT_NAME, 18),
+            height=40,
+            corner_radius=12,
+        ).withGridProperties(row=0, column=3, padx=20, pady=(20, 0), sticky="nse")
 
         self.ui.add(
             ctk.CTkLabel,
@@ -82,23 +82,12 @@ class LEDsPage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=0, column=2, padx=(0, 20), pady=(20, 0), sticky="nsew")
 
-        self.ui.add(
-            ctk.CTkButton,
-            "segments",
-            text="Segments",
-            font=(self.appRoot.FONT_NAME, 18),
-            width=120,
-            height=50,
-            corner_radius=12,
-        ).grid(row=0, column=3, padx=20, pady=(20, 0), sticky="nse")
-
         self.tabviewUI = SwappableUI(self)
         self.tabviewUI.grid(
             row=1, column=0, columnspan=4, padx=20, pady=(10, 20), sticky="nsew"
         )
         self.tabviewFrame = self.tabviewUI.addFrame("main")
         self.configFrame = self.tabviewUI.addFrame("config")
-        self.segmentsFrame = self.tabviewUI.addFrame("segments")
         self.tabviewUI.setFrame("main")
 
         self.tabview = self.ui.add(
@@ -109,6 +98,7 @@ class LEDsPage(NavigationPage):
         ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
         self.tabview.getInstance().add("Solid Color")
+        self.tabview.getInstance().add("Segments")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget(
             "unselected_color"
@@ -209,10 +199,11 @@ LED Channel: {self.ledService.LED_CHANNEL}
         )
 
         """Segments Page"""
-        self.segmentsUI = CommandUI(self.segmentsFrame)
-        self.segmentsFrame.grid_columnconfigure(0, weight=1)
-        self.segmentsFrame.grid_columnconfigure(1, weight=0)
-        self.segmentsFrame.grid_rowconfigure(0, weight=0)
+        segmentsFrame = self.tabview.getInstance().tab("Segments")
+        self.segmentsUI = CommandUI(segmentsFrame)
+        segmentsFrame.grid_columnconfigure(0, weight=1)
+        segmentsFrame.grid_columnconfigure(1, weight=0)
+        segmentsFrame.grid_rowconfigure(0, weight=0)
 
         self.segmentsUI.add(
             ctk.CTkLabel,
@@ -257,32 +248,20 @@ LED Channel: {self.ledService.LED_CHANNEL}
     def _initCommands(self):
         def lockPage():
             self.tabviewUI.setFrame("main")
-            # self.ui.get("b_config").getInstance().configure(text="Configuration")
-            # self.ui.get("b_config").drop()
+            self.ui.get("b_config").getInstance().configure(text="Configuration")
+            self.ui.get("b_config").drop()
 
         self.appRoot.addLockCallback(lockPage)
 
-        # def showConfig():
-        #     if self.tabviewUI.getCurrentFrameName() != "main":
-        #         self.ui.get("b_config").getInstance().configure(text="Configuration")
-        #         self.ui.get("segments").getInstance().configure(text="Segments")
-        #         self.tabviewUI.setFrame("main")
-        #     else:
-        #         self.ui.get("b_config").getInstance().configure(text="Back to LEDs")
-        #         self.tabviewUI.setFrame("config")
-
-        # self.ui.get("b_config").setCommand(showConfig)
-
-        def showSegments():
+        def showConfig():
             if self.tabviewUI.getCurrentFrameName() != "main":
-                # self.ui.get("b_config").getInstance().configure(text="Configuration")
-                self.ui.get("segments").getInstance().configure(text="Segments")
+                self.ui.get("b_config").getInstance().configure(text="Configuration")
                 self.tabviewUI.setFrame("main")
             else:
-                self.ui.get("segments").getInstance().configure(text="Back to LEDs")
-                self.tabviewUI.setFrame("segments")
+                self.ui.get("b_config").getInstance().configure(text="Back to LEDs")
+                self.tabviewUI.setFrame("config")
 
-        self.ui.get("segments").setCommand(showSegments)
+        self.ui.get("b_config").setCommand(showConfig)
 
         def selector_callback(value):
             if value == -1:
@@ -304,14 +283,13 @@ LED Channel: {self.ledService.LED_CHANNEL}
         )
 
     def onShow(self):
-        pass
-        # if self.appRoot.hasFullAccess():
-        # self.ui.get("b_config").getInstance().configure(text="Configuration")
-        # self.ui.get("b_config").grid()
+        if self.appRoot.hasFullAccess():
+            self.ui.get("b_config").getInstance().configure(text="Configuration")
+            self.ui.get("b_config").grid()
 
     def onHide(self):
-        # self.ui.get("b_config").getInstance().configure(text="Configuration")
-        # self.ui.get("b_config").drop()
+        self.ui.get("b_config").getInstance().configure(text="Configuration")
+        self.ui.get("b_config").drop()
         self.tabviewUI.setFrame("main")
 
     def addTheme(self, theme: "LEDTheme"):
@@ -369,3 +347,4 @@ LED Channel: {self.ledService.LED_CHANNEL}
             pady=(0, 40),
             stick="ne" if colPos else "nw",
         )
+

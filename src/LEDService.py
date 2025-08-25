@@ -16,7 +16,7 @@ from lib.led.WSExtensions import SegmentedPixelStrip
 class LEDService:
     _instance = None
 
-    LED_COUNT = 300
+    LED_COUNT = 600
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10

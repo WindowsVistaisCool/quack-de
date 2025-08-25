@@ -1283,31 +1283,31 @@ class LEDThemes:
                     "gray",
                 ],
             ),
-            Palette(
-                "Snow",
-                {
-                    "soft": 0x304048,
-                    "bright": 0xE0F0FF,
-                },
-                [
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "bright",
-                ],
-            ),
+            # Palette(
+            #     "Snow",
+            #     {
+            #         "soft": 0x304048,
+            #         "bright": 0xE0F0FF,
+            #     },
+            #     [
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "bright",
+            #     ],
+            # ),
             Palette(
                 "Holly",
                 {
@@ -1367,7 +1367,7 @@ class LEDThemes:
         coolLikeIncandescent = ctk.BooleanVar(value=True)
         _twinkleSpeed = 5
         _twinkleDensity = 4
-        _secondsPerPallette = 60
+        _secondsPerPallette = 30
         _coolLikeIncandescent = True
 
         rawPalettes = [p.get() for p in palettes]
