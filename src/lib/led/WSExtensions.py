@@ -23,6 +23,12 @@ class SegmentedPixelStrip(ws.PixelStrip):
         ), f"Sub-strip index {index} out of bounds"
         return self.subStrips[index]
 
+    def getSubStripRanges(self):
+        return [(sub_strip.start, sub_strip.end) for sub_strip in self.subStrips]
+
+    def getSubStripRangesStr(self):
+        return [sub_strip.rangeStr for sub_strip in self.subStrips]
+
     def clearSubStrips(self):
         self.subStrips.clear()
 

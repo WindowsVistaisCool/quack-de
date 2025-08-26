@@ -16,7 +16,7 @@ from lib.led.WSExtensions import SegmentedPixelStrip
 class LEDService:
     _instance = None
 
-    LED_COUNT = 300
+    LED_COUNT = 821
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
@@ -39,8 +39,11 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
-        self.leds.addSubStrip(0, 150)
-        self.leds.addSubStrip(150, 300)
+        self.leds.addSubStrip(0, 124)
+        self.leds.addSubStrip(124, 324)
+        self.leds.addSubStrip(324, 534)
+        self.leds.addSubStrip(534, 743)
+        self.leds.addSubStrip(743, 821)
 
         self.appRoot: "App" = appRoot
 
@@ -53,7 +56,7 @@ class LEDService:
 
         self._isRunning = True
 
-        self.errorCallback = lambda e: print(e)
+        self._errorCallback = lambda e: print(e)
 
         LEDService._instance = self
 
@@ -68,7 +71,7 @@ class LEDService:
             theme.passArgs(self.leds, break_event, subStrip=subStrip)
             theme.runInit()
         except Exception:
-            self.errorCallback(
+            self._errorCallback(
                 f"Failed to initialize loop {theme.id}: {traceback.format_exc()}"
             )
             return
@@ -81,7 +84,7 @@ class LEDService:
                     break_event.set()
                     break
             except Exception:
-                self.errorCallback(traceback.format_exc())
+                self._errorCallback(traceback.format_exc())
                 break_event.set()
                 break
 

@@ -370,6 +370,7 @@ class LEDThemes:
             "null": LEDThemes.null()
         }  # needs to init like this because `self._checkLoopExists` references it
         self.themes = {
+            "ledSelector": self.ledSelector(),
             "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
@@ -409,6 +410,44 @@ class LEDThemes:
         assert (
             theme_id not in self.themes.keys()
         ), f"LED theme '{theme_id}' already exists"
+
+    def ledSelector(self):
+        self._checkThemeExists("ledSelector")
+
+        num = ctk.IntVar(value=0)
+
+        def target(theme: "LEDTheme"):
+            for i in range(theme.strip.numPixels()):
+                c = 255 if i == num.get() else 0
+                theme.strip.setPixelColor(i, ws.Color(c, c, c))
+            theme.strip.show()
+
+        def uiMaker(theme: "LEDTheme", ui: CommandUI, withShowSaveButton: callable):
+            ui.add(
+                ctk.CTkLabel,
+                "l_num",
+                textvariable=num,
+                font=("Arial", 20),
+            ).grid(row=0, column=0, padx=20, pady=15, sticky="nsw")
+            ui.add(
+                ctk.CTkSlider,
+                "s_num",
+                variable=num,
+                from_=0,
+                to=theme.leds.numPixels() - 1,
+                number_of_steps=theme.leds.numPixels() - 2,
+                height=30,
+            ).grid(row=0, column=1, padx=(0, 20), pady=15, sticky="nsew").setCommand(
+                withShowSaveButton(
+                    lambda *_: theme.setData("num", num.get())
+                )
+            )
+
+        return LEDTheme(
+            "ledSelector",
+            target,
+            settingsUIFactory=uiMaker
+        )
 
     def rainbow(self, *, _name="rainbow"):
         self._checkThemeExists(_name)
@@ -643,45 +682,45 @@ class LEDThemes:
             rangeList = list(
                 range(0, self.strip.numPixels(), max(1, _step_size))
             )  # Use step_size to skip pixels
-            for k in range(2):
-                if k % 2 != 0:
-                    rangeList.reverse()
-                for i in rangeList:
-                    if self.checkBreak():
-                        return True
-                    hue += 4
-                    hue &= 0xFF
+            # for k in range(2):
+            #     if k % 2 != 0:
+            #         rangeList.reverse()
+            for i in rangeList:
+                if self.checkBreak():
+                    return True
+                hue += 4
+                hue &= 0xFF
 
-                    # Set multiple pixels if step_size > 1 to fill gaps
-                    for offset in range(min(_step_size, self.strip.numPixels() - i)):
-                        if i + offset < self.strip.numPixels():
-                            self.strip.setPixelColor(
-                                i + offset,
-                                ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
-                            )
-
-                    # Apply tail fading - ensure all pixels get faded for consistent tail effect
-                    for k in range(self.strip.numPixels()):
-                        if self.checkBreak():
-                            return True
-                        rgbw = self.strip.getPixelColorRGB(k)
+                # Set multiple pixels if step_size > 1 to fill gaps
+                for offset in range(min(_step_size, self.strip.numPixels() - i)):
+                    if i + offset < self.strip.numPixels():
                         self.strip.setPixelColor(
-                            k,
-                            ws.Color(
-                                *FastLEDFunctions.CRGB_nscale8(
-                                    (rgbw.r, rgbw.g, rgbw.b), _tailScaleFactor
-                                )
-                            ),
+                            i + offset,
+                            ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
                         )
 
-                    if isinstance(tailScaleFactor, ctk.IntVar):
-                        _tailScaleFactor = tailScaleFactor.get()
-                    if isinstance(step_size, ctk.IntVar):
-                        if _step_size != step_size.get():
-                            _step_size = max(1, step_size.get())
-                            return None  # return but keep loop running
-                    self.strip.show()
-                    time.sleep(10 / 1000)
+                # Apply tail fading - ensure all pixels get faded for consistent tail effect
+                for k in range(self.strip.numPixels()):
+                    if self.checkBreak():
+                        return True
+                    rgbw = self.strip.getPixelColorRGB(k)
+                    self.strip.setPixelColor(
+                        k,
+                        ws.Color(
+                            *FastLEDFunctions.CRGB_nscale8(
+                                (rgbw.r, rgbw.g, rgbw.b), _tailScaleFactor
+                            )
+                        ),
+                    )
+
+                if isinstance(tailScaleFactor, ctk.IntVar):
+                    _tailScaleFactor = tailScaleFactor.get()
+                if isinstance(step_size, ctk.IntVar):
+                    if _step_size != step_size.get():
+                        _step_size = max(1, step_size.get())
+                        return None  # return but keep loop running
+                self.strip.show()
+                # time.sleep(10 / 1000)
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
@@ -1115,6 +1154,37 @@ class LEDThemes:
         """
         palettes = [
             Palette(
+                "Purple",
+                {
+                    "purple1": 0x7A0DAF,
+                    "purple2": 0x9B2BFF,
+                    "purple3": 0xD466FF,
+                    "pink1": 0xFF66CC,
+                    "pink2": 0xFF33AA,
+                    "violet": 0x7F00FF,
+                    "magenta": 0xFF00FF,
+                    "deep_purple": 0x3A0060,
+                },
+                [
+                    "purple1",
+                    "purple3",
+                    "pink1",
+                    "magenta",
+                    "pink2",
+                    "purple2",
+                    "violet",
+                    "deep_purple",
+                    "magenta",
+                    "pink1",
+                    "purple3",
+                    "pink2",
+                    "purple1",
+                    "violet",
+                    "magenta",
+                    "purple2",
+                ],
+            ),
+            Palette(
                 "C9",
                 {
                     "red": 0xBB80400,
@@ -1258,56 +1328,56 @@ class LEDThemes:
                     0x0007F9,
                 ],
             ),
-            Palette(
-                "Red and White",
-                {
-                    "red": 0xFF0000,
-                    "gray": 0x808080,
-                },
-                [
-                    "red",
-                    "red",
-                    "red",
-                    "red",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "red",
-                    "red",
-                    "red",
-                    "red",
-                    "gray",
-                    "gray",
-                    "gray",
-                    "gray",
-                ],
-            ),
-            Palette(
-                "Snow",
-                {
-                    "soft": 0x304048,
-                    "bright": 0xE0F0FF,
-                },
-                [
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "soft",
-                    "bright",
-                ],
-            ),
+            # Palette(
+            #     "Red and White",
+            #     {
+            #         "red": 0xFF0000,
+            #         "gray": 0x808080,
+            #     },
+            #     [
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "red",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #         "gray",
+            #     ],
+            # ),
+            # Palette(
+            #     "Snow",
+            #     {
+            #         "soft": 0x304048,
+            #         "bright": 0xE0F0FF,
+            #     },
+            #     [
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "soft",
+            #         "bright",
+            #     ],
+            # ),
             Palette(
                 "Holly",
                 {
@@ -1367,7 +1437,7 @@ class LEDThemes:
         coolLikeIncandescent = ctk.BooleanVar(value=True)
         _twinkleSpeed = 5
         _twinkleDensity = 4
-        _secondsPerPallette = 60
+        _secondsPerPallette = 30
         _coolLikeIncandescent = True
 
         rawPalettes = [p.get() for p in palettes]
