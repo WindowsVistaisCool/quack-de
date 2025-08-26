@@ -36,7 +36,7 @@ class HomePage(NavigationPage):
             "l_quickact",
             text="Quick Actions",
             font=(self.appRoot.FONT_NAME, 26),
-        ).grid(row=1, column=0, padx=30, pady=(0, 15), sticky="nw")
+        ).grid(row=1, column=0, padx=30, pady=(0, 20), sticky="nw")
 
         self.ui.add(
             ctk.CTkButton,
@@ -45,29 +45,20 @@ class HomePage(NavigationPage):
             border_spacing=12,
             corner_radius=12,
             font=(self.appRoot.FONT_NAME, 24),
-        ).grid(row=2, column=0, padx=30, pady=(0, 10), sticky="nw")
+        ).grid(row=2, column=0, padx=30, pady=15, sticky="nw")
 
         self.ui.add(
             ctk.CTkButton,
-            "bashar",
-            text="bashar button (danger)",
+            "b_ledlow",
+            text="Set LEDs Low",
             border_spacing=12,
             corner_radius=12,
             font=(self.appRoot.FONT_NAME, 24),
-        ).grid(row=2, column=1, padx=30, pady=(0, 10), sticky="nw")
+        ).grid(row=3, column=0, padx=30, pady=20, sticky="nw")
 
     def _initCommands(self):
-        self.ui.get("b_ledoff").setCommand(lambda: LEDService.getInstance().off())
-        self.ui.get("bashar").setCommand(
-            lambda: self.navigator.navigateEphemeral(
-                StatImg(
-                    self.appRoot,
-                    ctk.CTkImage(
-                        Image.open("./assets/images/bashar.png"), size=(1600, 1600)
-                    ),
-                )
-            )
-        )
+        self.ui.get("b_ledoff").setCommand(lambda: (LEDService.getInstance().off(), LEDService.getInstance().setBrightness(255)))
+        self.ui.get("b_ledlow").setCommand(lambda: LEDService.getInstance().setBrightness(20))
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:

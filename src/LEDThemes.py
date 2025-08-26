@@ -682,45 +682,45 @@ class LEDThemes:
             rangeList = list(
                 range(0, self.strip.numPixels(), max(1, _step_size))
             )  # Use step_size to skip pixels
-            for k in range(2):
-                if k % 2 != 0:
-                    rangeList.reverse()
-                for i in rangeList:
-                    if self.checkBreak():
-                        return True
-                    hue += 4
-                    hue &= 0xFF
+            # for k in range(2):
+            #     if k % 2 != 0:
+            #         rangeList.reverse()
+            for i in rangeList:
+                if self.checkBreak():
+                    return True
+                hue += 4
+                hue &= 0xFF
 
-                    # Set multiple pixels if step_size > 1 to fill gaps
-                    for offset in range(min(_step_size, self.strip.numPixels() - i)):
-                        if i + offset < self.strip.numPixels():
-                            self.strip.setPixelColor(
-                                i + offset,
-                                ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
-                            )
-
-                    # Apply tail fading - ensure all pixels get faded for consistent tail effect
-                    for k in range(self.strip.numPixels()):
-                        if self.checkBreak():
-                            return True
-                        rgbw = self.strip.getPixelColorRGB(k)
+                # Set multiple pixels if step_size > 1 to fill gaps
+                for offset in range(min(_step_size, self.strip.numPixels() - i)):
+                    if i + offset < self.strip.numPixels():
                         self.strip.setPixelColor(
-                            k,
-                            ws.Color(
-                                *FastLEDFunctions.CRGB_nscale8(
-                                    (rgbw.r, rgbw.g, rgbw.b), _tailScaleFactor
-                                )
-                            ),
+                            i + offset,
+                            ws.Color(*FastLEDFunctions.fromHSV(hue, 255, 255)),
                         )
 
-                    if isinstance(tailScaleFactor, ctk.IntVar):
-                        _tailScaleFactor = tailScaleFactor.get()
-                    if isinstance(step_size, ctk.IntVar):
-                        if _step_size != step_size.get():
-                            _step_size = max(1, step_size.get())
-                            return None  # return but keep loop running
-                    self.strip.show()
-                    time.sleep(10 / 1000)
+                # Apply tail fading - ensure all pixels get faded for consistent tail effect
+                for k in range(self.strip.numPixels()):
+                    if self.checkBreak():
+                        return True
+                    rgbw = self.strip.getPixelColorRGB(k)
+                    self.strip.setPixelColor(
+                        k,
+                        ws.Color(
+                            *FastLEDFunctions.CRGB_nscale8(
+                                (rgbw.r, rgbw.g, rgbw.b), _tailScaleFactor
+                            )
+                        ),
+                    )
+
+                if isinstance(tailScaleFactor, ctk.IntVar):
+                    _tailScaleFactor = tailScaleFactor.get()
+                if isinstance(step_size, ctk.IntVar):
+                    if _step_size != step_size.get():
+                        _step_size = max(1, step_size.get())
+                        return None  # return but keep loop running
+                self.strip.show()
+                # time.sleep(10 / 1000)
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
