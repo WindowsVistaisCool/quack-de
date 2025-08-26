@@ -47,18 +47,27 @@ class HomePage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 24),
         ).grid(row=2, column=0, padx=30, pady=15, sticky="nw")
 
-        self.ui.add(
+        
+        self.button_fg_color = self.ui.add(
             ctk.CTkButton,
             "b_ledlow",
-            text="Set LEDs Low",
+            text="Movie Mode",
             border_spacing=12,
             corner_radius=12,
             font=(self.appRoot.FONT_NAME, 24),
-        ).grid(row=3, column=0, padx=30, pady=20, sticky="nw")
+        ).grid(row=3, column=0, padx=30, pady=20, sticky="nw").getInstance().cget("fg_color")
 
     def _initCommands(self):
+        def b_ledlow_targ():
+            if LEDService.getInstance().leds.getBrightness() != 20:
+                LEDService.getInstance().setBrightness(20)
+                self.ui.get("b_ledlow").getInstance().configure(text="Disable Movie Mode", fg_color="#FF5C5C")
+            else:
+                LEDService.getInstance().setBrightness(255)
+                self.ui.get("b_ledlow").getInstance().configure(text="Movie Mode", fg_color=self.button_fg_color)
+
         self.ui.get("b_ledoff").setCommand(lambda: (LEDService.getInstance().off(), LEDService.getInstance().setBrightness(255)))
-        self.ui.get("b_ledlow").setCommand(lambda: LEDService.getInstance().setBrightness(20))
+        self.ui.get("b_ledlow").setCommand(b_ledlow_targ)
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:
