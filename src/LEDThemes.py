@@ -459,7 +459,7 @@ class LEDThemes:
         def target(theme: "LEDTheme"):
             nonlocal hue
 
-            hue = (hue + 16) & 0xFF
+            hue = (hue + 32) & 0xFF
 
             for i in range(theme.strip.numPixels()):
                 theme.strip.setPixelColorRGB(i, *FastLEDFunctions.fromHSV(hue, 255, 255))
