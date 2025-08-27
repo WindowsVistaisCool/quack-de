@@ -4,30 +4,31 @@ import rpi_ws281x as ws
 class SegmentedPixelStrip(ws.PixelStrip):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.subStrips = []
+        self.subStrips = {}
 
-    def addSubStrip(self, start: int, end: int):
-        for sub_strip in self.subStrips:
+    def addSubStrip(self, id: str, start: int, end: int):
+        assert id not in self.subStrips.keys(), f"Sub-strip ID {id} already exists"
+        assert id.lower() != "all", f"Sub-strip ID `{id}` is reserved"
+
+        for sub_strip in self.subStrips.values():
             overlap = not (end <= sub_strip.start or start >= sub_strip.end)
             assert (
                 not overlap
             ), f"Sub-strip [{start}, {end}) overlaps with existing sub-strip [{sub_strip.start}, {sub_strip.end})"
 
         sub_strip = SubStrip(self, start, end)
-        self.subStrips.append(sub_strip)
+        self.subStrips[id] = sub_strip
         return sub_strip
 
-    def getSubStrip(self, index: int):
-        assert (
-            0 <= index < len(self.subStrips)
-        ), f"Sub-strip index {index} out of bounds"
-        return self.subStrips[index]
+    def getSubStrip(self, id: str):
+        assert id in self.subStrips.keys(), f"Sub-strip ID {id} not found"
+        return self.subStrips[id]
 
     def getSubStripRanges(self):
-        return [(sub_strip.start, sub_strip.end) for sub_strip in self.subStrips]
+        return [(sub_strip.start, sub_strip.end) for sub_strip in self.subStrips.values()]
 
     def getSubStripRangesStr(self):
-        return [sub_strip.rangeStr for sub_strip in self.subStrips]
+        return [sub_strip.rangeStr for sub_strip in self.subStrips.values()]
 
     def clearSubStrips(self):
         self.subStrips.clear()
