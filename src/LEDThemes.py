@@ -377,6 +377,7 @@ class LEDThemes:
             "purple": self.purple(),
             "twinkle": self.twinkle(),
             "pacifica": self.pacifica(),
+            "epilepsy": self.epilepsy(),
         }
 
     @classmethod
@@ -447,6 +448,34 @@ class LEDThemes:
             "ledSelector",
             target,
             settingsUIFactory=uiMaker
+        )
+    
+    def epilepsy(self):
+        self._checkThemeExists("epilepsy")
+
+        num = ctk.IntVar(value=0)
+        hue = 0
+
+        def target(theme: "LEDTheme"):
+            nonlocal hue
+
+            hue = (hue + 16) & 0xFF
+
+            for i in range(theme.strip.numPixels()):
+                theme.strip.setPixelColorRGB(i, *FastLEDFunctions.fromHSV(hue, 255, 255))
+            theme.strip.show()
+
+            time.sleep(0.05)
+
+            for i in range(theme.strip.numPixels()):
+                theme.strip.setPixelColorRGB(i, 0, 0, 0)
+            theme.strip.show()
+
+            time.sleep(0.05)
+
+        return LEDTheme(
+            "epilepsy",
+            target,
         )
 
     def rainbow(self, *, _name="rainbow"):
