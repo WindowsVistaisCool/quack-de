@@ -28,8 +28,9 @@ class HomePage(NavigationPage):
             ctk.CTkLabel,
             "title",
             textvariable=self.greetingText,
-            font=(self.appRoot.FONT_NAME, 32, "bold"),
-        ).grid(row=0, column=0, columnspan=10, padx=30, pady=(35, 25), sticky="nw")
+            font=(self.appRoot.FONT_NAME, 40, "bold"),
+            justify="center",
+        ).grid(row=0, column=0, columnspan=10, padx=30, pady=(35, 25), sticky="nwe")
 
         self.ui.add(
             ctk.CTkLabel,
@@ -47,7 +48,6 @@ class HomePage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 24),
         ).grid(row=2, column=0, padx=30, pady=15, sticky="nw")
 
-        
         self.button_fg_color = self.ui.add(
             ctk.CTkButton,
             "b_ledlow",

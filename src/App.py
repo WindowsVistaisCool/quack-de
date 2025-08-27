@@ -17,10 +17,11 @@ from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
+from pages.Weather import WeatherPage
 
 
 class App(QuackApp):
-    VERSION = f"v1{'-dev' if isDev() else ''}"
+    VERSION = f"v1.1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
@@ -99,16 +100,16 @@ class App(QuackApp):
             corner_radius=20,
         ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
 
-        # self.ui.add(
-        #     ctk.CTkButton,
-        #     "nav_calendar",
-        #     root=self.navbar.getInstance(),
-        #     text="Calendar",
-        #     font=(self.FONT_NAME, 18),
-        #     width=150,
-        #     height=60,
-        #     corner_radius=20,
-        # ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_weather",
+            root=self.navbar.getInstance(),
+            text="Weather",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -142,7 +143,7 @@ class App(QuackApp):
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
-        # self.ui.addCommand("nav_calendar", lambda: self.navigation.navigate(CalendarPage))
+        self.ui.addCommand("nav_weather", lambda: self.navigation.navigate(WeatherPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
         )
@@ -164,7 +165,7 @@ class App(QuackApp):
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
-        # CalendarPage(self.navigation, self, self.content_root.getInstance())
+        WeatherPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.navigation.getPage(HomePage).updateGreeting(datetime.now())
