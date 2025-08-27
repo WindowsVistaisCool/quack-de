@@ -16,7 +16,7 @@ from lib.led.WSExtensions import SegmentedPixelStrip
 class LEDService:
     _instance = None
 
-    LED_COUNT = 821
+    LED_COUNT = 822
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
@@ -39,11 +39,10 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
-        self.leds.addSubStrip("begin", 0, 124)
-        self.leds.addSubStrip("spartan wall", 124, 324)
-        self.leds.addSubStrip("window", 324, 534)
-        self.leds.addSubStrip("door side", 534, 743)
-        self.leds.addSubStrip("end", 743, 821)
+        self.leds.addSubStrip("Door Side", [(0, 124), (743, 822)])
+        self.leds.addSubStrip("Kyle Side", [(124, 324)])
+        self.leds.addSubStrip("Window", [(324, 534)])
+        self.leds.addSubStrip("Jusnoor Side", [(534, 743)])
 
         self.appRoot: "App" = appRoot
 

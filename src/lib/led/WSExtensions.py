@@ -6,17 +6,17 @@ class SegmentedPixelStrip(ws.PixelStrip):
         super().__init__(*args, **kwargs)
         self.subStrips = {}
 
-    def addSubStrip(self, id: str, start: int, end: int):
+    def addSubStrip(self, id: str, ranges: list):
         assert id not in self.subStrips.keys(), f"Sub-strip ID {id} already exists"
         assert id.lower() != "all", f"Sub-strip ID `{id}` is reserved"
 
-        for sub_strip in self.subStrips.values():
-            overlap = not (end <= sub_strip.start or start >= sub_strip.end)
-            assert (
-                not overlap
-            ), f"Sub-strip [{start}, {end}) overlaps with existing sub-strip [{sub_strip.start}, {sub_strip.end})"
+        # for sub_strip in self.subStrips.values():
+        #     overlap = not (end <= sub_strip.start or start >= sub_strip.end)
+        #     assert (
+        #         not overlap
+        #     ), f"Sub-strip [{start}, {end}) overlaps with existing sub-strip [{sub_strip.start}, {sub_strip.end})"
 
-        sub_strip = SubStrip(self, start, end)
+        sub_strip = SubStrip(self, ranges)
         self.subStrips[id] = sub_strip
         return sub_strip
 
@@ -25,7 +25,7 @@ class SegmentedPixelStrip(ws.PixelStrip):
         return self.subStrips[id]
 
     def getSubStripRanges(self):
-        return [(sub_strip.start, sub_strip.end) for sub_strip in self.subStrips.values()]
+        return [sub_strip.ranges for sub_strip in self.subStrips.values()]
 
     def getSubStripRangesStr(self):
         return [sub_strip.rangeStr for sub_strip in self.subStrips.values()]
@@ -35,29 +35,38 @@ class SegmentedPixelStrip(ws.PixelStrip):
 
 
 class SubStrip:
-    def __init__(self, leds: SegmentedPixelStrip, start: int = 0, end: int = None):
+    def __init__(self, leds: SegmentedPixelStrip, ranges: list):
         self.leds = leds
 
         self._pixelColors = []
 
-        end = end if end is not None else leds.numPixels()
-        self.configure(start, end)
+        self.configure(ranges)
 
-    def configure(self, start: int, end: int):
-        self.start = start
-        self.end = end
-        self.rangeStr = f"{start}-{end}"
+    def configure(self, ranges: list):
+        self.ranges = ranges
+        self.rangeStr = ""
+        for rng in self.ranges:
+            self.rangeStr += f"{rng[0]}-{rng[1]}, "
+        self.rangeStr = self.rangeStr.strip(", ")
+        
+        # map the real phyiscal indicies for the strip to a continuous range
+        self._stripTranslations = []
+        for rng in self.ranges:
+            jLoop = range(rng[0], rng[1])
+            if len(rng) == 3 and rng[2] is True:
+                jLoop = reversed(jLoop)
+            for j in jLoop:
+                self._stripTranslations.append(j)
 
     def numPixels(self):
-        return self.end - self.start
+        pixels = 0
+        for rng in self.ranges:
+            pixels += rng[1] - rng[0]
+        return pixels
 
     def setPixelColor(self, n, color):
         """Set LED at position n to the provided 24-bit color value (in RGB order)."""
-        tf = n + self.start
-        assert (
-            self.start <= tf < self.end
-        ), f"Pixel index {n} out of bounds for sub-strip [{self.start}, {self.end})"
-        self.leds.setPixelColor(tf, color)
+        self.leds.setPixelColor(self._stripTranslations[n], color)
 
     def setPixelColorRGB(self, n, red, green, blue, white=0):
         """Set LED at position n to the provided red, green, and blue color.
@@ -68,11 +77,7 @@ class SubStrip:
 
     def getPixelColorRGB(self, n):
         """Get the RGB color of the LED at position n."""
-        tf = n + self.start
-        assert (
-            self.start <= tf < self.end
-        ), f"Pixel index {n} out of bounds for sub-strip [{self.start}, {self.end})"
-        return self.leds.getPixelColorRGB(tf)
+        return self.leds.getPixelColorRGB(self._stripTranslations[n])
 
     def show(self):
         self.leds.show()
