@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from threading import Thread
 
+# from API import QuackDEAPI
 from LEDThemes import LEDThemes
 from LEDService import LEDService
 
@@ -41,6 +42,9 @@ class App(QuackApp):
         self._initUI()
         self._initCommands()
         self._addPages()
+
+        # self.api = QuackDEAPI()
+        # self.api.init()
 
     def _initUI(self):
         # init grid
