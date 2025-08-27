@@ -97,6 +97,8 @@ class LEDService:
         """
         if not loop:
             loop = LEDThemes.null()
+        if subStrip is not None:
+            self.setLoop() # set the loop for all to none
 
         # key is the sub-strip index; None represents the full strip
         key = subStrip if subStrip is not None else None
