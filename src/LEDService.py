@@ -4,6 +4,7 @@ if TYPE_CHECKING:
     from App import App
 
 import threading
+import multiprocessing
 import time
 import traceback
 import rpi_ws281x as ws
@@ -60,7 +61,7 @@ class LEDService:
         LEDService._instance = self
 
     def _ledLoopTarget(
-        self, theme: "LEDTheme", break_event: threading.Event, subStrip=None
+        self, theme: "LEDTheme", break_event, subStrip=None
     ):
         """
         Thread target for running a single LEDTheme on its assigned strip (or full strip).
@@ -89,7 +90,34 @@ class LEDService:
                 break_event.set()
                 break
 
-    def setLoop(self, loop: "LEDTheme" = None, subStrip=None):
+    def _ledLoopProcessTarget(theme, break_event, appRoot, leds, subStrip=None):
+        """
+        Multiprocessing target for running a single LEDTheme on its assigned strip (or full strip).
+        This is a static method so it can be pickled for multiprocessing.
+        """
+        try:
+            if subStrip == "All":
+                subStrip = None
+            theme.passApp(appRoot)
+            theme.passArgs(leds, break_event, subStrip=subStrip)
+            theme.runInit()
+        except Exception as e:
+            print(f"Failed to initialize loop {theme.id}: {e}")
+            return
+
+        while not break_event.is_set():
+            time.sleep(0.001)
+            try:
+                stat = theme.runLoop()
+                if stat is not None:
+                    break_event.set()
+                    break
+            except Exception as e:
+                print(e)
+                break_event.set()
+                break
+
+    def setLoop(self, loop: "LEDTheme" = None, subStrip=None, use_multiprocessing=False):
         """
         Start or replace a loop. If the theme has a stripID, it will run on that sub-strip
         (one thread per sub-strip). If stripID is None, it runs on the full strip (key=None).
@@ -146,17 +174,32 @@ class LEDService:
         if loop.id == LEDThemes.null().id:
             return
 
-        break_event = threading.Event()
-        t = threading.Thread(
-            target=self._ledLoopTarget, args=(loop, break_event, subStrip), daemon=True
-        )
-        self.active_loops[key] = {
-            "theme": loop,
-            "thread": t,
-            "break_event": break_event,
-            "subStrip": subStrip,
-        }
-        t.start()
+        if use_multiprocessing:
+            break_event = multiprocessing.Event()
+            p = multiprocessing.Process(
+                target=LEDService._ledLoopProcessTarget,
+                args=(loop, break_event, self.appRoot, self.leds, subStrip),
+                daemon=True
+            )
+            self.active_loops[key] = {
+                "theme": loop,
+                "process": p,
+                "break_event": break_event,
+                "subStrip": subStrip,
+            }
+            p.start()
+        else:
+            break_event = threading.Event()
+            t = threading.Thread(
+                target=self._ledLoopTarget, args=(loop, break_event, subStrip), daemon=True
+            )
+            self.active_loops[key] = {
+                "theme": loop,
+                "thread": t,
+                "break_event": break_event,
+                "subStrip": subStrip,
+            }
+            t.start()
 
     def setBrightness(self, brightness: int):
         self.leds.setBrightness(int(brightness) & 0xFF)  # constrain brightness to 0-255
