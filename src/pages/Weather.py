@@ -72,7 +72,6 @@ class WeatherPage(NavigationPage):
                 self.addEntry(epoch)
 
     def updateWeather(self):
-        return
         api_key = os.getenv("WEATHER_API")
         assert api_key is not None
 

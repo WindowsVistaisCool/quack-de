@@ -228,6 +228,6 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     else:
         app.toggleFullAccess(True)
-    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
+    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
     
     app.mainloop()
