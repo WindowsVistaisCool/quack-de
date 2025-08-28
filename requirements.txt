@@ -2,3 +2,5 @@ customtkinter
 rpi-ws281x
 psutil
 ctkcolorpicker
+requests
+dotenv

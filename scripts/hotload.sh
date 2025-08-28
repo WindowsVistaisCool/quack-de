@@ -7,6 +7,7 @@ replace_code() {
 
     mkdir deploy
     cp -r ./temp/* ./deploy/
+    cp -r ./temp/.env ./deploy/
 
     rm -r ./temp/
 

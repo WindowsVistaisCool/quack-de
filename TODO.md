@@ -4,6 +4,7 @@
 - scheduling
 - FX menu
 - relays
+- install python packages on install
 
 Led:
 multiple ranges in a substrip, there needs to be a start offset for the translation map.
