@@ -2,6 +2,7 @@ import customtkinter as ctk
 import time
 from datetime import datetime
 from threading import Thread
+from dotenv import load_dotenv
 
 from LEDThemes import LEDThemes
 from LEDService import LEDService
@@ -27,6 +28,7 @@ class App(QuackApp):
     FONT_NAME = "Ubuntu Mono"
 
     def __init__(self):
+        load_dotenv()
         Configurator.setSchemaVersion(2)
 
         super().__init__(appTitle=self.APP_TITLE)
@@ -152,12 +154,17 @@ class App(QuackApp):
         self.clock_enabled = True
 
         def clock_worker():
-            now = None
+            now = datetime.now()
+            def update():
+                self.navigation.getPage(HomePage).updateGreeting(now)
+                self.navigation.getPage(WeatherPage).updateTime(now)
+
+            update()
             while self.clock_enabled:
                 now = datetime.now()
                 self.clock_label.set(now.strftime("%I:%M:%S %p"))
                 if now.minute % 60 == 0 and now.second == 0:
-                    self.navigation.getPage(HomePage).updateGreeting(now)
+                    update()
                 time.sleep(1)
 
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
@@ -168,7 +175,6 @@ class App(QuackApp):
         WeatherPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
-        self.navigation.getPage(HomePage).updateGreeting(datetime.now())
         self.clock_thread().start()
 
         self.navigation.navigate(HomePage)
@@ -223,6 +229,6 @@ if __name__ == "__main__":
     else:
         app.toggleFullAccess(True)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
-    # LEDService.getInstance().setLoop(LEDThemes.getTheme("rgbSnake"), subStrip=0)
-    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip=1)
+    
+    app.navigation.navigate(WeatherPage)
     app.mainloop()
