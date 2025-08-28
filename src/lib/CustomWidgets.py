@@ -113,10 +113,46 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master=master, **kwargs)
 
-        # Bind to all widgets in the frame, including children
-        self.bind_all("<Button-1>", self.start_touch_all)
-        self.bind_all("<B1-Motion>", self.on_touch_move_all)
-        self.bind_all("<ButtonRelease-1>", self.end_touch_all)
+    # Bind touch events to the scrollable area (prefer internal canvas).
+    # Fall back to frame-level binding and retry if canvas appears later.
+        try:
+            # Try a few common attribute names for CTkScrollableFrame's canvas
+            possible_names = [
+                "_parent_canvas",
+                "_canvas",
+                "canvas",
+                "_canvas_widget",
+            ]
+            canvas = None
+            for name in possible_names:
+                canvas = getattr(self, name, None)
+                if canvas is not None:
+                    break
+
+            if canvas is not None:
+                canvas.bind("<Button-1>", self.start_touch_all, add="+")
+                canvas.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+                canvas.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+                # remember which widget we bound to and bind descendants
+                self._bound_widget = canvas
+                self._bind_descendants()
+                self._bind_descendants()
+            else:
+                # Canvas not available yet — bind to the frame and retry later
+                self.bind("<Button-1>", self.start_touch_all, add="+")
+                self.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+                self.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+                self._bound_widget = self
+                # Try to bind to the internal canvas up to a few times
+                self._deferred_bind_attempts = 0
+                self.after(50, self._attempt_bind_canvas)
+        except Exception:
+            # If anything goes wrong, fall back to frame-level binding
+            self.bind("<Button-1>", self.start_touch_all, add="+")
+            self.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+            self.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+            self._bound_widget = self
+    
 
         self.last_touch_y = 0
         self.last_touch_time = 0
@@ -144,8 +180,12 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
         return False
 
     def start_touch_all(self, event):
-        if not self._is_event_in_frame(event):
-            return
+        # If we bound directly to a specific widget (canvas), events will
+        # originate from that widget — skip the containment check in that case.
+        # If we bound to the frame, verify the event is inside.
+        if getattr(self, "_bound_widget", None) is self:
+            if not self._is_event_in_frame(event):
+                return
 
         self.is_touching = True
         self.scroll_active = False
@@ -157,8 +197,14 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
             self.momentum_after_id = None
 
     def on_touch_move_all(self, event):
-        if not self._is_event_in_frame(event) or not self.is_touching:
-            return
+        # If we bound to the canvas, the event is guaranteed to be for this
+        # scrollable area; otherwise verify containment.
+        if getattr(self, "_bound_widget", None) is self:
+            if not self._is_event_in_frame(event) or not self.is_touching:
+                return
+        else:
+            if not self.is_touching:
+                return
 
         current_time = time.time()
         current_y = event.y_root
@@ -209,8 +255,9 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
             button._handle_parent_scroll_start()
 
     def end_touch_all(self, event):
-        if not self._is_event_in_frame(event):
-            return
+        if getattr(self, "_bound_widget", None) is self:
+            if not self._is_event_in_frame(event):
+                return
 
         self.is_touching = False
 
@@ -248,6 +295,57 @@ class TouchScrollableFrame(ctk.CTkScrollableFrame):
         self.momentum_after_id = self.after(
             self.updateRate, self.apply_momentum
         )  # ~60fps
+
+    def _attempt_bind_canvas(self):
+        """Retry binding to the internal canvas if it wasn't available in __init__."""
+        # Avoid infinite attempts
+        if getattr(self, "_deferred_bind_attempts", 0) > 10:
+            return
+        self._deferred_bind_attempts = getattr(self, "_deferred_bind_attempts", 0) + 1
+
+        possible_names = ["_parent_canvas", "_canvas", "canvas", "_canvas_widget"]
+        for name in possible_names:
+            canvas = getattr(self, name, None)
+            if canvas is not None:
+                try:
+                    canvas.bind("<Button-1>", self.start_touch_all, add="+")
+                    canvas.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+                    canvas.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+                    self._bound_widget = canvas
+                    self._bind_descendants()
+                    return
+                except Exception:
+                    continue
+
+        # Not found yet; try again shortly
+        self.after(100, self._attempt_bind_canvas)
+
+    def _bind_descendants(self):
+        """Bind handlers on descendant widgets and rescan for new children."""
+        try:
+            # bind to the root frame itself
+            self.bind("<Button-1>", self.start_touch_all, add="+")
+            self.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+            self.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+
+            for child in self.winfo_children():
+                # avoid rebinding infinitely
+                if getattr(child, "_tsf_bound", False):
+                    continue
+                try:
+                    child.bind("<Button-1>", self.start_touch_all, add="+")
+                    child.bind("<B1-Motion>", self.on_touch_move_all, add="+")
+                    child.bind("<ButtonRelease-1>", self.end_touch_all, add="+")
+                    setattr(child, "_tsf_bound", True)
+                except Exception:
+                    continue
+
+            # schedule a few rescans to bind children added later
+            self._desc_bind_attempts = getattr(self, "_desc_bind_attempts", 0) + 1
+            if self._desc_bind_attempts < 10:
+                self.after(200, self._bind_descendants)
+        except Exception:
+            return
 
 
 class QuackColorPicker(CTkColorPicker):
