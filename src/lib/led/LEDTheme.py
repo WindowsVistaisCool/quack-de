@@ -74,6 +74,9 @@ class LEDTheme:
         assert isinstance(app, QuackApp), "app must be an instance of QuackApp"
         self.app = app
         self.after = app.after
+    
+    def passAfter(self, call):
+        self.after = call
 
     def checkBreak(self):
         """
@@ -96,6 +99,6 @@ class LEDTheme:
         """
         assert self.leds, "LEDLoop must have leds set before running."
         assert self.break_event, "LEDLoop must have break_event set before running."
-        assert self.after, "LEDLoop target requires after method to be set."
+        # assert self.after, "LEDLoop target requires after method to be set."
 
         return self._loopTarget(self)
