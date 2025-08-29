@@ -45,7 +45,7 @@ class WeatherPage(NavigationPage):
 
         self.frameUI = CommandUI(
             self.ui.add(
-                TouchScrollableFrame,
+                ctk.CTkScrollableFrame,
                 "weather_frame",
                 fg_color=self.cget("fg_color"),
             )
@@ -53,6 +53,7 @@ class WeatherPage(NavigationPage):
             .getInstance()
         )
         self.frameUI.master.grid_columnconfigure(0, weight=1)
+        self.frameUI.master._scrollbar.configure(width=60)
 
     def _initCommands(self):
         pass
