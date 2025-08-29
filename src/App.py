@@ -230,5 +230,5 @@ if __name__ == "__main__":
         app.toggleFullAccess(True)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
     
-    app.navigation.navigate(WeatherPage)
+    # app.navigation.navigate(WeatherPage)
     app.mainloop()
