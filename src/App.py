@@ -18,6 +18,7 @@ from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
 from pages.Home import HomePage
 from pages.Settings import SettingsPage
+from pages.VirtualLED import VirtualLEDs
 from pages.Weather import WeatherPage
 
 
@@ -115,6 +116,17 @@ class App(QuackApp):
 
         self.ui.add(
             ctk.CTkButton,
+            "nav_viewer",
+            root=self.navbar.getInstance(),
+            text="Viewer",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=5, column=0, padx=20, pady=(15, 0), sticky="new")
+
+        self.ui.add(
+            ctk.CTkButton,
             "nav_settings",
             root=self.navbar.getInstance(),
             text="Settings",
@@ -122,7 +134,7 @@ class App(QuackApp):
             width=140,
             height=50,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="s")
+        ).grid(row=6, column=0, padx=20, pady=(10, 20), sticky="s")
 
         # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
@@ -145,6 +157,7 @@ class App(QuackApp):
     def _initCommands(self):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
+        self.ui.addCommand("nav_viewer", lambda: self.navigation.navigate(VirtualLEDs))
         self.ui.addCommand("nav_weather", lambda: self.navigation.navigate(WeatherPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
@@ -169,13 +182,22 @@ class App(QuackApp):
 
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
 
+        def update_thread():
+            while self.clock_enabled:
+                time.sleep(0.05)
+                self.navigation.getPage(VirtualLEDs).update()
+
+        self.virtLed_thread = lambda: Thread(target=update_thread, daemon=True)
+
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
+        VirtualLEDs(self.navigation, self, self.content_root.getInstance())
         WeatherPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.clock_thread().start()
+        self.virtLed_thread().start()
 
         self.navigation.navigate(HomePage)
 
