@@ -1,3 +1,4 @@
+import traceback
 import customtkinter as ctk
 import time
 from datetime import datetime
@@ -248,4 +249,10 @@ if __name__ == "__main__":
         app.toggleFullAccess(True)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
 
-    app.mainloop()
+    dev = isDev()
+    try:
+        app.mainloop()
+    except:
+        if dev:
+            with open(f"/home/kiosk/{datetime.now().timestamp()}.log", "w") as f:
+                f.write(traceback.format_exc())
