@@ -11,10 +11,10 @@ import tkinter as tk
 
 from LEDService import LEDService
 from lib.CustomWidgets import ToggleButton
-from lib.Navigation import EphemeralNavigationPage
+from lib.Navigation import EphemeralPage
 
 
-class VirtualLEDs(EphemeralNavigationPage):
+class VirtualLEDs(EphemeralPage):
     def __init__(self, navigator, appRoot: "App", master, **kwargs):
         super().__init__(navigator, master, title="Viewer", **kwargs)
         self.appRoot: "App" = appRoot

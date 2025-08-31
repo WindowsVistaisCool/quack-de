@@ -4,10 +4,10 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from lib.Navigation import EphemeralNavigationPage
+from lib.Navigation import EphemeralPage
 
 
-class LockPage(EphemeralNavigationPage):
+class LockPage(EphemeralPage):
     def __init__(self, navigator, appRoot: "App", master, **kwargs):
         super().__init__(navigator, master, title="Lock", **kwargs)
         self.appRoot: "App" = appRoot
