@@ -90,7 +90,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=2, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=2, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -101,7 +101,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=3, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -112,7 +112,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -123,7 +123,7 @@ class App(QuackApp):
             width=140,
             height=50,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(15, 0), sticky="s")
+        ).withGridProperties(row=5, column=0, padx=20, pady=(10, 0), sticky="s")
 
         self.ui.add(
             ctk.CTkButton,
@@ -134,7 +134,7 @@ class App(QuackApp):
             width=140,
             height=50,
             corner_radius=20,
-        ).grid(row=6, column=0, padx=20, pady=(10, 20), sticky="s")
+        ).grid(row=6, column=0, padx=20, pady=(10, 15), sticky="s")
 
         # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
@@ -168,11 +168,11 @@ class App(QuackApp):
 
         def clock_worker():
             now = datetime.now()
-        
+
             def update():
                 self.navigation.getPage(HomePage).updateGreeting(now)
-                self.navigation.getPage(WeatherPage).updateTime(now)
-                
+                # self.navigation.getPage(WeatherPage).updateTime(now)
+
             update()
             while self.clock_enabled:
                 now = datetime.now()
@@ -182,6 +182,8 @@ class App(QuackApp):
                 time.sleep(1)
 
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
+
+        self.addLockCallback(lambda: self.ui.get("nav_debug").drop())
 
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
@@ -210,6 +212,7 @@ class App(QuackApp):
         self._fullAccessMode = enable
         if enable:
             self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
+            self.ui.get("nav_debug").grid()
             self._fullAccessTimerID = self.after(
                 5 * 60 * 1000,
                 self._disableFullAccessCallback,
@@ -244,6 +247,5 @@ if __name__ == "__main__":
     else:
         app.toggleFullAccess(True)
     LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
-    
-    # app.navigation.navigate(WeatherPage)
+
     app.mainloop()

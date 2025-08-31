@@ -74,10 +74,12 @@ class VirtualLEDs(EphemeralPage):
             .grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
             .getInstance()
         )
-        self.ledGrid.configure(bg=led_frame.cget("fg_color")[1])
+        bg = led_frame.cget("fg_color")[1]
+        self.ledGrid.configure(bg=bg)
 
         for i in range(LEDService.LED_COUNT):
             self.ledGrid.addLED(i)
+            self.ledGrid.setLED(i, bg)
 
     def _initCommands(self):
         def toggle_target(state):
