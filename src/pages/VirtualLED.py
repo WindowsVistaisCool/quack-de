@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import tkinter as tk
+
 from LEDService import LEDService
 from pages.ephemeral.StatImg import StatImg
 from PIL import Image
@@ -18,7 +20,7 @@ class VirtualLEDs(NavigationPage):
         super().__init__(navigator, master, title="Viewer", **kwargs)
         self.appRoot: "App" = appRoot
 
-        self.labels = []
+        # self.labels = []
 
         self.init = False
 
@@ -37,27 +39,34 @@ class VirtualLEDs(NavigationPage):
             "title",
             text="LED Viewer",
             font=(self.appRoot.FONT_NAME, 32, "bold"),
-        ).grid(row=0, column=0, padx=30, pady=(20, 10), sticky="nw")
+        ).grid(row=0, column=0, padx=30, pady=(20, 10), sticky="nsw")
 
         self.ui.add(
             ctk.CTkButton,
             "init",
-            text="do init"
-        ).grid(row=0, column=1, padx=30, pady=(20, 10), sticky="ne")
+            text="Display LEDs",
+            height=40
+        ).grid(row=0, column=1, padx=30, pady=(20, 10), sticky="nse")
 
         led_frame = self.ui.add(
             ctk.CTkScrollableFrame,
             "led_frame",
-        ).grid(row=1, column=0, columnspan=2, padx=20, pady=10, sticky="nsew").getInstance()
+        ).grid(row=1, column=0, columnspan=2, padx=20, pady=0, sticky="nsew").getInstance()
+        led_frame.grid_rowconfigure(0, weight=1)
+        led_frame.grid_columnconfigure(0, weight=1)
+
+        self.ledGrid = self.ui.add(
+            LEDGrid,
+            "led_text",
+            root=led_frame,
+            cols=34,
+            led_size=16,
+            padding=1,
+        ).grid(row=0, column=0, padx=5, pady=5, sticky="nsew").getInstance()
+        self.ledGrid.configure(bg=led_frame.cget("fg_color")[1])
 
         for i in range(LEDService.LED_COUNT):
-            label = ctk.CTkLabel(
-                master=led_frame,
-                text=f" ",
-                font=(self.appRoot.FONT_NAME, 14),
-            )
-            self.labels.append(label)
-            label.grid(row=i // 60, column=i % 60, padx=1, pady=0, sticky="nw")
+            self.ledGrid.addLED(i)
 
     def _initCommands(self):
         self.ui.get("init").setCommand(self._setInit)
@@ -67,12 +76,11 @@ class VirtualLEDs(NavigationPage):
             return
         
         svc = LEDService.getInstance().leds
-        colors = ["transparent"] * LEDService.LED_COUNT
-        def setcolors():
+        # colors = ["transparent"] * LEDService.LED_COUNT
+        def applyColors():
             nonlocal colors
             for i, color in enumerate(colors):
-                if self.labels[i].cget("fg_color") != color:
-                    self.labels[i].configure(fg_color=color)
+                self.ledGrid.setLED(i, color)
         # setcolors()
         colors = []
         for i in range(LEDService.LED_COUNT):
@@ -82,4 +90,47 @@ class VirtualLEDs(NavigationPage):
             b = led & 0xFF
             hex_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
             colors.append(hex_color)
-        setcolors()
+        applyColors()
+
+class LEDGrid(tk.Canvas):
+    def __init__(self, master=None, cols=60, led_size=10, padding=1, **kwargs):
+        super().__init__(master, **kwargs)
+        self.cols = cols
+        self.led_size = led_size
+        self.padding = padding
+        self._items = []
+
+        self.configure(highlightthickness=0)
+
+    def addLED(self, i):
+        row = i // self.cols
+        col = i % self.cols
+        x0 = col * (self.led_size + self.padding)
+        y0 = row * (self.led_size + self.padding)
+        x1 = x0 + self.led_size
+        y1 = y0 + self.led_size
+
+        # create a rectangle; if indices gap, pad the _items list
+        while len(self._items) <= i:
+            self._items.append(None)
+
+        item = self.create_rectangle(x0, y0, x1, y1, fill="#000000", outline="")
+        self._items[i] = item
+
+        # update scrollregion so parent scroll frame knows full size
+        total_rows = (len(self._items) + self.cols - 1) // self.cols
+        width = self.cols * (self.led_size + self.padding)
+        height = total_rows * (self.led_size + self.padding)
+        self.configure(scrollregion=(0, 0, width, height), width=min(width, 800), height=height)
+
+    def setLED(self, i, color):
+        if i < 0 or i >= len(self._items):
+            return
+        item = self._items[i]
+        if item is None:
+            return
+        
+        if color == self.itemcget(item, "fill"):
+            return
+
+        self.itemconfig(item, fill=color)
