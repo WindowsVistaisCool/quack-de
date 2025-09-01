@@ -76,7 +76,7 @@ class App(QuackApp):
         # init nav sidebar
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main", width=800, corner_radius=0)
         self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
-        self.navbar.getInstance().grid_rowconfigure(7, weight=1)
+        self.navbar.getInstance().grid_rowconfigure((7), weight=1)
 
         self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
         self.ui.add(
@@ -273,7 +273,7 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     else:
         app.toggleFullAccess(True)
-    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
+    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
 
     dev = isDev()
     try:

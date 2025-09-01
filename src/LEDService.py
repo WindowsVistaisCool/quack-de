@@ -89,7 +89,7 @@ class LEDService:
                 break_event.set()
                 break
 
-    def setLoop(self, loop: "LEDTheme" = None, subStrip=None):
+    def setLoop(self, loop: "LEDTheme" = None, subStrip="All"):
         """
         Start or replace a loop. If the theme has a stripID, it will run on that sub-strip
         (one thread per sub-strip). If stripID is None, it runs on the full strip (key=None).
