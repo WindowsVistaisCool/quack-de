@@ -28,6 +28,7 @@ class YesNoDialog(EphemeralPage):
             text="Are you sure you want to proceed?",
             font=(self.appRoot.FONT_NAME, 20),
             justify="center",
+            wraplength=400,
         ).grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="sew")
 
         self.ui.add(

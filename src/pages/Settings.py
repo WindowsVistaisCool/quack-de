@@ -135,7 +135,7 @@ class SettingsPage(NavigationPage):
             ctk.CTkButton,
             "b_restartXServer",
             root=self.lockedSettings.getInstance(),
-            text="Restart X",
+            text="Restart App",
             height=40,
         ).grid(row=1, column=0, padx=5, pady=(0, 10), sticky="nse")
 

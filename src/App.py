@@ -144,10 +144,10 @@ class App(QuackApp):
             ctk.CTkButton,
             "nav_debug",
             root=self.navbar.getInstance(),
-            text="Debug",
+            text="Secrets",
             font=(self.FONT_NAME, 18),
             width=140,
-            height=50,
+            height=40,
             corner_radius=20,
         ).withGridProperties(row=6, column=0, padx=20, pady=(10, 0), sticky="s")
 

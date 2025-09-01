@@ -136,27 +136,31 @@ class ToggleButton(ctk.CTkButton):
         self._hover_untoggled = self.cget("hover_color")
         self._toggled = False
 
+    def _cmd_pre(self):
+        self._toggled = not self._toggled
+        if self._toggled:
+            self.configure(
+                fg_color=self._toggled_color,
+                text=self._toggled_text,
+                hover_color=self._hover_toggled,
+            )
+        else:
+            self.configure(
+                fg_color=self._untoggled_color,
+                text=self._untoggled_text,
+                hover_color=self._hover_untoggled,
+            )
+
     def configure(self, **kwargs):
         """Override configure to handle command parameter"""
         if "command" in kwargs:
-            def _cmd_pre():
-                self._toggled = not self._toggled
-                if self._toggled:
-                    self.configure(
-                        fg_color=self._toggled_color,
-                        text=self._toggled_text,
-                        hover_color=self._hover_toggled,
-                    )
-                else:
-                    self.configure(
-                        fg_color=self._untoggled_color,
-                        text=self._untoggled_text,
-                        hover_color=self._hover_untoggled,
-                    )
 
             cmd = kwargs["command"]
-            kwargs["command"] = lambda: (_cmd_pre(), cmd(self._toggled))
+            kwargs["command"] = lambda: (self._cmd_pre(), cmd(self._toggled))
         super().configure(**kwargs)
+
+    def toggle(self):
+        self._command()
 
 
 class TouchScrollableFrame(ctk.CTkScrollableFrame):

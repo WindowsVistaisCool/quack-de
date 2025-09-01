@@ -91,6 +91,7 @@ class VirtualLEDs(EphemeralPage):
                 for i in range(LEDService.LED_COUNT):
                     self.ledGrid.setLED(i, c)
         self.ui.get("toggle").setCommand(toggle_target)
+        self.ui.get("toggle").getInstance().toggle()
 
     def update(self):
         if not self.enabled:
