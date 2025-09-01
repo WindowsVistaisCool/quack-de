@@ -24,7 +24,7 @@ class VirtualLEDs(EphemeralPage):
         def thread_target():
             while self.enabled:
                 self.update()
-                time.sleep(0.1)
+                time.sleep(0.01)
 
         self.getThread = lambda: threading.Thread(target=thread_target, daemon=True)
 
@@ -99,17 +99,6 @@ class VirtualLEDs(EphemeralPage):
 
         svc = LEDService.getInstance().leds
 
-        # colors = ["transparent"] * LEDService.LED_COUNT
-        def applyColors():
-            nonlocal colors
-            for i, color in enumerate(colors):
-                try:
-                    self.ledGrid.setLED(i, color)
-                except tk.TclError:
-                    return
-                if not self.enabled:
-                    return
-
         # setcolors()
         colors = []
         for i in range(LEDService.LED_COUNT):
@@ -119,7 +108,13 @@ class VirtualLEDs(EphemeralPage):
             b = led & 0xFF
             hex_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
             colors.append(hex_color)
-        applyColors()
+        for i, color in enumerate(colors):
+                try:
+                    self.ledGrid.setLED(i, color)
+                except tk.TclError:
+                    return
+                if not self.enabled:
+                    return
 
 
 class LEDGrid(tk.Canvas):
