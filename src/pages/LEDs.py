@@ -38,10 +38,11 @@ class LEDsPage(NavigationPage):
         # goes (0, 0), (0, 1), (1, 0), (1, 1), etc. in grid units
         arrangement = (
             LEDThemes.getTheme("twinkle"),
-            LEDThemes.getTheme("rainbow"),
             LEDThemes.getTheme("rgbSnake"),
             LEDThemes.getTheme("fire2012"),
             LEDThemes.getTheme("pacifica"),
+            LEDThemes.getTheme("rainbow"),
+            # LEDThemes.getTheme("epilepsy"),
             # LEDThemes.getTheme("ledSelector"),
         )
         for theme in arrangement:
@@ -215,7 +216,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         self.segmentsUI.add(
             ctk.CTkLabel,
             "segmentNo",
-            textvariable=self.tv_segmentLabel,
+            textvariable=self.tv_segmentNum,
             font=(self.appRoot.FONT_NAME, 20),
         ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nw")
         _segmentsFrameOverlay = (
@@ -233,7 +234,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
             ctk.CTkSegmentedButton,
             "selector",
             root=_segmentsFrameOverlay,
-            values=self.ledService.leds.getSubStripRangesStr(),
+            values=list(self.ledService.leds.subStrips.keys()),
             corner_radius=12,
             height=40,
         ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
@@ -270,10 +271,10 @@ LED Channel: {self.ledService.LED_CHANNEL}
                 self.tv_segmentLabel.set("All")
                 self.segmentsUI.get("selector").getInstance().set(-1)
                 return
-            for index, substrip in enumerate(self.ledService.leds.subStrips):
-                if substrip.rangeStr == value:
-                    self.tv_segmentNum.set(index)
-                    self.tv_segmentLabel.set(substrip.rangeStr)
+            for id, substrip in self.ledService.leds.subStrips.items():
+                if id == value:
+                    self.tv_segmentNum.set(substrip.rangeStr)
+                    self.tv_segmentLabel.set(id)
                     break
 
         self.segmentsUI.get("selector").setCommand(selector_callback)
@@ -315,11 +316,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
                 try:
                     self.ledService.setLoop(
                         loop,
-                        subStrip=(
-                            self.tv_segmentNum.get()
-                            if self.tv_segmentNum.get() != -1
-                            else None
-                        ),
+                        subStrip=self.tv_segmentLabel.get(),
                     )
                 except:
                     self.ui.exceptionCallback(traceback.format_exc())

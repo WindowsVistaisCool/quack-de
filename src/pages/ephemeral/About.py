@@ -27,10 +27,10 @@ else:
 
 from lib.Configurator import Configurator
 
-from lib.Navigation import EphemeralNavigationPage
+from lib.Navigation import EphemeralPage
 
 
-class AboutPage(EphemeralNavigationPage):
+class AboutPage(EphemeralPage):
     @staticmethod
     def getPlatformIP():
         try:

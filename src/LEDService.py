@@ -16,7 +16,7 @@ from lib.led.WSExtensions import SegmentedPixelStrip
 class LEDService:
     _instance = None
 
-    LED_COUNT = 821
+    LED_COUNT = 822
     LED_PIN = 18
     LED_FREQ_HZ = 800000
     LED_DMA = 10
@@ -39,11 +39,10 @@ class LEDService:
             self.LED_CHANNEL,
         )
         self.leds.begin()
-        self.leds.addSubStrip(0, 124)
-        self.leds.addSubStrip(124, 324)
-        self.leds.addSubStrip(324, 534)
-        self.leds.addSubStrip(534, 743)
-        self.leds.addSubStrip(743, 821)
+        self.leds.addSubStrip("Door Side", [(0, 124), (743, 822)])
+        self.leds.addSubStrip("Kyle Side", [(124, 324)])
+        self.leds.addSubStrip("Window", [(324, 534)])
+        self.leds.addSubStrip("Jusnoor Side", [(534, 743)])
 
         self.appRoot: "App" = appRoot
 
@@ -67,6 +66,8 @@ class LEDService:
         Thread target for running a single LEDTheme on its assigned strip (or full strip).
         """
         try:
+            if subStrip == "All":
+                subStrip = None
             theme.passApp(self.appRoot)
             theme.passArgs(self.leds, break_event, subStrip=subStrip)
             theme.runInit()
@@ -88,7 +89,7 @@ class LEDService:
                 break_event.set()
                 break
 
-    def setLoop(self, loop: "LEDTheme" = None, subStrip=None):
+    def setLoop(self, loop: "LEDTheme" = None, subStrip="All"):
         """
         Start or replace a loop. If the theme has a stripID, it will run on that sub-strip
         (one thread per sub-strip). If stripID is None, it runs on the full strip (key=None).
@@ -97,6 +98,31 @@ class LEDService:
         """
         if not loop:
             loop = LEDThemes.null()
+
+        # If setting a loop for the full strip (subStrip is None), cancel all active sub-strip loops
+        if subStrip is None or subStrip == "All":
+            for k in list(self.active_loops.keys()):
+                if k is not None:
+                    existing = self.active_loops.get(k)
+                    if existing:
+                        try:
+                            existing["break_event"].set()
+                            existing["thread"].join(timeout=0.2)
+                        except Exception:
+                            pass
+                        finally:
+                            self.active_loops.pop(k, None)
+        # If setting a loop for a sub-strip, cancel any active full-strip loop
+        else:
+            existing_full = self.active_loops.get(None)
+            if existing_full:
+                try:
+                    existing_full["break_event"].set()
+                    existing_full["thread"].join(timeout=0.2)
+                except Exception:
+                    pass
+                finally:
+                    self.active_loops.pop(None, None)
 
         # key is the sub-strip index; None represents the full strip
         key = subStrip if subStrip is not None else None

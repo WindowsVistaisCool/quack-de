@@ -112,7 +112,8 @@ class CommandUI:
 
     def __init__(self, master):
         self.master = master
-        self.items = {"root": CommandUIItem(None, None, master, None, None)}
+        self.rootItem = CommandUIItem(None, None, master, None, None)
+        self.items = {"root": self.rootItem}
         self.exceptionUI: CommandUIItem = None
         self.exceptionCallback = lambda e: print(e)
 
@@ -130,27 +131,19 @@ class CommandUI:
         )
         return self.items[id]
 
-    # [TODO] what was i smoking when i wrote this?
-    # def addInnerUI(self, ui: 'CommandUI', id: str, root=None, **kwargs):
-    #     if id in self.items:
-    #         raise ValueError(f"UI element '{id}' already exists.")
-    #     if not root:
-    #         root = self.master
-    #     self.items[id] = CommandUIItem(
-    #         root,
-    #         ui.__class__,
-    #         ui,
-    #         None if not kwargs.get("command") else kwargs["command"],
-    #         self.exceptionCallback)
-    #     return self.items[id]
+    def remove(self, id: str):
+        if id not in self.items:
+            raise ValueError(f"UI element '{id}' does not exist.")
+        self.items[id].drop()
+        del self.items[id]
 
-    # def addExceptionUI(self, className, root=None, **kwargs):
-    #     if self.exceptionUI is not None:
-    #         raise ValueError("Exception UI already exists.")
-    #     if not root:
-    #         root = self.window
-    #     self.exceptionUI = CommandUIItem(root, className, className(master=root, **kwargs), None if not kwargs.get("command") else kwargs["command"])
-    #     return self.exceptionUI
+    def clear(self):
+        for name, item in self.items.items():
+            if name == "root":
+                continue
+            item.getInstance().destroy()
+        self.items.clear()
+        self.items["root"] = self.rootItem
 
     def addCommand(self, id: str, command):
         if id not in self.items:

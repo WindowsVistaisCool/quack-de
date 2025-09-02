@@ -109,6 +109,60 @@ class QuackExtendedButton(ctk.CTkButton):
         self.normal_command = command
 
 
+class ToggleButton(ctk.CTkButton):
+    def __init__(
+        self,
+        # variable: ctk.BooleanVar = None,
+        toggled_color="#d33c34",
+        hover_toggled=None,
+        toggled_text=None,
+        *args,
+        **kwargs
+    ):
+        if toggled_text is None:
+            toggled_text = kwargs.get("text", "")
+        if hover_toggled is None:
+            hover_toggled = toggled_color
+
+        # self._variable = variable
+        self._hover_toggled = hover_toggled
+        self._toggled_color = toggled_color
+        self._toggled_text = toggled_text
+        self._untoggled_text = kwargs.get("text", "")
+
+        super().__init__(*args, **kwargs)
+
+        self._untoggled_color = self.cget("fg_color")
+        self._hover_untoggled = self.cget("hover_color")
+        self._toggled = False
+
+    def _cmd_pre(self):
+        self._toggled = not self._toggled
+        if self._toggled:
+            self.configure(
+                fg_color=self._toggled_color,
+                text=self._toggled_text,
+                hover_color=self._hover_toggled,
+            )
+        else:
+            self.configure(
+                fg_color=self._untoggled_color,
+                text=self._untoggled_text,
+                hover_color=self._hover_untoggled,
+            )
+
+    def configure(self, **kwargs):
+        """Override configure to handle command parameter"""
+        if "command" in kwargs:
+
+            cmd = kwargs["command"]
+            kwargs["command"] = lambda: (self._cmd_pre(), cmd(self._toggled))
+        super().configure(**kwargs)
+
+    def toggle(self):
+        self._command()
+
+
 class TouchScrollableFrame(ctk.CTkScrollableFrame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master=master, **kwargs)
