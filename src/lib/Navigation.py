@@ -53,7 +53,7 @@ class NavigationPage(ctk.CTkFrame):
         pass
 
 
-class EphemeralNavigationPage(NavigationPage):
+class EphemeralPage(NavigationPage):
     def __init__(self, *args, **kwargs):
         if "ephemeral" not in kwargs:
             kwargs["ephemeral"] = True

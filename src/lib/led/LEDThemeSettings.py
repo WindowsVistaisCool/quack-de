@@ -6,12 +6,12 @@ if TYPE_CHECKING:
 import customtkinter as ctk
 
 from lib.CommandUI import CommandUI
-from lib.Navigation import EphemeralNavigationPage
+from lib.Navigation import EphemeralPage
 from lib.Notifier import NotifierService
 from lib.QuackApp import QuackApp
 
 
-class LEDThemeSettings(EphemeralNavigationPage):
+class LEDThemeSettings(EphemeralPage):
     def __init__(
         self,
         appRoot: "QuackApp",

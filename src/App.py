@@ -1,4 +1,6 @@
+import traceback
 import customtkinter as ctk
+import os
 import time
 from datetime import datetime
 from threading import Thread
@@ -20,6 +22,20 @@ from pages.Home import HomePage
 from pages.Settings import SettingsPage
 from pages.Weather import WeatherPage
 
+if os.name != "nt":
+    import psutil
+
+    def cpuPercent():
+        return psutil.cpu_percent()
+
+    def cpuTemp():
+        return psutil.sensors_temperatures().get("cpu_thermal", [])[0].current
+else:
+    def cpuPercent():
+        return 67
+
+    def cpuTemp():
+        return 67 # he he he haw
 
 class App(QuackApp):
     VERSION = f"v1.1{'-dev' if isDev() else ''}"
@@ -60,7 +76,7 @@ class App(QuackApp):
         # init nav sidebar
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main", width=800, corner_radius=0)
         self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
-        self.navbar.getInstance().grid_rowconfigure(5, weight=1)
+        self.navbar.getInstance().grid_rowconfigure((7), weight=1)
 
         self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
         self.ui.add(
@@ -69,7 +85,8 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             textvariable=self._fullAccessText,
             font=(self.FONT_NAME, 28, "bold"),
-        ).grid(row=0, column=0, padx=20, pady=(20, 5), sticky="new")
+            pady=0,
+        ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="new")
 
         self.clock_label = ctk.StringVar(value="Unknown Time")
         self.ui.add(
@@ -78,7 +95,17 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             textvariable=self.clock_label,
             font=(self.FONT_NAME, 16),
-        ).grid(row=1, column=0, padx=20, pady=(0, 10), sticky="new")
+        ).grid(row=1, column=0, padx=20, pady=(5, 0), sticky="new")
+
+        self.temp_label = ctk.StringVar(value="CPU: ?% ?°C")
+        self.ui.add(
+            ctk.CTkLabel,
+            "temp",
+            root=self.navbar.getInstance(),
+            textvariable=self.temp_label,
+            font=(self.FONT_NAME, 16),
+            pady=0,
+        ).grid(row=2, column=0, padx=20, pady=(0, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -89,7 +116,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=2, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=3, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -100,7 +127,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=3, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -111,7 +138,18 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=4, column=0, padx=20, pady=(15, 0), sticky="new")
+        ).grid(row=5, column=0, padx=20, pady=(10, 0), sticky="new")
+
+        self.ui.add(
+            ctk.CTkButton,
+            "nav_debug",
+            root=self.navbar.getInstance(),
+            text="Secrets",
+            font=(self.FONT_NAME, 18),
+            width=140,
+            height=40,
+            corner_radius=20,
+        ).withGridProperties(row=6, column=0, padx=20, pady=(10, 0), sticky="s")
 
         self.ui.add(
             ctk.CTkButton,
@@ -122,7 +160,7 @@ class App(QuackApp):
             width=140,
             height=50,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(10, 20), sticky="s")
+        ).grid(row=7, column=0, padx=20, pady=(10, 15), sticky="s")
 
         # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
@@ -146,33 +184,39 @@ class App(QuackApp):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
         self.ui.addCommand("nav_weather", lambda: self.navigation.navigate(WeatherPage))
+        self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
         )
 
-        # initilaze the clock
+        # initialize the clock
         self.clock_enabled = True
 
         def clock_worker():
             now = datetime.now()
+
             def update():
                 self.navigation.getPage(HomePage).updateGreeting(now)
-                self.navigation.getPage(WeatherPage).updateTime(now)
+                # self.navigation.getPage(WeatherPage).updateTime(now)
 
             update()
             while self.clock_enabled:
                 now = datetime.now()
                 self.clock_label.set(now.strftime("%I:%M:%S %p"))
+                self.temp_label.set(f"CPU: {cpuPercent()}% {cpuTemp()}°C")
                 if now.minute % 60 == 0 and now.second == 0:
                     update()
                 time.sleep(1)
 
         self.clock_thread = lambda: Thread(target=clock_worker, daemon=True)
 
+        self.addLockCallback(lambda: self.ui.get("nav_debug").drop())
+
     def _addPages(self):
         HomePage(self.navigation, self, self.content_root.getInstance())
         LEDsPage(self.navigation, self, self.content_root.getInstance())
         WeatherPage(self.navigation, self, self.content_root.getInstance())
+        DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
 
         self.clock_thread().start()
@@ -195,6 +239,7 @@ class App(QuackApp):
         self._fullAccessMode = enable
         if enable:
             self._fullAccessText.set(f"🔓 {self.APP_TITLE}")
+            self.ui.get("nav_debug").grid()
             self._fullAccessTimerID = self.after(
                 5 * 60 * 1000,
                 self._disableFullAccessCallback,
@@ -228,6 +273,14 @@ if __name__ == "__main__":
         app.setFullscreen(True)
     else:
         app.toggleFullAccess(True)
-    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"))
+
+    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
     
-    app.mainloop()
+
+    dev = isDev()
+    try:
+        app.mainloop()
+    except:
+        if dev:
+            with open(f"/home/kiosk/{datetime.now().timestamp()}.log", "w") as f:
+                f.write(traceback.format_exc())

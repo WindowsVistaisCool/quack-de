@@ -3,9 +3,9 @@ if TYPE_CHECKING:
     from App import App
 
 import customtkinter as ctk
-from lib.Navigation import EphemeralNavigationPage
+from lib.Navigation import EphemeralPage
 
-class StatImg(EphemeralNavigationPage):
+class StatImg(EphemeralPage):
     def __init__(self, appRoot: "App", img, **kwargs):
         super().__init__(appRoot.navigation, appRoot.content_root.getInstance(), title="StatImg", **kwargs)
 

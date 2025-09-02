@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from LEDService import LEDService
+from lib.CustomWidgets import ToggleButton
 from pages.ephemeral.StatImg import StatImg
 from PIL import Image
 
@@ -49,22 +50,21 @@ class HomePage(NavigationPage):
         ).grid(row=2, column=0, padx=30, pady=15, sticky="nw")
 
         self.button_fg_color = self.ui.add(
-            ctk.CTkButton,
+            ToggleButton,
             "b_ledlow",
             text="Movie Mode",
+            toggled_text="Bright Mode",
             border_spacing=12,
             corner_radius=12,
             font=(self.appRoot.FONT_NAME, 24),
         ).grid(row=3, column=0, padx=30, pady=20, sticky="nw").getInstance().cget("fg_color")
 
     def _initCommands(self):
-        def b_ledlow_targ():
-            if LEDService.getInstance().leds.getBrightness() != 20:
+        def b_ledlow_targ(state):
+            if state:
                 LEDService.getInstance().setBrightness(20)
-                self.ui.get("b_ledlow").getInstance().configure(text="Disable Movie Mode", fg_color="#FF5C5C")
             else:
                 LEDService.getInstance().setBrightness(255)
-                self.ui.get("b_ledlow").getInstance().configure(text="Movie Mode", fg_color=self.button_fg_color)
 
         self.ui.get("b_ledoff").setCommand(lambda: (LEDService.getInstance().off(), LEDService.getInstance().setBrightness(255)))
         self.ui.get("b_ledlow").setCommand(b_ledlow_targ)
