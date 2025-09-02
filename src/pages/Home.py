@@ -73,9 +73,8 @@ class HomePage(NavigationPage):
 
         self.ui.get("b_ledoff").setCommand(
             lambda: (
-                self.ui.get("b_ledlow").getInstance().toggle(False),
                 LEDService.getInstance().off(),
-                LEDService.getInstance().setBrightness(255),
+                self.ui.get("b_ledlow").getInstance().toggle(False),
             )
         )
         self.ui.get("b_ledlow").setCommand(b_ledlow_targ)
