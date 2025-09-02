@@ -5,9 +5,10 @@ import random
 import rpi_ws281x as ws
 import time
 
+from ledthemes import Epilepsy
 from lib.CommandUI import CommandUI
 from lib.SwappableUI import SwappableUI
-from lib.led.LEDTheme import LEDTheme
+from lib.led.LEDTheme import LEDTheme, MPCTargetParams
 
 
 class FastLEDFunctions:
@@ -377,7 +378,7 @@ class LEDThemes:
             "purple": self.purple(),
             "twinkle": self.twinkle(),
             "pacifica": self.pacifica(),
-            "epilepsy": self.epilepsy(),
+            "epilepsy": Epilepsy.get(),
         }
 
     @classmethod
@@ -450,33 +451,34 @@ class LEDThemes:
             settingsUIFactory=uiMaker
         )
     
-    def epilepsy(self):
-        self._checkThemeExists("epilepsy")
+    # def epilepsy(self):
+    #     self._checkThemeExists("epilepsy")
 
-        num = ctk.IntVar(value=0)
-        hue = 0
+    #     # num = ctk.IntVar(value=0)
+    #     hue = 0
 
-        def target(theme: "LEDTheme"):
-            nonlocal hue
+    #     def target(theme: "MPCTargetParams"):
+    #         # nonlocal hue
+    #         hue = 0
+    #         hue = (hue + 32) & 0xFF
 
-            hue = (hue + 32) & 0xFF
+    #         for i in range(theme.strip.numPixels()):
+    #             theme.strip.setPixelColorRGB(i, *FastLEDFunctions.fromHSV(hue, 255, 255))
+    #         theme.strip.show()
 
-            for i in range(theme.strip.numPixels()):
-                theme.strip.setPixelColorRGB(i, *FastLEDFunctions.fromHSV(hue, 255, 255))
-            theme.strip.show()
+    #         time.sleep(0.05)
 
-            time.sleep(0.05)
+    #         for i in range(theme.strip.numPixels()):
+    #             theme.strip.setPixelColorRGB(i, 0, 0, 0)
+    #         theme.strip.show()
 
-            for i in range(theme.strip.numPixels()):
-                theme.strip.setPixelColorRGB(i, 0, 0, 0)
-            theme.strip.show()
+    #         time.sleep(0.05)
 
-            time.sleep(0.05)
-
-        return LEDTheme(
-            "epilepsy",
-            target,
-        )
+    #     return LEDTheme(
+    #         "epilepsy",
+    #         target,
+    #         allowMPC=True
+    #     )
 
     def rainbow(self, *, _name="rainbow"):
         self._checkThemeExists(_name)

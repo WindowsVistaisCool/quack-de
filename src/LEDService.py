@@ -88,35 +88,6 @@ class LEDService:
                 break_event.set()
                 break
 
-    def _ledLoopMPCTarget(theme: "LEDTheme", break_event, subStrip=None, *, afterCall, leds, errCall):
-        """
-        Multiprocessing target for running a single LEDTheme on its assigned strip (or full strip).
-        This is a static method so it can be pickled for multiprocessing.
-        """
-        try:
-            if subStrip == "All":
-                subStrip = None
-            # theme.passAfter(afterCall)
-            theme.passArgs(leds, break_event, subStrip=subStrip)
-            theme.runInit()
-        except Exception:
-            errCall(
-                f"Failed to initialize loop {theme.id}: {traceback.format_exc()}"
-            )
-            return
-
-        while not break_event.is_set():
-            time.sleep(0.001)
-            try:
-                stat = theme.runLoop()
-                if stat is not None:
-                    break_event.set()
-                    break
-            except Exception:
-                errCall(traceback.format_exc())
-                break_event.set()
-                break
-
     def setLoop(self, loop: "LEDTheme" = None, subStrip=None, use_mpc=True):
         """
         Start or replace a loop. If the theme has a stripID, it will run on that sub-strip
@@ -176,16 +147,25 @@ class LEDService:
 
         if use_mpc:
             break_event = multiprocessing.Event()
-            p = multiprocessing.Process(
-                target=self._ledLoopMPCTarget,
-                args=(loop, break_event, subStrip),
-                kwargs={
-                    "appRoot": self.appRoot.after,
-                    "leds": self.leds,
-                    "errCall": self._errorCallback
-                },
-                daemon=True,
-            )
+
+            try:
+                if subStrip == "All":
+                    subStrip = None
+                # loop.passAfter(afterCall)
+                loop.passArgs(self.leds, break_event, subStrip=subStrip)
+                loop.runInit()
+            except Exception:
+                self._errorCallback(
+                    f"Failed to initialize loop {loop.id}: {traceback.format_exc()}"
+                )
+                return
+
+            p = loop.getLoopTargetMPC()
+            # p = multiprocessing.Process(
+            #     target=_ledLoopMPCTarget,
+            #     args=(loop.getLoopTargetMPC(), break_event),
+            #     daemon=True,
+            # )
             self.active_loops[key] = {
                 "theme": loop,
                 "process": p,
@@ -250,3 +230,16 @@ class LEDService:
     @classmethod
     def getInstance(cls):
         return cls._instance
+
+def _ledLoopMPCTarget(runLoop, break_event):
+                while not break_event.is_set():
+                    time.sleep(0.001)
+                    try:
+                        stat = runLoop()
+                        if stat is not None:
+                            break_event.set()
+                            break
+                    except Exception:
+                        print(traceback.format_exc())
+                        break_event.set()
+                        break
