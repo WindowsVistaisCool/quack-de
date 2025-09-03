@@ -4,11 +4,6 @@
 #include <vector>
 #include "ws2811.h"
 
-struct Color
-{
-    uint8_t r, g, b;
-};
-
 class PixelStrip
 {
 public:
@@ -19,16 +14,34 @@ public:
 
     void setBrightness(uint8_t brightness);
 
-    void setPixelColor(int index, const Color& color);
+    void setPixelColor(int index, const Color &color);
     void setPixelColor(int index, uint8_t r, uint8_t g, uint8_t b);
     void show();
 
     uint32_t getRawPixelColor(int index);
     Color getPixelColor(int index);
+    uint8_t getPixelAverageLight(int index);
 
     void clear();
 
     int numPixels() const { return m_count; }
+
+    // Color operator[](int index) { return getPixelColor(index); }
+
+    // struct PixelProxy {
+    //     PixelStrip& strip;
+    //     int index;
+    //     PixelProxy& operator=(const Color& color) {
+    //         strip.setPixelColor(index, color);
+    //         return *this;
+    //     }
+    //     operator Color() const {
+    //         return strip.getPixelColor(index);
+    //     }
+    // };
+    // PixelProxy operator[](int index) {
+    //     return PixelProxy{*this, index};
+    // }
 
 private:
     ws2811_t m_leds;

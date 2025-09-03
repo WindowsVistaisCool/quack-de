@@ -1,5 +1,5 @@
 #include "Fire2012.h"
-#include "LEDFunctions.h"
+#include "LEDMath8.h"
 
 Fire2012::Fire2012(PixelStrip &pixelStrip) : Theme(pixelStrip)
 {

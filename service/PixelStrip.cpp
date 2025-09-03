@@ -1,6 +1,7 @@
 #include "PixelStrip.h"
 #include <cstring>
 #include <iostream>
+#include "LEDMath8.h"
 
 PixelStrip::PixelStrip(int count, int gpio, int dma, int freq, int channel)
     : m_count(count), m_channel(channel)
@@ -66,6 +67,15 @@ Color PixelStrip::getPixelColor(int index)
 {
     uint32_t color = getRawPixelColor(index);
     return Color{(uint8_t)((color >> 16) & 0xFF), (uint8_t)((color >> 8) & 0xFF), (uint8_t)(color & 0xFF)};
+}
+
+uint8_t PixelStrip::getPixelAverageLight(int index)
+{
+    Color c = getPixelColor(index);
+    uint8_t avg = scale8(c.r, 85) + \
+                  scale8(c.g, 85) + \
+                  scale8(c.b, 85);
+    return avg;
 }
 
 void PixelStrip::clear()

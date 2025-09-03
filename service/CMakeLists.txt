@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add the rpi ws281x subproject (submodule expected at service/rpi_281x)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rpi_281x)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/rpi_281x)
 
 add_executable(service
