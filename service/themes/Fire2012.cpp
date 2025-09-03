@@ -1,7 +1,7 @@
 #include "Fire2012.h"
 #include "LEDFunctions.h"
 
-Fire2012::Fire2012(PixelStrip &pixelStrip) : strip(pixelStrip)
+Fire2012::Fire2012(PixelStrip &pixelStrip) : Theme(pixelStrip)
 {
     init();
 }

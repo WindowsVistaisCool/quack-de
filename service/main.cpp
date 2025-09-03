@@ -2,7 +2,8 @@
 #include <thread>
 #include <chrono>
 #include "PixelStrip.h"
-#include "Fire2012.h"
+#include "themes/Theme.h"
+#include "themes/Rainbow.h"
 
 #define LED_COUNT 822
 #define LED_PIN 18
@@ -17,11 +18,11 @@ int main() {
 
     strip.setBrightness(50);
 
-    Fire2012 theme(strip);
+    Rainbow theme(strip);
 
     while (true) {
         theme.run();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     return 0;

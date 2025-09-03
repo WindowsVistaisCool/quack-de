@@ -1,23 +1,21 @@
 #pragma once
 
-#include "PixelStrip.h"
+#include "Theme.h"
 #include <vector>
 #include <cstdint>
 
-class Fire2012 {
+class Fire2012 : public Theme {
     public:
         Fire2012(PixelStrip& pixelStrip);
-        ~Fire2012();
+        ~Fire2012() override;
 
-        void init();
+        void init() override;
 
-        void run();
+        void run() override;
 
     private:
-        PixelStrip& strip;
         int cooling;
         int sparking;
         bool reverseDirection;
-
         std::vector<uint8_t> heat;
 };

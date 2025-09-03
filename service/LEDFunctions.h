@@ -4,18 +4,18 @@
 #include <cstdlib>
 #include "PixelStrip.h"
 
-uint8_t random8(uint8_t min, uint8_t max)
+inline uint8_t random8(uint8_t min, uint8_t max)
 {
     return rand() % (max - min + 1) + min;
 }
 
-uint8_t random8(uint8_t lim) {
+inline uint8_t random8(uint8_t lim) {
     uint8_t r = random8(0, 255);
     r = (r * lim) >> 8;
     return r;
 }
 
-uint8_t qadd8(uint8_t a, uint8_t b)
+inline uint8_t qadd8(uint8_t a, uint8_t b)
 {
     unsigned int t = a + b;
     if (t > 255)
@@ -23,7 +23,7 @@ uint8_t qadd8(uint8_t a, uint8_t b)
     return t;
 }
 
-uint8_t qsub8(uint8_t a, uint8_t b)
+inline uint8_t qsub8(uint8_t a, uint8_t b)
 {
     int t = a - b;
     if (t < 0)
@@ -31,12 +31,12 @@ uint8_t qsub8(uint8_t a, uint8_t b)
     return t;
 }
 
-uint8_t scale8(uint8_t i, uint8_t scale)
+inline uint8_t scale8(uint8_t i, uint8_t scale)
 {
     return (((uint16_t)(i)) * ((uint16_t)(scale + 1))) >> 8;
 }
 
-Color HeatColor(uint8_t temperature)
+inline Color HeatColor(uint8_t temperature)
 {
     Color c = Color{0, 0, 0};
 
