@@ -28,7 +28,7 @@ void Fire2012::run()
 {
     for (int i = 0; i < strip.numPixels(); i++)
     {
-        heat[i] = qsub8(heat[i], random8(0, ((Fire2012::cooling * 10) / strip.numPixels()) + 2));
+        heat[i] = qsub8(heat[i], random8(0, ((cooling * 10) / strip.numPixels()) + 2));
     }
 
     // Step 2.  Heat from each cell drifts 'up' and diffuses a little
@@ -38,7 +38,7 @@ void Fire2012::run()
     }
 
     // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-    if (random8(0, 255) < Fire2012::sparking)
+    if (random8(0, 255) < sparking)
     {
         int y = random8(7);
         heat[y] = qadd8(heat[y], random8(160, 255));
@@ -49,7 +49,7 @@ void Fire2012::run()
     {
         Color color = HeatColor(heat[j]);
         int pixelnumber;
-        if (Fire2012::reverseDirection)
+        if (reverseDirection)
         {
             pixelnumber = (strip.numPixels() - 1) - j;
         }

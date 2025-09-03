@@ -18,12 +18,14 @@ int main() {
 
     strip.setBrightness(50);
 
-    Rainbow theme(strip);
+    // Rainbow theme(strip);
 
-    while (true) {
-        theme.run();
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    // while (true) {
+    //     theme.run();
+    //     // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // }
+
+    
 
     return 0;
 }

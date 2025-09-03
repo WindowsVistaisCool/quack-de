@@ -15,6 +15,7 @@ add_executable(service
 	PixelStrip.cpp
 	themes/Fire2012.cpp
 	themes/Rainbow.cpp
+    themes/Pacifica.cpp
 )
 
 target_include_directories(service PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/themes)

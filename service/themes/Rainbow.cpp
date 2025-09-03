@@ -28,8 +28,8 @@ Rainbow::Rainbow(PixelStrip &pixelStrip) : Theme(pixelStrip)
 void Rainbow::init()
 {
     iterations = 90;
-    step_size = 3;
-    delay = 10;
+    step_size = 14;
+    delay = 20;
 }
 
 void Rainbow::run()
