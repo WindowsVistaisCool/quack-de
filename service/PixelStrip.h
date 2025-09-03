@@ -1,8 +1,12 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
+
+#pragma once
+
+#include <cstdint>
 #include "ws2811.h"
+#include "Color.h"
 
 class PixelStrip
 {
@@ -25,23 +29,6 @@ public:
     void clear();
 
     int numPixels() const { return m_count; }
-
-    // Color operator[](int index) { return getPixelColor(index); }
-
-    // struct PixelProxy {
-    //     PixelStrip& strip;
-    //     int index;
-    //     PixelProxy& operator=(const Color& color) {
-    //         strip.setPixelColor(index, color);
-    //         return *this;
-    //     }
-    //     operator Color() const {
-    //         return strip.getPixelColor(index);
-    //     }
-    // };
-    // PixelProxy operator[](int index) {
-    //     return PixelProxy{*this, index};
-    // }
 
 private:
     ws2811_t m_leds;

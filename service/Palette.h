@@ -4,42 +4,12 @@
 #include <cstdint>
 #include <vector>
 #include "LEDMath8.h"
-
-struct Color
-{
-    Color(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {}
-
-    Color(uint32_t color)
-    {
-        r = (color >> 16) & 0xFF;
-        g = (color >> 8) & 0xFF;
-        b = color & 0xFF;
-    }
-
-    uint8_t r, g, b;
-
-    inline Color &operator|=(const Color &rhs)
-    {
-        if (rhs.r > r)
-            r = rhs.r;
-        if (rhs.g > g)
-            g = rhs.g;
-        if (rhs.b > b)
-            b = rhs.b;
-        return *this;
-    }
-
-    inline Color operator+(const Color &rhs) const
-    {
-        return Color{qadd8(r, rhs.r), qadd8(g, rhs.g), qadd8(b, rhs.b)};
-    };
-};
+#include "Color.h"
 
 class Palette
 {
 public:
-    Palette(
-        const std::vector<Color> &colors) : m_colors(colors) {}
+    Palette(const std::vector<Color> &colors) : m_colors(colors) {}
 
     Color getColor(uint8_t index) const
     {
@@ -48,7 +18,7 @@ public:
             return m_colors[index];
         }
         return Color(0, 0, 0); // Return black if index is out of bounds
-    };
+    }
 
     void setColor(uint8_t index, Color color)
     {
@@ -62,11 +32,11 @@ private:
     std::vector<Color> m_colors;
 };
 
-Color ColorFromPalette(const Palette &pal, uint8_t index, uint8_t brightness, BLENDTYPE blendType)
+// Color-from-palette helper (uses helpers from LEDMath8)
+inline Color ColorFromPalette(const Palette &pal, uint8_t index, uint8_t brightness, BLENDTYPE blendType)
 {
     if (blendType == LINEARBLEND_NOWRAP) {
-        return Color(0); // TODO: implement if needed lol
-        // index = map8(index, 0, 239);
+        return Color(0,0,0); // placeholder
     }
 
     uint8_t hi4 = index >> 4;
@@ -80,7 +50,7 @@ Color ColorFromPalette(const Palette &pal, uint8_t index, uint8_t brightness, BL
     uint8_t blue1 = color1.b;
 
     if (blend) {
-        Color color2 = Color(0);
+        Color color2 = Color(0,0,0);
         if (hi4 == 15) {
             color2 = pal.getColor(0);
         } else {

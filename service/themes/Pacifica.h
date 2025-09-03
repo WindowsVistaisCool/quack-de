@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Theme.h"
+#include "Palette.h"
+#include "Color.h"
 
 class Pacifica : public Theme
 {

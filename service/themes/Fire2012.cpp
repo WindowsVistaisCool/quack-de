@@ -1,4 +1,6 @@
 #include "Fire2012.h"
+#include "PixelStrip.h"
+#include "Color.h"
 #include "LEDMath8.h"
 
 Fire2012::Fire2012(PixelStrip &pixelStrip) : Theme(pixelStrip)

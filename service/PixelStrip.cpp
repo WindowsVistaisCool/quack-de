@@ -1,4 +1,5 @@
 #include "PixelStrip.h"
+#include "Color.h"
 #include <cstring>
 #include <iostream>
 #include "LEDMath8.h"
@@ -33,7 +34,7 @@ bool PixelStrip::begin()
     return true;
 }
 
-void PixelStrip::setBrightness(uint8_t brightness, bool log = false)
+void PixelStrip::setBrightness(uint8_t brightness, bool log)
 {
     if (log)
     {

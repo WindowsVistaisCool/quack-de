@@ -4,8 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <chrono>
-#include "PixelStrip.h"
-#include "Palette.h"
+#include "Color.h"
 
 enum BLENDTYPE {
     LINEARBLEND = 0,
