@@ -33,8 +33,14 @@ bool PixelStrip::begin()
     return true;
 }
 
-void PixelStrip::setBrightness(uint8_t brightness)
+void PixelStrip::setBrightness(uint8_t brightness, bool log = false)
 {
+    if (log)
+    {
+        // TODO
+        //     uint8_t log_brightness = (uint8_t)(std::pow(2.0, brightness / 32.0) - 1);
+        //     brightness = log_brightness;
+    }
     m_leds.channel[m_channel].brightness = brightness;
 }
 
@@ -72,8 +78,8 @@ Color PixelStrip::getPixelColor(int index)
 uint8_t PixelStrip::getPixelAverageLight(int index)
 {
     Color c = getPixelColor(index);
-    uint8_t avg = scale8(c.r, 85) + \
-                  scale8(c.g, 85) + \
+    uint8_t avg = scale8(c.r, 85) +
+                  scale8(c.g, 85) +
                   scale8(c.b, 85);
     return avg;
 }

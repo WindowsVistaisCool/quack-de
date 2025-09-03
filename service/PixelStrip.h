@@ -12,7 +12,7 @@ public:
 
     bool begin();
 
-    void setBrightness(uint8_t brightness);
+    void setBrightness(uint8_t brightness, bool log = false);
 
     void setPixelColor(int index, const Color &color);
     void setPixelColor(int index, uint8_t r, uint8_t g, uint8_t b);
