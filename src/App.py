@@ -29,7 +29,7 @@ if os.name != "nt":
         return psutil.cpu_percent()
 
     def cpuTemp():
-        return psutil.sensors_temperatures().get("cpu_thermal", [])[0].current
+        return int(psutil.sensors_temperatures().get("cpu_thermal", [])[0].current)
 else:
     def cpuPercent():
         return 67
