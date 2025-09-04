@@ -43,7 +43,8 @@ class DebugPage(NavigationPage):
             root=led_frame,
             text="View Virtual LEDs",
             height=50,
-            font=(self.appRoot.FONT_NAME, 18, "bold"),
+            font=(self.appRoot.FONT_NAME, 18),
+            state="disabled",
         ).grid(row=0, column=0, padx=20, pady=10, sticky="nw")
 
         self.ui.add(
@@ -55,29 +56,41 @@ class DebugPage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=0, column=1, padx=20, pady=10, sticky="nw")
 
+        f_sock = (
+            self.ui.add(
+                ctk.CTkFrame,
+                "socket_frame",
+            )
+            .grid(row=2, column=0, columnspan=10, padx=20, pady=20, sticky="nsew")
+            .getInstance()
+        )
+
         self.ui.add(
             ctk.CTkButton,
             "b_reconnect",
+            root=f_sock,
             text="Reconnect",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=2, column=0, padx=20, pady=10, sticky="nw")
+        ).grid(row=0, column=0, padx=20, pady=10, sticky="nw")
 
         self.ui.add(
             ctk.CTkButton,
             "b_dc",
+            root=f_sock,
             text="Disconnect",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=2, column=1, padx=20, pady=10, sticky="n")
+        ).grid(row=0, column=1, padx=20, pady=10, sticky="n")
 
         self.ui.add(
             ctk.CTkButton,
             "b_kill",
+            root=f_sock,
             text="Kill Server",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=2, column=2, padx=20, pady=10, sticky="ne")
+        ).grid(row=0, column=2, padx=20, pady=10, sticky="ne")
 
     def _initCommands(self):
         self.ui.get("nav_virtual").setCommand(
