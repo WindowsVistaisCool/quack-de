@@ -5,15 +5,8 @@ from lib.led.SocketLED import SocketLED
 if TYPE_CHECKING:
     from App import App
 
-import threading
-import time
-import traceback
-import rpi_ws281x as ws
-
 from LEDThemes import LEDThemes
 from lib.led.LEDTheme import LEDTheme
-from lib.led.WSExtensions import SegmentedPixelStrip
-
 
 class LEDService:
     _instance = None
@@ -34,7 +27,7 @@ class LEDService:
         self.appRoot: "App" = appRoot
 
         # initialize themes registry
-        # LEDThemes()  # themes are initialized in this constructor
+        LEDThemes()  # themes are initialized in this constructor
 
         self._errorCallback = lambda e: print(e)
 

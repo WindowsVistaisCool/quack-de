@@ -3,17 +3,12 @@
 #include "Color.h"
 #include "LEDMath8.h"
 
-Fire2012::Fire2012(PixelStrip &pixelStrip) : Theme(pixelStrip)
-{
-    init();
-}
-
 Fire2012::~Fire2012()
 {
     heat.clear();
 }
 
-void Fire2012::init()
+void Fire2012::themeInit()
 {
     strip.clear();
 

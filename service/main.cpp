@@ -4,6 +4,7 @@
 #include "PixelStrip.h"
 #include "themes/Fire2012.h"
 #include "themes/Pacifica.h"
+#include "themes/Rainbow.h"
 #include "LEDMath8.h"
 #include "ThemeRegistry.h"
 #if defined(_WIN32) || defined(_WIN64)
@@ -34,11 +35,13 @@ int main()
         std::cerr << "Failed to initialize PixelStrip" << std::endl;
         return 1;
     }
-    strip.setBrightness(100);
-    registry = new ThemeRegistry(strip);
 
+    // Appoint registry
+    registry = new ThemeRegistry(strip);
     registry->add("Fire2012", new Fire2012(strip));
     registry->add("Pacifica", new Pacifica(strip));
+    registry->add("Rainbow", new Rainbow(strip));
+    strip.setBrightness(100);
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -58,6 +61,7 @@ int main()
     // Main loop
     static const std::string endMessage = "end";
     bool mainLoopActive = true;
+    // loop to accept connections
     while (mainLoopActive)
     {
         int connection = accept(server, nullptr, nullptr);
@@ -67,6 +71,7 @@ int main()
             return 1;
         }
 
+        // data receiving loop
         while (true)
         {
             char buffer[1024] = {0};
@@ -101,13 +106,20 @@ int main()
 
 void parseMessage(const std::string &message)
 {
-    if (message == "fire")
+    if (message.compare(0, 4, "set:") == 0) // starts with "set:"
     {
-        registry->setCurrentTheme("Fire2012");
+        std::string themeName = message.substr(4); // get the part after "set:"
+        if (!registry->exists(themeName))
+        {
+            std::cout << "Theme '" << themeName << "' does not exist." << std::endl;
+            return;
+        }
+        registry->setCurrentTheme(themeName);
     }
-    else if (message == "ocean")
-    {
-        registry->setCurrentTheme("Pacifica");
+    else if (message.compare(0, 7, "bright:") == 0) {
+        std::string brightness = message.substr(7); // get the part after "bright:"
+        uint8_t brightnessValue = std::stoi(brightness);
+        registry->m_strip.setBrightness(brightnessValue);
     }
     else if (message != "")
     {

@@ -20,12 +20,7 @@ Color rainbowWheel(uint8_t pos)
     }
 }
 
-Rainbow::Rainbow(PixelStrip &pixelStrip) : Theme(pixelStrip)
-{
-    init();
-}
-
-void Rainbow::init()
+void Rainbow::themeInit()
 {
     iterations = 90;
     step_size = 14;
@@ -42,8 +37,13 @@ void Rainbow::run()
             Color color = rainbowWheel(hue);
             strip.setPixelColor(j, color);
         }
-        strip.show();
-    
+        if (shouldReturn())
+        {
+            return;
+        } else {
+            strip.show();
+        }
+
         if (delay > 0)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));

@@ -4,13 +4,14 @@
 
 class Rainbow : public Theme {
 public:
-    Rainbow(PixelStrip &pixelStrip);
+    using Theme::Theme;
     ~Rainbow() = default;
 
-    void init() override;
     void run() override;
-
+    
 private:
+    void themeInit() override;
+
     int iterations;
     int delay;
     int step_size;

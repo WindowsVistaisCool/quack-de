@@ -167,7 +167,7 @@ class LEDsPage(NavigationPage):
             ctk.CTkLabel,
             "cfg_text_info",
             root=_cfgTextFrame.getInstance(),
-            text=f"""LED Count: {self.ledService.LED_COUNT}
+            text="""LED Count: {self.ledService.leds.numPixels()}
 LED Pin: {self.ledService.LED_PIN}
 LED Frequency: {self.ledService.LED_FREQ_HZ} Hz
 LED DMA: {self.ledService.LED_DMA}
@@ -197,55 +197,55 @@ LED Channel: {self.ledService.LED_CHANNEL}
             width=300,
         ).grid(row=1, column=1, padx=(20, 20), pady=(0, 20), sticky="nsew")
         configUI.get("brightness_slider").getInstance().set(
-            self.ledService.LED_BRIGHTNESS
+            self.ledService.leds.getBrightness()
         )
 
         """Segments Page"""
-        segmentsFrame = self.tabview.getInstance().tab("Segments")
-        self.segmentsUI = CommandUI(segmentsFrame)
-        segmentsFrame.grid_columnconfigure(0, weight=1)
-        segmentsFrame.grid_columnconfigure(1, weight=0)
-        segmentsFrame.grid_rowconfigure(0, weight=0)
+        # segmentsFrame = self.tabview.getInstance().tab("Segments")
+        # self.segmentsUI = CommandUI(segmentsFrame)
+        # segmentsFrame.grid_columnconfigure(0, weight=1)
+        # segmentsFrame.grid_columnconfigure(1, weight=0)
+        # segmentsFrame.grid_rowconfigure(0, weight=0)
 
-        self.segmentsUI.add(
-            ctk.CTkLabel,
-            "l_ab",
-            text="Currently Selected Segment:",
-            font=(self.appRoot.FONT_NAME, 20, "bold"),
-        ).grid(row=0, column=0, padx=(20, 0), pady=20, sticky="nw")
-        self.segmentsUI.add(
-            ctk.CTkLabel,
-            "segmentNo",
-            textvariable=self.tv_segmentNum,
-            font=(self.appRoot.FONT_NAME, 20),
-        ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nw")
-        _segmentsFrameOverlay = (
-            self.segmentsUI.add(
-                ctk.CTkFrame,
-                "frame_overlay",
-                corner_radius=12,
-            )
-            .grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
-            .getInstance()
-        )
-        _segmentsFrameOverlay.grid_columnconfigure(0, weight=1)
-        _segmentsFrameOverlay.grid_rowconfigure(0, weight=1)
-        self.segmentsUI.add(
-            ctk.CTkSegmentedButton,
-            "selector",
-            root=_segmentsFrameOverlay,
-            values=list(self.ledService.leds.subStrips.keys()),
-            corner_radius=12,
-            height=40,
-        ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-        self.segmentsUI.add(
-            ctk.CTkButton,
-            "selectall",
-            root=_segmentsFrameOverlay,
-            text="Select Whole Strip",
-            font=(self.appRoot.FONT_NAME, 20),
-            height=40,
-        ).grid(row=1, column=0, padx=10, pady=10, sticky="ns")
+        # self.segmentsUI.add(
+        #     ctk.CTkLabel,
+        #     "l_ab",
+        #     text="Currently Selected Segment:",
+        #     font=(self.appRoot.FONT_NAME, 20, "bold"),
+        # ).grid(row=0, column=0, padx=(20, 0), pady=20, sticky="nw")
+        # self.segmentsUI.add(
+        #     ctk.CTkLabel,
+        #     "segmentNo",
+        #     textvariable=self.tv_segmentNum,
+        #     font=(self.appRoot.FONT_NAME, 20),
+        # ).grid(row=0, column=1, padx=(0, 20), pady=20, sticky="nw")
+        # _segmentsFrameOverlay = (
+        #     self.segmentsUI.add(
+        #         ctk.CTkFrame,
+        #         "frame_overlay",
+        #         corner_radius=12,
+        #     )
+        #     .grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        #     .getInstance()
+        # )
+        # _segmentsFrameOverlay.grid_columnconfigure(0, weight=1)
+        # _segmentsFrameOverlay.grid_rowconfigure(0, weight=1)
+        # self.segmentsUI.add(
+        #     ctk.CTkSegmentedButton,
+        #     "selector",
+        #     root=_segmentsFrameOverlay,
+        #     values=list(self.ledService.leds.subStrips.keys()),
+        #     corner_radius=12,
+        #     height=40,
+        # ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        # self.segmentsUI.add(
+        #     ctk.CTkButton,
+        #     "selectall",
+        #     root=_segmentsFrameOverlay,
+        #     text="Select Whole Strip",
+        #     font=(self.appRoot.FONT_NAME, 20),
+        #     height=40,
+        # ).grid(row=1, column=0, padx=10, pady=10, sticky="ns")
 
     def _initCommands(self):
         def lockPage():
@@ -265,20 +265,20 @@ LED Channel: {self.ledService.LED_CHANNEL}
 
         self.ui.get("b_config").setCommand(showConfig)
 
-        def selector_callback(value):
-            if value == -1:
-                self.tv_segmentNum.set(-1)
-                self.tv_segmentLabel.set("All")
-                self.segmentsUI.get("selector").getInstance().set(-1)
-                return
-            for id, substrip in self.ledService.leds.subStrips.items():
-                if id == value:
-                    self.tv_segmentNum.set(substrip.rangeStr)
-                    self.tv_segmentLabel.set(id)
-                    break
+        # def selector_callback(value):
+        #     if value == -1:
+        #         self.tv_segmentNum.set(-1)
+        #         self.tv_segmentLabel.set("All")
+        #         self.segmentsUI.get("selector").getInstance().set(-1)
+        #         return
+        #     for id, substrip in self.ledService.leds.subStrips.items():
+        #         if id == value:
+        #             self.tv_segmentNum.set(substrip.rangeStr)
+        #             self.tv_segmentLabel.set(id)
+        #             break
 
-        self.segmentsUI.get("selector").setCommand(selector_callback)
-        self.segmentsUI.get("selectall").setCommand(lambda: selector_callback(-1))
+        # self.segmentsUI.get("selector").setCommand(selector_callback)
+        # self.segmentsUI.get("selectall").setCommand(lambda: selector_callback(-1))
 
         self.ui.get("color_picker").setCommand(
             lambda rgb: self.ledService.setSolid(*rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)

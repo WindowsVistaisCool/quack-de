@@ -274,7 +274,7 @@ if __name__ == "__main__":
     else:
         app.toggleFullAccess(True)
 
-    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
+    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
     
 
     dev = isDev()

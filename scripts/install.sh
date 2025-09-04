@@ -17,7 +17,9 @@ cat > ~/.bash_profile <<- "EOF"
 #!/bin/sh
 source ~/.profile
 if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
-    cd /home/kiosk/deploy
+    cd ~
+    sudo ./led_svc &
+    cd ~/deploy
     startx -- -nocursor
 fi
 EOF

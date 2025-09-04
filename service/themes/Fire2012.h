@@ -4,18 +4,18 @@
 #include <vector>
 #include <cstdint>
 
-class Fire2012 : public Theme {
-    public:
-        Fire2012(PixelStrip& pixelStrip);
-        ~Fire2012() override;
+class Fire2012 : public Theme
+{
+public:
+    using Theme::Theme;
+    ~Fire2012() override;
 
-        void init() override;
+    void run() override;
 
-        void run() override;
-
-    private:
-        int cooling;
-        int sparking;
-        bool reverseDirection;
-        std::vector<uint8_t> heat;
+private:
+    void themeInit() override;
+    int cooling;
+    int sparking;
+    bool reverseDirection;
+    std::vector<uint8_t> heat;
 };

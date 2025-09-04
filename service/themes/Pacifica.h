@@ -7,18 +7,17 @@
 class Pacifica : public Theme
 {
 public:
-    Pacifica(PixelStrip &pixelStrip);
+    using Theme::Theme;
     ~Pacifica() = default;
 
-    void init() override;
     void run() override;
 
 private:
+    void themeInit() override;
+
     void waves_one_layer(const Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff);
     void waves_add_whitecaps();
     void waves_deepen_colors();
-
-    int stuff = 0;
 
     const Palette pacifica1 = Palette({Color(0x000507),
                                        Color(0x000409),

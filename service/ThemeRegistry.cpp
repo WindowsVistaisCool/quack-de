@@ -27,11 +27,17 @@ Theme *ThemeRegistry::get(const std::string &key)
     throw std::runtime_error("Theme with key '" + key + "' not found.");
 }
 
+bool ThemeRegistry::exists(const std::string &key) const
+{
+    return m_themes.find(key) != m_themes.end();
+}
+
 void ThemeRegistry::clearCurrentTheme()
 {
     if (currentThemeKey != "")
     {
         m_themeStates[currentThemeKey] = false;
+        currentTheme->sendStopSignal();
         if (m_themeThread != nullptr)
         {
             m_themeThread->join();

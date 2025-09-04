@@ -9,7 +9,7 @@
 
 class ThemeRegistry {
     public:
-        ThemeRegistry(PixelStrip& pixelStrip) : m_pixelStrip(pixelStrip) {
+        ThemeRegistry(PixelStrip& pixelStrip) : m_strip(pixelStrip) {
             currentTheme = nullptr;
             currentThemeKey = "";
             m_themeThread = nullptr;
@@ -18,6 +18,7 @@ class ThemeRegistry {
 
         void add(const std::string& key, Theme* theme);
         Theme* get(const std::string& key);
+        bool exists(const std::string& key) const;
 
         void clearCurrentTheme();
         std::thread* setCurrentTheme(const std::string& key);
@@ -26,8 +27,8 @@ class ThemeRegistry {
 
         std::atomic<bool>& getThemeState(const std::string& key);
 
+        PixelStrip& m_strip;
     private:
-        PixelStrip& m_pixelStrip;
         std::unordered_map<std::string, Theme*> m_themes;
         std::unordered_map<std::string, std::atomic<bool>> m_themeStates;
         Theme* currentTheme;

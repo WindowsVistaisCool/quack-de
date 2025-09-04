@@ -4,12 +4,7 @@
 #include "LEDMath8.h"
 #include <thread>
 
-Pacifica::Pacifica(PixelStrip &pixelStrip) : Theme(pixelStrip)
-{
-    init();
-}
-
-void Pacifica::init()
+void Pacifica::themeInit()
 {
     strip.clear();
 }
