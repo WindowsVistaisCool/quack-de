@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Theme.h"
+#include "Palette.h"
+#include <vector>
 
 class Twinkle : public Theme
 {
@@ -18,4 +20,7 @@ private:
     int secondsPerPalette;
     // bool autoSelectBg;
     bool coolLikeIncandescent;
+
+    std::vector<std::reference_wrapper<Palette>> palettes;
+    Palette* currentPalette = nullptr;
 };

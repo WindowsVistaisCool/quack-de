@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "LEDMath8.h"
 #include <algorithm>
 
 struct Color {
@@ -13,13 +14,6 @@ struct Color {
     }
 
     uint8_t r, g, b;
-
-    inline Color &operator|=(const Color &rhs) {
-        if (rhs.r > r) r = rhs.r;
-        if (rhs.g > g) g = rhs.g;
-        if (rhs.b > b) b = rhs.b;
-        return *this;
-    }
 
     // HSV to RGB conversion
     // h: 0-360, s: 0-1, v: 0-1
@@ -49,12 +43,64 @@ struct Color {
         );
     }
 
+    uint8_t getAverageLight() {
+        uint8_t avg = scale8(r, 85) +
+                    scale8(g, 85) +
+                    scale8(b, 85);
+        return avg;
+    }
+
+    inline Color &operator|=(const Color &rhs) {
+        if (rhs.r > r) r = rhs.r;
+        if (rhs.g > g) g = rhs.g;
+        if (rhs.b > b) b = rhs.b;
+        return *this;
+    }
+
     inline Color operator+(const Color &rhs) const {
         auto qadd8 = [](uint8_t a, uint8_t b) -> uint8_t {
             unsigned int t = a + b;
             if (t > 255) t = 255;
             return static_cast<uint8_t>(t);
         };
+        
         return Color{qadd8(r, rhs.r), qadd8(g, rhs.g), qadd8(b, rhs.b)};
     }
 };
+
+// Blend two Colors using per-channel blend8 helper from LEDMath8
+inline Color blend(const Color& c1, const Color& c2, uint8_t amountC2)
+{
+    Color result;
+    result.r = blend8(c1.r, c2.r, amountC2);
+    result.g = blend8(c1.g, c2.g, amountC2);
+    result.b = blend8(c1.b, c2.b, amountC2);
+    return result;
+}
+
+// HeatColor moved here because it depends on Color
+inline Color HeatColor(uint8_t temperature)
+{
+    Color c = Color{0, 0, 0};
+
+    uint8_t scaled = scale8(temperature, 191);
+
+    uint8_t heatramp = scaled & 0x3F; // 0..63
+    heatramp <<= 2;
+
+    if (scaled & 0x80) {
+        c.r = 255;
+        c.g = 255;
+        c.b = heatramp;
+    } else if (scaled & 0x40) {
+        c.r = 255;
+        c.g = heatramp;
+        c.b = 0;
+    } else {
+        c.r = heatramp;
+        c.g = 0;
+        c.b = 0;
+    }
+
+    return c;
+}
