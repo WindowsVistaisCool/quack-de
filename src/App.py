@@ -38,7 +38,7 @@ else:
         return 67 # he he he haw
 
 class App(QuackApp):
-    VERSION = f"v1.1{'-dev' if isDev() else ''}"
+    VERSION = f"v2.0{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
