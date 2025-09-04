@@ -9,16 +9,12 @@ from lib.led.WSExtensions import SegmentedPixelStrip, SubStrip
 class LEDTheme:
     def __init__(self,
             id: str,
-            loopTarget=lambda *_: 1,
-            initTarget=lambda *_: None,
             settingsUIFactory: callable = None,
             *,
             imagePath: str = "assets/images/missing.png",
             friendlyName: str = None,
         ):
         self.id = id
-        self._loopTarget = loopTarget
-        self._initTarget = initTarget
         self.settingUIFactory = settingsUIFactory
         self.imagePath = imagePath
         self.friendlyName = friendlyName or self.id
@@ -27,11 +23,11 @@ class LEDTheme:
 
         self.app: 'QuackApp' = None
 
-        self.leds: 'SegmentedPixelStrip' = None
-        self.strip: 'SubStrip' = None
+        # self.leds: 'SegmentedPixelStrip' = None
+        # self.strip: 'SubStrip' = None
 
-        self.break_event: 'threading.Event' = None
-        self.after = lambda delay, callback: None
+        # self.break_event: 'threading.Event' = None
+        # self.after = lambda delay, callback: None
 
     def getSettings(self, app: QuackApp) -> 'LEDThemeSettings':
         """
@@ -57,45 +53,3 @@ class LEDTheme:
             data = self.getData()
         Configurator.getInstance().set(self.id, data)
         Configurator.getInstance().saveSettings()
-
-    def passArgs(self, leds: 'ws.PixelStrip', break_event: 'threading.Event', subStrip=None):
-        """
-        Passes the LED strip and break event to the loop.
-        """
-        self.leds = leds
-        self.strip = self.leds.getSubStrip(subStrip) if subStrip is not None else self.leds
-        self.break_event = break_event
-
-    def passApp(self, app: QuackApp):
-        """
-        Pass app args into the LED loop.
-        This is used to access the app and navigator from within the loop.
-        """
-        assert isinstance(app, QuackApp), "app must be an instance of QuackApp"
-        self.app = app
-        self.after = app.after
-
-    def checkBreak(self):
-        """
-        Checks if the break event is set.
-        Returns True if the loop should stop, False otherwise.
-        """
-        return self.break_event.is_set()
-
-    def runInit(self):
-        """
-        Runs the initialization target function.
-        """
-        assert self._initTarget, "LEDLoop must have initTarget set before running."
-
-        return self._initTarget(self)
-
-    def runLoop(self):
-        """
-        Runs the LED loop with the provided target function.
-        """
-        assert self.leds, "LEDLoop must have leds set before running."
-        assert self.break_event, "LEDLoop must have break_event set before running."
-        assert self.after, "LEDLoop target requires after method to be set."
-
-        return self._loopTarget(self)

@@ -374,7 +374,6 @@ class LEDThemes:
             "rainbow": self.rainbow(),
             "fire2012": self.fire2012(),
             "rgbSnake": self.rgbSnake(),
-            "purple": self.purple(),
             "twinkle": self.twinkle(),
             "pacifica": self.pacifica(),
             "epilepsy": self.epilepsy(),
@@ -446,14 +445,12 @@ class LEDThemes:
 
         return LEDTheme(
             "ledSelector",
-            target,
             settingsUIFactory=uiMaker
         )
     
     def epilepsy(self):
         self._checkThemeExists("epilepsy")
 
-        num = ctk.IntVar(value=0)
         hue = 0
 
         def target(theme: "LEDTheme"):
@@ -487,36 +484,6 @@ class LEDThemes:
         _delay = delay.get()
         step_size = ctk.IntVar(value=4)
         _step_size = step_size.get()
-
-        def init(self: "LEDTheme"):
-            data = self.getData()
-            iterations.set(data.get("iterations", _iterations))
-            delay.set(data.get("delay", _delay))
-            step_size.set(data.get("stepSize", _step_size))
-
-        def target(theme: "LEDTheme"):
-            nonlocal _iterations, _delay, _step_size
-
-            for j in range(0, 256, max(1, _step_size)):  # Use step_size to skip colors
-                if theme.checkBreak():
-                    return 1
-                if isinstance(iterations, ctk.IntVar):
-                    _iterations = max(1, iterations.get())  # Prevent division by zero
-                if isinstance(delay, ctk.IntVar):
-                    _delay = delay.get()
-                if isinstance(step_size, ctk.IntVar):
-                    if _step_size != step_size.get():
-                        _step_size = max(
-                            1, step_size.get()
-                        )  # Ensure step_size is at least 1
-                        return None  # return but keep loop running
-                for i in range(theme.strip.numPixels()):
-                    theme.strip.setPixelColor(
-                        i, FastLEDFunctions._wheel(((i * 256 // _iterations) + j) & 255)
-                    )
-                theme.strip.show()
-                if _delay > 0:  # Only sleep if delay is greater than 0
-                    time.sleep(_delay / 1000.0)  # Convert ms to seconds properly
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(
@@ -560,8 +527,6 @@ class LEDThemes:
 
         return LEDTheme(
             _name,
-            target,
-            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/rainbow.png",
             friendlyName="Rainbow",
@@ -578,15 +543,6 @@ class LEDThemes:
         _reversed = reversed.get()
 
         temps = None
-
-        def init(self: "LEDTheme"):
-            data = self.getData()
-            cooling.set(data.get("cooling", _cooling))
-            sparking.set(data.get("sparking", _sparking))
-            reversed.set(data.get("reversed", _reversed))
-
-            nonlocal temps
-            temps = None
 
         def target(self: "LEDTheme"):
             nonlocal temps
@@ -681,8 +637,6 @@ class LEDThemes:
 
         return LEDTheme(
             _name,
-            target,
-            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/fire.png",
             friendlyName="Fireplace",
@@ -698,11 +652,6 @@ class LEDThemes:
         _step_size = step_size.get()
 
         hue = 0
-
-        def init(self: "LEDTheme"):
-            data = self.getData()
-            tailScaleFactor.set(data.get("tailScaleFactor", _tailScaleFactor))
-            step_size.set(data.get("stepSize", _step_size))
 
         def target(self: "LEDTheme"):
             nonlocal hue
@@ -793,23 +742,9 @@ class LEDThemes:
 
         return LEDTheme(
             _name,
-            target,
-            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/snake.png",
             friendlyName="Color Snake",
-        )
-
-    def purple(self):
-        self._checkThemeExists("purple")
-
-        def target(self):
-            pass
-
-        return LEDTheme(
-            "purple",
-            target,
-            friendlyName="Purple",
         )
 
     def pacifica(self, *, _name="pacifica"):
@@ -1171,7 +1106,6 @@ class LEDThemes:
 
         return LEDTheme(
             _name,
-            target,
             imagePath="assets/images/ocean.png",
             friendlyName="Ocean Blue",
         )
@@ -1740,8 +1674,6 @@ class LEDThemes:
 
         return LEDTheme(
             _name,
-            target,
-            init,
             settingsUIFactory=uiMaker,
             imagePath="assets/images/christmas.png",
             friendlyName="Christmas",

@@ -314,7 +314,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         def commandFactory(loop):
             def exception_wrapper():
                 try:
-                    self.ledService.setLoop(
+                    self.ledService.leds.setLoop(
                         loop,
                         subStrip=self.tv_segmentLabel.get(),
                     )

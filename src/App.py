@@ -197,7 +197,7 @@ class App(QuackApp):
 
             def update():
                 self.navigation.getPage(HomePage).updateGreeting(now)
-                # self.navigation.getPage(WeatherPage).updateTime(now)
+                self.navigation.getPage(WeatherPage).updateTime(now)
 
             update()
             while self.clock_enabled:
