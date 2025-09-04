@@ -3,6 +3,7 @@
 #include <chrono>
 #include "PixelStrip.h"
 #include "themes/Fire2012.h"
+#include "themes/Jerry.h"
 #include "themes/Pacifica.h"
 #include "themes/Rainbow.h"
 #include "LEDMath8.h"
@@ -28,6 +29,8 @@ void parseMessage(const std::string &message);
 
 int main()
 {
+    std::cout << "Starting LED Service..." << std::endl;
+
     // Initialize the LEDS
     PixelStrip strip(LED_COUNT, LED_PIN, LED_DMA);
     if (!strip.begin())
@@ -39,6 +42,7 @@ int main()
     // Appoint registry
     registry = new ThemeRegistry(strip);
     registry->add("fire2012", new Fire2012(strip));
+    registry->add("rgbSnake", new Jerry(strip));
     registry->add("pacifica", new Pacifica(strip));
     registry->add("rainbow", new Rainbow(strip));
     strip.setBrightness(100);
@@ -75,6 +79,7 @@ int main()
         // data receiving loop
         while (true)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             char buffer[1024] = {0};
             int bytesReceived = recv(connection, buffer, sizeof(buffer) - 1, 0);
             if (bytesReceived <= 0)
@@ -123,8 +128,20 @@ void parseMessage(const std::string &message)
         uint8_t brightnessValue = std::stoi(brightness);
         registry->m_strip.setBrightness(brightnessValue);
     }
-    else if (message == "clear")
+    else if (message.compare(0, 9, "colorrgb:") == 0) {
+        std::string color = message.substr(9); // get the part after "color:"
+        int r = 0, g = 0, b = 0;
+        sscanf(color.c_str(), "%d,%d,%d", &r, &g, &b);
+        Color colorRaw(r, g, b);
+        registry->m_strip.setColor(Color(colorRaw));
+    }
+    else if (message.compare(0, 5, "clear") == 0)
     {
+        registry->m_strip.clear();
+    }
+    else if (message.compare(0, 6, "noloop") == 0)
+    {
+        registry->clearCurrentTheme();
         registry->m_strip.clear();
     }
     else if (message != "")

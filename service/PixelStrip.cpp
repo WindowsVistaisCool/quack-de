@@ -45,6 +45,15 @@ void PixelStrip::setBrightness(uint8_t brightness, bool log)
     m_leds.channel[m_channel].brightness = brightness;
 }
 
+void PixelStrip::setColor(const Color &color)
+{
+    for (int i = 0; i < m_count; ++i)
+    {
+        setPixelColor(i, color);
+    }
+    show();
+}
+
 void PixelStrip::show()
 {
     ws2811_render(&m_leds);

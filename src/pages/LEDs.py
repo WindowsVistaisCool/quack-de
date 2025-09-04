@@ -192,7 +192,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
             root=self.configFrame,
             from_=0,
             to=255,
-            command=self.ledService.setBrightness,
+            command=self.ledService.leds.setBrightness,
             number_of_steps=256,
             width=300,
         ).grid(row=1, column=1, padx=(20, 20), pady=(0, 20), sticky="nsew")
@@ -281,7 +281,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         # self.segmentsUI.get("selectall").setCommand(lambda: selector_callback(-1))
 
         self.ui.get("color_picker").setCommand(
-            lambda rgb: self.ledService.setSolid(*rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)
+            lambda rgb: self.ledService.leds.setColor(rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)
         )
 
     def onShow(self):

@@ -25,14 +25,14 @@ class DebugPage(NavigationPage):
             "title",
             text="🤫 Secret Page",
             font=(self.appRoot.FONT_NAME, 32, "bold"),
-        ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
+        ).grid(row=0, column=0, columnspan=10, padx=20, pady=20, sticky="nw")
 
         led_frame = (
             self.ui.add(
                 ctk.CTkFrame,
                 "led_frame",
             )
-            .grid(row=1, column=0, padx=20, pady=0, sticky="nsew")
+            .grid(row=1, column=0, columnspan=3, padx=20, pady=0, sticky="nsew")
             .getInstance()
         )
 
@@ -57,10 +57,26 @@ class DebugPage(NavigationPage):
         self.ui.add(
             ctk.CTkButton,
             "b_reconnect",
-            text="Reconnect Socket",
+            text="Reconnect",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=2, column=0, padx=20, pady=10, sticky="nw")
+
+        self.ui.add(
+            ctk.CTkButton,
+            "b_dc",
+            text="Kill Client",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=2, column=1, padx=20, pady=10, sticky="nw")
+
+        self.ui.add(
+            ctk.CTkButton,
+            "b_kill",
+            text="Kill Server",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=2, column=2, padx=20, pady=10, sticky="nw")
 
     def _initCommands(self):
         self.ui.get("nav_virtual").setCommand(
@@ -81,7 +97,9 @@ class DebugPage(NavigationPage):
             )
             yndialog.init(
                 "WARNING! This is EPILEPSY mode which is inherently DANGEROUS for the eyes!!!",
-                lambda: LEDService.getInstance().setLoop(LEDThemes.getTheme("epilepsy")),
+                lambda: LEDService.getInstance().setLoop(
+                    LEDThemes.getTheme("epilepsy")
+                ),
                 lambda: None,
             )
             self.navigator.navigateEphemeral(yndialog)
@@ -89,7 +107,13 @@ class DebugPage(NavigationPage):
         self.ui.get("epilepsy").setCommand(epilepsy_call)
 
         self.ui.get("b_reconnect").setCommand(
-            lambda: (
-                LEDService.getInstance().leds.begin(),
-            )
+            lambda: (LEDService.getInstance().leds.begin(),)
+        )
+
+        self.ui.get("b_dc").setCommand(
+            lambda: (LEDService.getInstance().leds.disconnect(),)
+        )
+
+        self.ui.get("b_kill").setCommand(
+            lambda: (LEDService.getInstance().leds.killServer(),)
         )
