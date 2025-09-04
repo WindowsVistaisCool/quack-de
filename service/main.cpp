@@ -6,8 +6,10 @@
 #include "themes/Jerry.h"
 #include "themes/Pacifica.h"
 #include "themes/Rainbow.h"
+#include "themes/Twinkle.h"
 #include "LEDMath8.h"
 #include "ThemeRegistry.h"
+
 #if defined(_WIN32) || defined(_WIN64)
 #include <winsock2.h>
 #else
@@ -45,8 +47,9 @@ int main()
     registry->add("rgbSnake", new Jerry(strip));
     registry->add("pacifica", new Pacifica(strip));
     registry->add("rainbow", new Rainbow(strip));
-    strip.setBrightness(100);
-    themeThread = registry->setCurrentTheme("pacifica");
+    registry->add("twinkle", new Twinkle(strip));
+    strip.setBrightness(200);
+    themeThread = registry->setCurrentTheme("twinkle");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);
