@@ -97,7 +97,7 @@ class HomePage(NavigationPage):
     def _initCommands(self):
         def b_ledlow_targ(state):
             if state:
-                LEDService.getInstance().leds.setBrightness(20)
+                LEDService.getInstance().leds.setBrightness(10)
             else:
                 LEDService.getInstance().leds.setBrightness(255)
 

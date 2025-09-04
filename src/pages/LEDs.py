@@ -315,7 +315,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
             def exception_wrapper():
                 try:
                     self.ledService.leds.setLoop(
-                        loop,
+                        loop.id,
                         subStrip=self.tv_segmentLabel.get(),
                     )
                 except:

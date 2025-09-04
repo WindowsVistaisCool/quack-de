@@ -36,10 +36,10 @@ class SocketLED:
 
     def _socket_sender(self):
         self._running = True
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             try:
+                # Recreate the socket before each connection attempt
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.sock.connect(("127.0.0.1", 5000))
                 self.onConnect()
             except Exception as e:
@@ -85,6 +85,7 @@ class SocketLED:
     def begin(self):
         if self._running:
             return
+        self.exceptionCall("Starting socket.")
         self.socketSendFactory().start()
 
     def numPixels(self):

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from LEDService import LEDService
 from LEDThemes import LEDThemes
+from pages.Home import HomePage
 from pages.VirtualLED import VirtualLEDs
 from pages.ephemeral.YesNoDialog import YesNoDialog
 
@@ -65,10 +66,10 @@ class DebugPage(NavigationPage):
         self.ui.add(
             ctk.CTkButton,
             "b_dc",
-            text="Kill Client",
+            text="Disconnect",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=2, column=1, padx=20, pady=10, sticky="nw")
+        ).grid(row=2, column=1, padx=20, pady=10, sticky="n")
 
         self.ui.add(
             ctk.CTkButton,
@@ -76,7 +77,7 @@ class DebugPage(NavigationPage):
             text="Kill Server",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=2, column=2, padx=20, pady=10, sticky="nw")
+        ).grid(row=2, column=2, padx=20, pady=10, sticky="ne")
 
     def _initCommands(self):
         self.ui.get("nav_virtual").setCommand(
@@ -96,9 +97,9 @@ class DebugPage(NavigationPage):
                 self.appRoot.content_root.getInstance(),
             )
             yndialog.init(
-                "WARNING! This is EPILEPSY mode which is inherently DANGEROUS for the eyes!!!",
-                lambda: LEDService.getInstance().setLoop(
-                    LEDThemes.getTheme("epilepsy")
+                "WARNING! This is EPILEPSY mode which is DANGEROUS for the eyes!!! meow",
+                lambda: LEDService.getInstance().leds.setLoop(
+                    LEDThemes.getTheme("epilepsy").id
                 ),
                 lambda: None,
             )
@@ -107,13 +108,22 @@ class DebugPage(NavigationPage):
         self.ui.get("epilepsy").setCommand(epilepsy_call)
 
         self.ui.get("b_reconnect").setCommand(
-            lambda: (LEDService.getInstance().leds.begin(),)
+            lambda: (
+                LEDService.getInstance().leds.begin(),
+                self.navigator.navigate(HomePage),
+            )
         )
 
         self.ui.get("b_dc").setCommand(
-            lambda: (LEDService.getInstance().leds.disconnect(),)
+            lambda: (
+                LEDService.getInstance().leds.disconnect(),
+                self.navigator.navigate(HomePage),
+            )
         )
 
         self.ui.get("b_kill").setCommand(
-            lambda: (LEDService.getInstance().leds.killServer(),)
+            lambda: (
+                LEDService.getInstance().leds.killServer(),
+                self.navigator.navigate(HomePage),
+            )
         )
