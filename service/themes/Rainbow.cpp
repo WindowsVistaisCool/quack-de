@@ -31,22 +31,30 @@ void Rainbow::run()
 {
     for (int i = 0; i < 256; i += step_size)
     {
+        // quick-exit check before starting this pass
+        if (shouldReturn()) {
+            return;
+        }
         for (int j = 0; j < strip.numPixels(); ++j)
         {
+            // check periodically inside the inner loop so we don't wait
+            // for the whole pass to finish before exiting
+            if ((j & 15) == 0 && shouldReturn()) {
+                return;
+            }
             int hue = ((j * 256 / iterations) + i) & 255;
             Color color = rainbowWheel(hue);
             strip.setPixelColor(j, color);
         }
-        if (shouldReturn())
-        {
-            return;
-        } else {
-            strip.show();
-        }
+        strip.show();
 
         if (delay > 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            if (shouldReturn())
+            {
+                return;
+            }
+            // std::this_thread::sleep_for(std::chrono::milliseconds(delay));
         }
     }
 }

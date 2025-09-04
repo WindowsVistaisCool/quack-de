@@ -25,6 +25,8 @@ class HomePage(NavigationPage):
         self._initCommands()
 
     def _initUI(self):
+        self.grid_rowconfigure(10, weight=1)
+
         self.ui.add(
             ctk.CTkLabel,
             "title",
@@ -64,6 +66,34 @@ class HomePage(NavigationPage):
             .cget("fg_color")
         )
 
+        self.svc_status = self.ui.add(
+            ctk.CTkFrame,
+            "svc_status",
+            corner_radius=0,
+        ).grid(row=10, column=0, padx=0, pady=0, sticky="swe").getInstance()
+
+        self.ui.add(
+            ctk.CTkLabel,
+            "label_svc_status",
+            root=self.svc_status,
+            text="Service Status:",
+            font=(self.appRoot.FONT_NAME, 16),
+        ).grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+
+        tv_status = ctk.StringVar(value="unkonwn")
+        self.ui.add(
+            ctk.CTkLabel,
+            "label_svc_status_value",
+            root=self.svc_status,
+            textvariable=tv_status,
+            font=(self.appRoot.FONT_NAME, 16),
+        ).grid(row=0, column=1, padx=10, pady=10, sticky="nw")
+
+        LEDService.getInstance().leds.onConnect = lambda: tv_status.set("Connected")
+        LEDService.getInstance().leds.onDisconnect = lambda: tv_status.set("Disconnected")
+        LEDService.getInstance().leds.exceptionCall = lambda e: tv_status.set(f"Error: {e}")
+        LEDService.getInstance().leds.begin()
+
     def _initCommands(self):
         def b_ledlow_targ(state):
             if state:
@@ -78,6 +108,10 @@ class HomePage(NavigationPage):
             )
         )
         self.ui.get("b_ledlow").setCommand(b_ledlow_targ)
+
+    def initStatusCallbacks(self):
+        LEDService.getInstance().onConnect = lambda: self.tv_status.set("Connected")
+        LEDService.getInstance().onDisconnect = lambda: self.tv_status.set("Disconnected")
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:

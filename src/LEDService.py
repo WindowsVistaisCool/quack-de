@@ -21,7 +21,7 @@ class LEDService:
         self.leds = SocketLED()
 
         # if not isDev():
-        self.leds.begin()
+        # self.leds.begin()
 
         # self.leds.addSubStrip("Door Side", [(0, 124), (743, 822)])
         # self.leds.addSubStrip("Kyle Side", [(124, 324)])

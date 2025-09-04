@@ -56,8 +56,8 @@ class DebugPage(NavigationPage):
 
         self.ui.add(
             ctk.CTkButton,
-            "debug",
-            text="send sig",
+            "b_reconnect",
+            text="Reconnect Socket",
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=2, column=0, padx=20, pady=10, sticky="nw")
@@ -88,8 +88,8 @@ class DebugPage(NavigationPage):
 
         self.ui.get("epilepsy").setCommand(epilepsy_call)
 
-        self.ui.get("debug").setCommand(
+        self.ui.get("b_reconnect").setCommand(
             lambda: (
-                LEDService.getInstance().leds.setLoop("rainbow"),
+                LEDService.getInstance().leds.begin(),
             )
         )

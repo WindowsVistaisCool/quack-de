@@ -52,6 +52,11 @@ std::thread *ThemeRegistry::setCurrentTheme(const std::string &key)
     if (currentThemeKey != "")
     {
         m_themeStates[currentThemeKey] = false;
+        // signal the running theme to stop as well so its run() can
+        // exit early if it checks shouldReturn()
+        if (currentTheme != nullptr) {
+            currentTheme->sendStopSignal();
+        }
         if (m_themeThread != nullptr)
         {
             m_themeThread->join();

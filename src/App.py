@@ -213,15 +213,17 @@ class App(QuackApp):
         self.addLockCallback(lambda: self.ui.get("nav_debug").drop())
 
     def _addPages(self):
-        HomePage(self.navigation, self, self.content_root.getInstance())
-        LEDsPage(self.navigation, self, self.content_root.getInstance())
+        LEDsPage(self.navigation, self, self.content_root.getInstance()).ledService.leds
         WeatherPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
+        HomePage(self.navigation, self, self.content_root.getInstance())
 
         self.clock_thread().start()
 
         self.navigation.navigate(HomePage)
+
+        
 
     def toggleNav(self, viewable):
         if not viewable:

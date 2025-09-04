@@ -2,8 +2,6 @@ import socket
 import threading
 import customtkinter as ctk
 
-from lib.led.LEDTheme import LEDTheme
-
 
 class SocketLED:
     def __init__(self):
@@ -14,6 +12,12 @@ class SocketLED:
 
         self._sender = ctk.StringVar(value="")
 
+        self._running = False
+
+        self.onConnect = lambda: None
+        self.onDisconnect = lambda: None
+        self.exceptionCall = lambda e: print(f"Socket error: {e}")
+
     def _socket_listener(self):
         while True:
             try:
@@ -22,29 +26,39 @@ class SocketLED:
                     break
                 self._handle_message(data.decode("utf-8"))
             except Exception as e:
-                print(f"Error receiving data: {e}")
+                self.exceptionCall(f"Error receiving data: {e}")
                 break
 
         self.sock.close()
 
     def _socket_sender(self):
+        self._running = True
         try:
-            self.sock.connect(("127.0.0.1", 5000))
-        except Exception as e:
-            print(f"Error connecting to server: {e}")
-        self.socketListenerFactory().start()
-
-        lastMsg = self._sender.get()
-        while True:
-            if self._sender.get() == lastMsg:
-                continue
-            lastMsg = self._sender.get()
             try:
-                self.sock.sendall(lastMsg.encode("utf-8"))
+                self.sock.connect(("127.0.0.1", 5000))
+                self.onConnect()
             except Exception as e:
-                print(f"Error sending data: {e}")
+                self.exceptionCall(f"Error connecting to server: {e}")
+            # self.socketListenerFactory().start()
+
+            lastMsg = self._sender.get()
+            while True:
+                if self._sender.get() == lastMsg:
+                    continue
+                self.onConnect()
+                lastMsg = self._sender.get()
+                try:
+                    self.sock.sendall(lastMsg.encode("utf-8"))
+                except Exception as e:
+                    self.exceptionCall(f"Error sending data: {e}")
+        except Exception as e:
+            self.exceptionCall(f"Error in socket sender: {e}")
+        self.onDisconnect()
+        self._running = False
 
     def begin(self):
+        if self._running:
+            return
         self.socketSendFactory().start()
 
     def numPixels(self):

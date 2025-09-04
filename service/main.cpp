@@ -38,10 +38,11 @@ int main()
 
     // Appoint registry
     registry = new ThemeRegistry(strip);
-    registry->add("Fire2012", new Fire2012(strip));
-    registry->add("Pacifica", new Pacifica(strip));
-    registry->add("Rainbow", new Rainbow(strip));
+    registry->add("fire2012", new Fire2012(strip));
+    registry->add("pacifica", new Pacifica(strip));
+    registry->add("rainbow", new Rainbow(strip));
     strip.setBrightness(100);
+    themeThread = registry->setCurrentTheme("pacifica");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -114,12 +115,17 @@ void parseMessage(const std::string &message)
             std::cout << "Theme '" << themeName << "' does not exist." << std::endl;
             return;
         }
-        registry->setCurrentTheme(themeName);
+        themeThread = registry->setCurrentTheme(themeName);
     }
-    else if (message.compare(0, 7, "bright:") == 0) {
+    else if (message.compare(0, 7, "bright:") == 0)
+    {
         std::string brightness = message.substr(7); // get the part after "bright:"
         uint8_t brightnessValue = std::stoi(brightness);
         registry->m_strip.setBrightness(brightnessValue);
+    }
+    else if (message == "clear")
+    {
+        registry->m_strip.clear();
     }
     else if (message != "")
     {
