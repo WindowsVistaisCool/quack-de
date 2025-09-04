@@ -21,7 +21,6 @@ struct Color {
         return *this;
     }
 
-    // Saturating add (qadd8 equivalent)
     inline Color operator+(const Color &rhs) const {
         auto qadd8 = [](uint8_t a, uint8_t b) -> uint8_t {
             unsigned int t = a + b;

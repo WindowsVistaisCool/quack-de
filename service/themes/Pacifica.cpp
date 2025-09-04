@@ -37,7 +37,7 @@ void Pacifica::run()
     // Clear out the LED array to a dim background blue-green
     for (int i = 0; i < strip.numPixels(); i++)
     {
-        strip.setPixelColor(i, Color{2, 6, 10});
+        strip.setPixelColor(i, Color(2, 6, 10));
     }
 
     // Render each of four layers, with different scales and speeds, that vary over time
@@ -56,7 +56,7 @@ void Pacifica::run()
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
 }
 
-void Pacifica::waves_one_layer(Palette& p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff)
+void Pacifica::waves_one_layer(const Palette& p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff)
 {
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;

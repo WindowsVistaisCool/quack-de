@@ -12,6 +12,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/rpi_281x)
 add_executable(service
 	main.cpp
 	PixelStrip.cpp
+	ThemeRegistry.cpp
 	themes/Fire2012.cpp
 	themes/Rainbow.cpp
     themes/Pacifica.cpp

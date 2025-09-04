@@ -14,13 +14,13 @@ public:
     void run() override;
 
 private:
-    void waves_one_layer(Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff);
+    void waves_one_layer(const Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff);
     void waves_add_whitecaps();
     void waves_deepen_colors();
 
     int stuff = 0;
 
-    Palette pacifica1 = Palette({Color(0x000507),
+    const Palette pacifica1 = Palette({Color(0x000507),
                                        Color(0x000409),
                                        Color(0x00030B),
                                        Color(0x00030D),
@@ -36,7 +36,7 @@ private:
                                        Color(0x000046),
                                        Color(0x14554B),
                                        Color(0x28AA50)});
-    Palette pacifica2 = Palette({Color(0x000507),
+   const Palette pacifica2 = Palette({Color(0x000507),
                                        Color(0x000409),
                                        Color(0x00030B),
                                        Color(0x00030D),
@@ -52,7 +52,7 @@ private:
                                        Color(0x000046),
                                        Color(0x0C5F52),
                                        Color(0x19BE5F)});
-    Palette pacifica3 = Palette({Color(0x000208),
+    const Palette pacifica3 = Palette({Color(0x000208),
                                        Color(0x00030E),
                                        Color(0x000514),
                                        Color(0x00061A),
