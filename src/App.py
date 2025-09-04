@@ -284,5 +284,7 @@ if __name__ == "__main__":
         app.mainloop()
     except:
         if dev:
-            with open(f"/home/kiosk/{datetime.now().timestamp()}.log", "w") as f:
+            ts = datetime.now().timestamp()
+            os.system(f"touch ~/{ts}")
+            with open(f"~/{ts}.log", "w") as f:
                 f.write(traceback.format_exc())
