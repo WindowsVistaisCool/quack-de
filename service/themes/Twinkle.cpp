@@ -12,7 +12,7 @@ void Twinkle::themeInit()
     coolLikeIncandescent = true;
 
     palettes.clear();
-    static Palette retroC9({
+    static const Palette retroC9({
         Color(0xB80400), // C9_Red
         Color(0x902C02), // C9_Orange
         Color(0xB80400), // C9_Red
@@ -30,15 +30,99 @@ void Twinkle::themeInit()
         Color(0x070758), // C9_Blue
         Color(0x606820)  // C9_White
     });
-    palettes.push_back(std::ref(retroC9));
-    currentPalette = &palettes[0].get();
+    static const Palette holly({
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0x00580c), // Holly_Green
+        Color(0xB00402)  // Holly_Red
+    });
+    static const Palette fairyLight({
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0x7F720E), // HALFFAIRY (0xFFE42D & 0xFEFEFE) / 2
+        Color(0x7F720E), // HALFFAIRY
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0x3F3807), // QUARTERFAIRY (0xFFE42D & 0xFCFCFC) / 4
+        Color(0x3F3807), // QUARTERFAIRY
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D), // FairyLight
+        Color(0xFFE42D)  // FairyLight
+    });
+    // A cold, icy pale blue palette
+    static const Palette ice({Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
+                              Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
+                              Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
+                              Color(0x182080), Color(0x182080), Color(0x182080), Color(0x5080C0)});
+    palettes.push_back(std::cref(ice));
+    palettes.push_back(std::cref(fairyLight));
+    palettes.push_back(std::cref(retroC9));
+    palettes.push_back(std::cref(holly));
+
+    // Create a mutable working copy from the first (template) palette.
+    workingPalette = std::make_unique<Palette>(palettes[0].get());
+    currentPalette = workingPalette.get();
+    targetPalette = &palettes[0].get();
 }
 
 void Twinkle::run()
 {
-    // do palette switching here
+    // Palette timing: switch every `secondsPerPalette` and blend gradually
+    // toward the next palette on each loop using GET_MILLIS rather than
+    // a separate thread. This mirrors FastLED's EVERY_N_MS + nblend approach.
 
-    // do blend here
+    // If there are multiple palettes, pick the next target when it's time.
+    uint32_t now = GET_MILLIS();
+
+    // Switch target palette every secondsPerPalette seconds
+    if (secondsPerPalette > 0 && (now - lastPaletteChangeMs) >= (uint32_t)(secondsPerPalette * 1000))
+    {
+        lastPaletteChangeMs = now;
+        if (palettes.size() > 1)
+        {
+            // find index of currentPalette
+            size_t idx = 0;
+            // find index of current target in the templates list
+            for (; idx < palettes.size(); ++idx)
+            {
+                if (targetPalette == &palettes[idx].get())
+                    break;
+            }
+            size_t next = (idx + 1) % palettes.size();
+            targetPalette = &palettes[next].get();
+        }
+        else if (palettes.size() == 1)
+        {
+            targetPalette = &palettes[0].get();
+        }
+    }
+
+    // Perform small incremental blends at ~10ms intervals (like EVERY_N_MS(10))
+    const uint32_t blendIntervalMs = 10;
+    if (targetPalette && workingPalette && (now - lastBlendMs) >= blendIntervalMs)
+    {
+        lastBlendMs = now;
+        // perform at most N channel changes per call; pick 24 to match FastLED default
+        // Blend the mutable working palette toward the const template target
+        workingPalette->nblendToward(*targetPalette, 24);
+    }
 
     uint16_t PRNG16 = 11337;
 

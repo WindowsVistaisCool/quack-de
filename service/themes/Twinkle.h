@@ -3,6 +3,7 @@
 #include "Theme.h"
 #include "Palette.h"
 #include <vector>
+#include <memory>
 
 class Twinkle : public Theme
 {
@@ -18,9 +19,16 @@ private:
     int twinkleSpeed;
     int twinkleDensity;
     int secondsPerPalette;
+    uint32_t lastPaletteChangeMs = 0;
+    uint32_t lastBlendMs = 0;
     // bool autoSelectBg;
     bool coolLikeIncandescent;
 
-    std::vector<std::reference_wrapper<Palette>> palettes;
-    Palette* currentPalette = nullptr;
+    // Keep the reference palettes as immutable templates; do not modify them.
+    std::vector<std::reference_wrapper<const Palette>> palettes;
+
+    // Working palette is a mutable copy that we blend toward a target template.
+    std::unique_ptr<Palette> workingPalette;
+    Palette* currentPalette = nullptr;        // points to workingPalette.get()
+    const Palette* targetPalette = nullptr;   // points into `palettes`
 };

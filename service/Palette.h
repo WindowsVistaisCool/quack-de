@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <vector>
+#include <algorithm>
 #include "LEDMath8.h"
 #include "Color.h"
 
@@ -25,6 +26,53 @@ public:
         if (index < m_colors.size())
         {
             m_colors[index] = color;
+        }
+    }
+
+    // Gradually blend this palette toward `target`, changing at most
+    // `maxChanges` color channels per call. Similar to FastLED's nblend.
+    void nblendToward(const Palette &target, uint8_t maxChanges = 24)
+    {
+        if (maxChanges == 0)
+            return;
+
+        size_t n = std::min(m_colors.size(), target.m_colors.size());
+        int changes = 0;
+
+        for (size_t i = 0; i < n && changes < maxChanges; ++i)
+        {
+            Color &src = m_colors[i];
+            const Color &dst = target.m_colors[i];
+
+            // Red channel
+            if (src.r != dst.r && changes < maxChanges)
+            {
+                if (src.r < dst.r)
+                    ++src.r;
+                else
+                    --src.r;
+                ++changes;
+            }
+
+            // Green channel
+            if (src.g != dst.g && changes < maxChanges)
+            {
+                if (src.g < dst.g)
+                    ++src.g;
+                else
+                    --src.g;
+                ++changes;
+            }
+
+            // Blue channel
+            if (src.b != dst.b && changes < maxChanges)
+            {
+                if (src.b < dst.b)
+                    ++src.b;
+                else
+                    --src.b;
+                ++changes;
+            }
         }
     }
 
