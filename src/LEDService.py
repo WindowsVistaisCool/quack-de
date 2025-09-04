@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from lib.DevChecks import isDev
+from lib.DevChecks import isDev
 from lib.led.SocketLED import SocketLED
 
 if TYPE_CHECKING:
@@ -18,7 +20,9 @@ class LEDService:
             )
         self.leds = SocketLED()
 
-        # self.leds.begin()
+        # if not isDev():
+        self.leds.begin()
+
         # self.leds.addSubStrip("Door Side", [(0, 124), (743, 822)])
         # self.leds.addSubStrip("Kyle Side", [(124, 324)])
         # self.leds.addSubStrip("Window", [(324, 534)])
@@ -40,14 +44,7 @@ class LEDService:
 
         Passing None will set the null theme (which does not spawn a thread) for the key.
         """
-        pass
-        # self.active_loops[key] = {
-        #     "theme": loop,
-        #     "thread": t,
-        #     "break_event": break_event,
-        #     "subStrip": subStrip,
-        # }
-        # t.start()
+        self.leds.setLoop(loop.id, subStrip)
 
     def setBrightness(self, brightness: int):
         pass

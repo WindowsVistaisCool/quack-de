@@ -54,6 +54,14 @@ class DebugPage(NavigationPage):
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=0, column=1, padx=20, pady=10, sticky="nw")
 
+        self.ui.add(
+            ctk.CTkButton,
+            "debug",
+            text="send sig",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=2, column=0, padx=20, pady=10, sticky="nw")
+
     def _initCommands(self):
         self.ui.get("nav_virtual").setCommand(
             lambda: self.navigator.navigateEphemeral(
@@ -79,3 +87,9 @@ class DebugPage(NavigationPage):
             self.navigator.navigateEphemeral(yndialog)
 
         self.ui.get("epilepsy").setCommand(epilepsy_call)
+
+        self.ui.get("debug").setCommand(
+            lambda: (
+                LEDService.getInstance().leds.setLoop("rainbow"),
+            )
+        )
