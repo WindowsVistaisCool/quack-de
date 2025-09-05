@@ -48,8 +48,8 @@ int main()
     registry->add("pacifica", new Pacifica(strip));
     registry->add("rainbow", new Rainbow(strip));
     registry->add("twinkle", new Twinkle(strip));
-    strip.setBrightness(200);
-    themeThread = registry->setCurrentTheme("twinkle");
+    strip.setBrightness(40);
+    themeThread = registry->setCurrentTheme("rgbSnake");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -62,7 +62,6 @@ int main()
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(5000);
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
     bind(server, (sockaddr *)&server_addr, sizeof(server_addr));
     listen(server, 5);
 

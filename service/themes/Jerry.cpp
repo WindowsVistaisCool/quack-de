@@ -5,13 +5,14 @@
 #include <algorithm>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 void Jerry::themeInit()
 {
     strip.clear();
     hue = 0;
-    tailScaleFactor = 250;
-    step_size = 1;
+    tailScaleFactor = 230;
+    step_size = 7;
 }
 
 void Jerry::run()

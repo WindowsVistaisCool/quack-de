@@ -16,23 +16,27 @@ struct Color {
     uint8_t r, g, b;
 
     // HSV to RGB conversion
-    // h: 0-360, s: 0-1, v: 0-1
-    static Color fromHSV(float h, float s, float v) {
+    // h: 0-255, s: 0-255, v: 0-255
+    static Color fromHSV(uint8_t h, uint8_t s, uint8_t v) {
+        float hf = (h / 255.0f) * 360.0f;
+        float sf = s / 255.0f;
+        float vf = v / 255.0f;
+
         float r_f, g_f, b_f;
 
-        int i = static_cast<int>(h / 60.0f) % 6;
-        float f = (h / 60.0f) - i;
-        float p = v * (1.0f - s);
-        float q = v * (1.0f - f * s);
-        float t = v * (1.0f - (1.0f - f) * s);
+        int i = static_cast<int>(hf / 60.0f) % 6;
+        float f = (hf / 60.0f) - i;
+        float p = vf * (1.0f - sf);
+        float q = vf * (1.0f - f * sf);
+        float t = vf * (1.0f - (1.0f - f) * sf);
 
         switch (i) {
-            case 0: r_f = v; g_f = t; b_f = p; break;
-            case 1: r_f = q; g_f = v; b_f = p; break;
-            case 2: r_f = p; g_f = v; b_f = t; break;
-            case 3: r_f = p; g_f = q; b_f = v; break;
-            case 4: r_f = t; g_f = p; b_f = v; break;
-            case 5: r_f = v; g_f = p; b_f = q; break;
+            case 0: r_f = vf; g_f = t; b_f = p; break;
+            case 1: r_f = q; g_f = vf; b_f = p; break;
+            case 2: r_f = p; g_f = vf; b_f = t; break;
+            case 3: r_f = p; g_f = q; b_f = vf; break;
+            case 4: r_f = t; g_f = p; b_f = vf; break;
+            case 5: r_f = vf; g_f = p; b_f = q; break;
             default: r_f = g_f = b_f = 0; break;
         }
 
@@ -42,7 +46,6 @@ struct Color {
             static_cast<uint8_t>(std::clamp(b_f * 255.0f, 0.0f, 255.0f))
         );
     }
-
     uint8_t getAverageLight() {
         uint8_t avg = scale8(r, 85) +
                     scale8(g, 85) +
