@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from LEDService import LEDService
 from LEDThemes import LEDThemes
+from pages.Home import HomePage
 from pages.VirtualLED import VirtualLEDs
 from pages.ephemeral.YesNoDialog import YesNoDialog
 
@@ -25,14 +26,14 @@ class DebugPage(NavigationPage):
             "title",
             text="🤫 Secret Page",
             font=(self.appRoot.FONT_NAME, 32, "bold"),
-        ).grid(row=0, column=0, padx=20, pady=20, sticky="nw")
+        ).grid(row=0, column=0, columnspan=10, padx=20, pady=20, sticky="nw")
 
         led_frame = (
             self.ui.add(
                 ctk.CTkFrame,
                 "led_frame",
             )
-            .grid(row=1, column=0, padx=20, pady=0, sticky="nsew")
+            .grid(row=1, column=0, columnspan=3, padx=20, pady=0, sticky="nsew")
             .getInstance()
         )
 
@@ -42,7 +43,8 @@ class DebugPage(NavigationPage):
             root=led_frame,
             text="View Virtual LEDs",
             height=50,
-            font=(self.appRoot.FONT_NAME, 18, "bold"),
+            font=(self.appRoot.FONT_NAME, 18),
+            state="disabled",
         ).grid(row=0, column=0, padx=20, pady=10, sticky="nw")
 
         self.ui.add(
@@ -53,6 +55,42 @@ class DebugPage(NavigationPage):
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=0, column=1, padx=20, pady=10, sticky="nw")
+
+        f_sock = (
+            self.ui.add(
+                ctk.CTkFrame,
+                "socket_frame",
+            )
+            .grid(row=2, column=0, columnspan=10, padx=20, pady=20, sticky="nsew")
+            .getInstance()
+        )
+
+        self.ui.add(
+            ctk.CTkButton,
+            "b_reconnect",
+            root=f_sock,
+            text="Reconnect",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=0, column=0, padx=20, pady=10, sticky="nw")
+
+        self.ui.add(
+            ctk.CTkButton,
+            "b_dc",
+            root=f_sock,
+            text="Disconnect",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=0, column=1, padx=20, pady=10, sticky="n")
+
+        self.ui.add(
+            ctk.CTkButton,
+            "b_kill",
+            root=f_sock,
+            text="Kill Server",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=0, column=2, padx=20, pady=10, sticky="ne")
 
     def _initCommands(self):
         self.ui.get("nav_virtual").setCommand(
@@ -72,10 +110,33 @@ class DebugPage(NavigationPage):
                 self.appRoot.content_root.getInstance(),
             )
             yndialog.init(
-                "WARNING! This is EPILEPSY mode which is inherently DANGEROUS for the eyes!!!",
-                lambda: LEDService.getInstance().setLoop(LEDThemes.getTheme("epilepsy")),
+                "WARNING! This is EPILEPSY mode which is DANGEROUS for the eyes!!! meow",
+                lambda: LEDService.getInstance().leds.setLoop(
+                    LEDThemes.getTheme("epilepsy").id
+                ),
                 lambda: None,
             )
             self.navigator.navigateEphemeral(yndialog)
 
         self.ui.get("epilepsy").setCommand(epilepsy_call)
+
+        self.ui.get("b_reconnect").setCommand(
+            lambda: (
+                LEDService.getInstance().leds.begin(),
+                self.navigator.navigate(HomePage),
+            )
+        )
+
+        self.ui.get("b_dc").setCommand(
+            lambda: (
+                LEDService.getInstance().leds.disconnect(),
+                self.navigator.navigate(HomePage),
+            )
+        )
+
+        self.ui.get("b_kill").setCommand(
+            lambda: (
+                LEDService.getInstance().leds.killServer(),
+                self.navigator.navigate(HomePage),
+            )
+        )

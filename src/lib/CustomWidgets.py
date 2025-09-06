@@ -159,7 +159,9 @@ class ToggleButton(ctk.CTkButton):
             kwargs["command"] = lambda: (self._cmd_pre(), cmd(self._toggled))
         super().configure(**kwargs)
 
-    def toggle(self):
+    def toggle(self, state=None):
+        if state is not None:
+            self._toggled = not state # will be updated in `self._cmd_pre`
         self._command()
 
 
