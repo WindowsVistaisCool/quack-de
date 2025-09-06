@@ -1,7 +1,6 @@
 from time import time
 from typing import TYPE_CHECKING
 
-from LEDService import LEDService
 from lib.CustomWidgets import ToggleButton
 from pages.ephemeral.StatImg import StatImg
 from PIL import Image
@@ -89,21 +88,21 @@ class HomePage(NavigationPage):
             textvariable=tv_status,
             font=(self.appRoot.FONT_NAME, 12),
         ).grid(row=0, column=1, padx=5, pady=5, sticky="nw")
-        LEDService.getInstance().leds.onConnect = lambda: tv_status.set("Connected")
-        LEDService.getInstance().leds.onDisconnect = lambda: tv_status.set("Disconnected")
-        LEDService.getInstance().leds.exceptionCall = lambda e: tv_status.set(f"{e}")
-        LEDService.getInstance().leds.begin()
+        self.appRoot.leds.onConnect = lambda: tv_status.set("Connected")
+        self.appRoot.leds.onDisconnect = lambda: tv_status.set("Disconnected")
+        self.appRoot.leds.exceptionCall = lambda e: tv_status.set(f"{e}")
+        self.appRoot.leds.begin()
 
     def _initCommands(self):
         def b_ledlow_targ(state):
             if state:
-                LEDService.getInstance().leds.setBrightness(10)
+                self.appRoot.leds.setBrightness(10)
             else:
-                LEDService.getInstance().leds.setBrightness(255)
+                self.appRoot.leds.setBrightness(255)
 
         self.ui.get("b_ledoff").setCommand(
             lambda: (
-                LEDService.getInstance().leds.off(),
+                self.appRoot.leds.off(),
                 self.ui.get("b_ledlow").getInstance().toggle(False),
             )
         )

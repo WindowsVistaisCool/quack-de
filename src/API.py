@@ -1,10 +1,15 @@
 import flask
 import threading
 
+from lib.led.SocketLED import SocketLED
+
+
 class QuackDEAPI:
-    def __init__(self):
-        self.base_url = "127.0.0.1"
-        self.port = 5000
+    def __init__(self, leds: "SocketLED"):
+        self.base_url = "0.0.0.0"
+        self.port = 6000
+
+        self.leds = leds
 
         self._api_thread = None
 
@@ -14,6 +19,14 @@ class QuackDEAPI:
         @app.route("/api/quack", methods=["GET"])
         def quack():
             return {"message": "Quack!"}
+        
+        @app.route("/api/themes/set", methods=["POST"])
+        def set_theme():
+            new_theme = flask.request.json.get("theme")
+            if new_theme:
+                self.leds.setLoop(new_theme)
+                return {"message": f"Theme set to {new_theme}"}
+            return {"error": "No theme provided"}, 400
 
         app.run(host=self.base_url, port=self.port)
     

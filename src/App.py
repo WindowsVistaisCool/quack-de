@@ -6,9 +6,8 @@ from datetime import datetime
 from threading import Thread
 from dotenv import load_dotenv
 
-# from API import QuackDEAPI
+from API import QuackDEAPI
 from LEDThemes import LEDThemes
-from LEDService import LEDService
 
 from lib.Configurator import Configurator
 from lib.CommandUI import CommandUI
@@ -16,6 +15,7 @@ from lib.DevChecks import isDev
 from lib.Notifier import NotifierService, NotifierUI
 from lib.QuackApp import QuackApp
 
+from lib.led.SocketLED import SocketLED
 from pages.Calendar import CalendarPage
 from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
@@ -58,12 +58,16 @@ class App(QuackApp):
         self._fullAccessTimerID = None
         self._fullAccessLockCallbacks = []
 
+        self.leds = SocketLED()
+        LEDThemes() # initialize themes
+
         self._initUI()
         self._initCommands()
         self._addPages()
 
-        # self.api = QuackDEAPI()
-        # self.api.init()
+        self.api = QuackDEAPI(self.leds)
+        if not isDev():
+            self.api.init()
 
     def _initUI(self):
         # init grid
@@ -217,7 +221,7 @@ class App(QuackApp):
         self.addLockCallback(lambda: self.ui.get("nav_debug").drop())
 
     def _addPages(self):
-        LEDsPage(self.navigation, self, self.content_root.getInstance()).ledService.leds
+        LEDsPage(self.navigation, self, self.content_root.getInstance())
         WeatherPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
@@ -280,7 +284,7 @@ if __name__ == "__main__":
     else:
         app.toggleFullAccess(True)
 
-    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
+    # self.appRoot.setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
     
 
     dev = isDev()

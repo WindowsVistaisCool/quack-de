@@ -9,7 +9,6 @@ import threading
 import time
 import tkinter as tk
 
-from LEDService import LEDService
 from lib.CustomWidgets import ToggleButton
 from lib.Navigation import EphemeralPage
 
@@ -77,7 +76,7 @@ class VirtualLEDs(EphemeralPage):
         bg = led_frame.cget("fg_color")[1]
         self.ledGrid.configure(bg=bg)
 
-        for i in range(LEDService.LED_COUNT):
+        for i in range(self.appRoot.leds.numPixels()):
             self.ledGrid.addLED(i)
             self.ledGrid.setLED(i, bg)
 
@@ -88,7 +87,7 @@ class VirtualLEDs(EphemeralPage):
                 self.getThread().start()
             else:
                 c = self.ledGrid.cget("bg")
-                for i in range(LEDService.LED_COUNT):
+                for i in range(self.appRoot.leds.numPixels()):
                     self.ledGrid.setLED(i, c)
         self.ui.get("toggle").setCommand(toggle_target)
         self.ui.get("toggle").getInstance().toggle()
@@ -97,11 +96,11 @@ class VirtualLEDs(EphemeralPage):
         if not self.enabled:
             return
 
-        svc = LEDService.getInstance().leds
+        svc = self.appRoot.leds
 
         # setcolors()
         colors = []
-        for i in range(LEDService.LED_COUNT):
+        for i in range(self.appRoot.leds.numPixels()):
             led = svc.getPixelColor(i)
             r = (led >> 16) & 0xFF
             g = (led >> 8) & 0xFF

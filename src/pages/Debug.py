@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from LEDService import LEDService
 from LEDThemes import LEDThemes
 from pages.Home import HomePage
 from pages.VirtualLED import VirtualLEDs
@@ -111,7 +110,7 @@ class DebugPage(NavigationPage):
             )
             yndialog.init(
                 "WARNING! This is EPILEPSY mode which is DANGEROUS for the eyes!!! meow",
-                lambda: LEDService.getInstance().leds.setLoop(
+                lambda: self.appRoot.leds.setLoop(
                     LEDThemes.getTheme("epilepsy").id
                 ),
                 lambda: None,
@@ -122,21 +121,21 @@ class DebugPage(NavigationPage):
 
         self.ui.get("b_reconnect").setCommand(
             lambda: (
-                LEDService.getInstance().leds.begin(),
+                self.appRoot.getInstance().leds.begin(),
                 self.navigator.navigate(HomePage),
             )
         )
 
         self.ui.get("b_dc").setCommand(
             lambda: (
-                LEDService.getInstance().leds.disconnect(),
+                self.appRoot.getInstance().leds.disconnect(),
                 self.navigator.navigate(HomePage),
             )
         )
 
         self.ui.get("b_kill").setCommand(
             lambda: (
-                LEDService.getInstance().leds.killServer(),
+                self.appRoot.getInstance().leds.killServer(),
                 self.navigator.navigate(HomePage),
             )
         )

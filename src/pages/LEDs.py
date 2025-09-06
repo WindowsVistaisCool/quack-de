@@ -8,7 +8,6 @@ import customtkinter as ctk
 from PIL import Image
 
 from LEDThemes import LEDThemes
-from LEDService import LEDService
 
 from lib.CommandUI import CommandUI
 from lib.led.LEDTheme import LEDTheme
@@ -25,9 +24,6 @@ class LEDsPage(NavigationPage):
     def __init__(self, navigator, appRoot: "App", master, **kwargs):
         super().__init__(navigator, master, title="LEDs", **kwargs)
         self.appRoot: "App" = appRoot
-
-        self.ledService = LEDService(self.appRoot)
-        self.ledService._errorCallback = self.ui.exceptionCallback
 
         self._loadedThemeCount = 0
 
@@ -167,14 +163,7 @@ class LEDsPage(NavigationPage):
             ctk.CTkLabel,
             "cfg_text_info",
             root=_cfgTextFrame.getInstance(),
-            text="""LED Count: {self.ledService.leds.numPixels()}
-LED Pin: {self.ledService.LED_PIN}
-LED Frequency: {self.ledService.LED_FREQ_HZ} Hz
-LED DMA: {self.ledService.LED_DMA}
-LED Brightness: {self.ledService.LED_BRIGHTNESS}
-LED Invert: {self.ledService.LED_INVERT}
-LED Channel: {self.ledService.LED_CHANNEL}
-""",
+            text="""ok garmin""",
             font=(self.appRoot.FONT_NAME, 14),
             justify="left",
         ).grid(row=1, column=0, padx=(20, 0), pady=10, sticky="nw")
@@ -192,12 +181,12 @@ LED Channel: {self.ledService.LED_CHANNEL}
             root=self.configFrame,
             from_=0,
             to=255,
-            command=self.ledService.leds.setBrightness,
+            command=self.appRoot.leds.setBrightness,
             number_of_steps=256,
             width=300,
         ).grid(row=1, column=1, padx=(20, 20), pady=(0, 20), sticky="nsew")
         configUI.get("brightness_slider").getInstance().set(
-            self.ledService.leds.getBrightness()
+            self.appRoot.leds.getBrightness()
         )
 
         """Segments Page"""
@@ -234,7 +223,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         #     ctk.CTkSegmentedButton,
         #     "selector",
         #     root=_segmentsFrameOverlay,
-        #     values=list(self.ledService.leds.subStrips.keys()),
+        #     values=list(self.appRoot.leds.subStrips.keys()),
         #     corner_radius=12,
         #     height=40,
         # ).grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
@@ -271,7 +260,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         #         self.tv_segmentLabel.set("All")
         #         self.segmentsUI.get("selector").getInstance().set(-1)
         #         return
-        #     for id, substrip in self.ledService.leds.subStrips.items():
+        #     for id, substrip in self.appRoot.leds.subStrips.items():
         #         if id == value:
         #             self.tv_segmentNum.set(substrip.rangeStr)
         #             self.tv_segmentLabel.set(id)
@@ -281,7 +270,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         # self.segmentsUI.get("selectall").setCommand(lambda: selector_callback(-1))
 
         self.ui.get("color_picker").setCommand(
-            lambda rgb: self.ledService.leds.setColor(rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)
+            lambda rgb: self.appRoot.leds.setColor(rgb, subStrip=self.tv_segmentNum.get() if self.tv_segmentNum.get() != -1 else None)
         )
 
     def onShow(self):
@@ -303,7 +292,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         def longPressFactory(loop: "LEDTheme"):
             def exception_wrapper():
                 try:
-                    # self.ledService.setLoop(loop)
+                    # self.appRoot.setLoop(loop)
                     self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
                 except:
                     self.ui.exceptionCallback(traceback.format_exc())
@@ -314,7 +303,7 @@ LED Channel: {self.ledService.LED_CHANNEL}
         def commandFactory(loop):
             def exception_wrapper():
                 try:
-                    self.ledService.leds.setLoop(
+                    self.appRoot.leds.setLoop(
                         loop.id,
                         subStrip=self.tv_segmentLabel.get(),
                     )

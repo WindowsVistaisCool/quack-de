@@ -4,3 +4,4 @@ psutil
 ctkcolorpicker
 requests
 dotenv
+flask

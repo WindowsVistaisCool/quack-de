@@ -5,11 +5,21 @@ import queue
 
 
 class SocketLED:
+    _instance = None
+
     def __init__(self):
+        if SocketLED._instance is not None:
+            raise RuntimeError(
+                "SocketLED is a singleton and cannot be instantiated multiple times."
+            )
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.socketListenerFactory = lambda: threading.Thread(target=self._socket_listener, daemon=True)
-        self.socketSendFactory = lambda: threading.Thread(target=self._socket_sender, daemon=True)
+        self.socketListenerFactory = lambda: threading.Thread(
+            target=self._socket_listener, daemon=True
+        )
+        self.socketSendFactory = lambda: threading.Thread(
+            target=self._socket_sender, daemon=True
+        )
 
         # use a thread-safe queue for outgoing messages instead of a UI StringVar
         # producer threads / callers call `put(...)`, the sender thread `get()`s
@@ -90,14 +100,14 @@ class SocketLED:
 
     def numPixels(self):
         return 822
-    
+
     def getBrightness(self):
         return 255
 
     def setLoop(self, loop: str, subStrip="All"):
         self._sender.put(f"set:{loop}")
         # self._subStrip = subStrip
-    
+
     def setBrightness(self, brightness: int):
         brightness = int(brightness)
         brightness &= 0xFF
@@ -114,3 +124,7 @@ class SocketLED:
 
     def killServer(self):
         self._sender.put(f"end")
+
+    @classmethod
+    def getInstance(cls):
+        return cls._instance
