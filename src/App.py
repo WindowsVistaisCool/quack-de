@@ -285,6 +285,6 @@ if __name__ == "__main__":
     except:
         if dev:
             ts = datetime.now().timestamp()
-            os.system(f"touch ~/{ts}")
-            with open(f"~/{ts}.log", "w") as f:
+            os.system(f"touch {os.path.expanduser(f'~/{ts}')}")
+            with open(os.path.expanduser(f"~/{ts}.log"), "w") as f:
                 f.write(traceback.format_exc())
