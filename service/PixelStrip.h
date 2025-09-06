@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-#pragma once
-
 #include <cstdint>
 #include "ws2811.h"
 #include "Color.h"
