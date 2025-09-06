@@ -1,6 +1,6 @@
 import flask
 import threading
-
+import time
 from lib.led.SocketLED import SocketLED
 
 
@@ -9,17 +9,39 @@ class QuackDEAPI:
         self.base_url = "0.0.0.0"
         self.port = 6000
 
-        self.leds = leds
+        self.leds: SocketLED = leds
 
         self._api_thread = None
 
     def start_server(self):
         app = flask.Flask(__name__)
 
-        @app.route("/api/quack", methods=["GET"])
-        def quack():
-            return {"message": "Quack!"}
-        
+        @app.route("/api/themes/current", methods=["GET"])
+        def get_theme():
+            themeReturn = None
+            def callback(theme):
+                nonlocal themeReturn
+                themeReturn = theme
+            self.leds.getCurrentTheme(callback)
+            for _ in range(50):
+                if themeReturn is not None:
+                    return {"theme": themeReturn}
+                time.sleep(0.1)
+            return {"error": "Timeout fetching theme"}, 500
+
+        @app.route("/api/themes/list", methods=["GET"])
+        def list_themes():
+            themesReturn = []
+            def callback(themes):
+                nonlocal themesReturn
+                themesReturn = themes
+            self.leds.getThemes(callback)
+            for _ in range(50):
+                if themesReturn:
+                    return {"themes": themesReturn}
+                time.sleep(0.1)
+            return {"error": "Timeout fetching themes"}, 500
+
         @app.route("/api/themes/set", methods=["POST"])
         def set_theme():
             new_theme = flask.request.json.get("theme")

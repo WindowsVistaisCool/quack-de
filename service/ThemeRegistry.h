@@ -5,6 +5,7 @@
 #include <string>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 #include <atomic>
 
 class ThemeRegistry {
@@ -18,6 +19,7 @@ class ThemeRegistry {
 
         void add(const std::string& key, Theme* theme);
         Theme* get(const std::string& key);
+        std::vector<std::string> list() const;
         bool exists(const std::string& key) const;
 
         void clearCurrentTheme();

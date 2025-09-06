@@ -26,6 +26,7 @@
 
 std::thread *themeThread = nullptr;
 ThemeRegistry *registry = nullptr;
+int connection = -1;
 
 void parseMessage(const std::string &message);
 
@@ -71,7 +72,7 @@ int main()
     // loop to accept connections
     while (mainLoopActive)
     {
-        int connection = accept(server, nullptr, nullptr);
+        connection = accept(server, nullptr, nullptr);
         if (connection < 0)
         {
             std::cerr << "Failed to accept connection" << std::endl;
@@ -93,6 +94,7 @@ int main()
 
             if (std::string(buffer) == endMessage)
             {
+                connection = -1;
 #if defined(_WIN32) || defined(_WIN64)
                 closesocket(server);
                 WSACleanup();
@@ -119,7 +121,10 @@ void parseMessage(const std::string &message)
         std::string themeName = message.substr(4); // get the part after "set:"
         if (!registry->exists(themeName))
         {
-            std::cout << "Theme '" << themeName << "' does not exist." << std::endl;
+            if (connection >= 0) {
+                const std::string errorMsg = "Theme '" + themeName + "' does not exist.\n";
+                send(connection, errorMsg.c_str(), errorMsg.size(), 0);
+            }
             return;
         }
         themeThread = registry->setCurrentTheme(themeName);
@@ -145,6 +150,30 @@ void parseMessage(const std::string &message)
     {
         registry->clearCurrentTheme();
         registry->m_strip.clear();
+    }
+    else if (message.compare(0, 3, "get") == 0)
+    {
+        std::string currentThemeKey = registry->getCurrentThemeKey();
+        std::string response = "current:" + currentThemeKey + "\n";
+        if (connection >= 0) {
+            send(connection, response.c_str(), response.size(), 0);
+        }
+    }
+    else if (message.compare(0, 4, "list") == 0)
+    {
+        std::string themeList = "themes:";
+        for (const std::string key : registry->list())
+        {
+            themeList += key + ",";
+        }
+        if (!themeList.empty() && themeList.back() == ',')
+        {
+            themeList.pop_back(); // Remove trailing comma
+        }
+        themeList += "\n";
+        if (connection >= 0) {
+            send(connection, themeList.c_str(), themeList.size(), 0);
+        }
     }
     else if (message != "")
     {

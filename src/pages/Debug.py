@@ -121,21 +121,21 @@ class DebugPage(NavigationPage):
 
         self.ui.get("b_reconnect").setCommand(
             lambda: (
-                self.appRoot.getInstance().leds.begin(),
+                self.appRoot.leds.begin(),
                 self.navigator.navigate(HomePage),
             )
         )
 
         self.ui.get("b_dc").setCommand(
             lambda: (
-                self.appRoot.getInstance().leds.disconnect(),
+                self.appRoot.leds.disconnect(),
                 self.navigator.navigate(HomePage),
             )
         )
 
         self.ui.get("b_kill").setCommand(
             lambda: (
-                self.appRoot.getInstance().leds.killServer(),
+                self.appRoot.leds.killServer(),
                 self.navigator.navigate(HomePage),
             )
         )

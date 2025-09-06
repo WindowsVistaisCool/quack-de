@@ -21,8 +21,6 @@ class SocketLED:
             target=self._socket_sender, daemon=True
         )
 
-        # use a thread-safe queue for outgoing messages instead of a UI StringVar
-        # producer threads / callers call `put(...)`, the sender thread `get()`s
         self._sender = queue.Queue()
 
         self._running = False
@@ -30,6 +28,26 @@ class SocketLED:
         self.onConnect = lambda: None
         self.onDisconnect = lambda: None
         self.exceptionCall = lambda e: print(f"Socket error: {e}")
+
+        self._listenCallbackMap = {
+            "current:": [],
+            "themes:": [],
+        }
+
+    def _handle_message(self, message: str):
+        if message.startswith("current:"):
+            theme = message[len("current:"):].strip()
+            for callback in self._listenCallbackMap["current:"]:
+                callback(theme)
+            self._listenCallbackMap["current:"].clear()
+        elif message.startswith("themes:"):
+            themes_str = message[len("themes:"):].strip()
+            themes = themes_str.split(",") if themes_str else []
+            for callback in self._listenCallbackMap["themes:"]:
+                callback(themes)
+            self._listenCallbackMap["themes:"].clear()
+        else:
+            self.exceptionCall(f"UKN-MSG->{message}")
 
     def _socket_listener(self):
         while True:
@@ -41,8 +59,6 @@ class SocketLED:
             except Exception as e:
                 self.exceptionCall(f"Error receiving data: {e}")
                 break
-
-        self.sock.close()
 
     def _socket_sender(self):
         self._running = True
@@ -57,11 +73,8 @@ class SocketLED:
                 self.exceptionCall(f"Error connecting to server: {e}")
                 self._running = False
                 return
-            # self.socketListenerFactory().start()
+            self.socketListenerFactory().start()
 
-            # Wait for messages from the queue and send them as they arrive.
-            # queue.Queue.get() blocks until an item is available which avoids
-            # busy-waiting and removes the need for a StringVar polling trick.
             while True:
                 time.sleep(0.005)
                 try:
@@ -103,6 +116,14 @@ class SocketLED:
 
     def getBrightness(self):
         return 255
+
+    def getCurrentTheme(self, callback):
+        self._listenCallbackMap["current:"].append(callback)
+        self._sender.put("get:")
+    
+    def getThemes(self, callback):
+        self._listenCallbackMap["themes:"].append(callback)
+        self._sender.put("list:")
 
     def setLoop(self, loop: str, subStrip="All"):
         self._sender.put(f"set:{loop}")

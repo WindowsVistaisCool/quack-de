@@ -1,5 +1,6 @@
 #include "ThemeRegistry.h"
 #include <atomic>
+#include <vector>
 
 ThemeRegistry::~ThemeRegistry()
 {
@@ -25,6 +26,16 @@ Theme *ThemeRegistry::get(const std::string &key)
         return it->second;
     }
     throw std::runtime_error("Theme with key '" + key + "' not found.");
+}
+
+std::vector<std::string> ThemeRegistry::list() const
+{
+    std::vector<std::string> themeList;
+    for (const auto &pair : m_themes)
+    {
+        themeList.push_back(pair.first);
+    }
+    return themeList;
 }
 
 bool ThemeRegistry::exists(const std::string &key) const
