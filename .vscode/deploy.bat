@@ -1,3 +1,6 @@
-scp -r ./src/* kiosk@testbench:/home/kiosk/temp/
-scp ./src/.env kiosk@testbench:/home/kiosk/temp/
-ssh kiosk@testbench "cd ~/scripts && ./hotload.sh"
+@echo off
+set HOSTNAME=192.168.1.20
+
+scp -r ./src/* kiosk@%HOSTNAME%:/home/kiosk/temp/
+scp ./src/.env kiosk@%HOSTNAME%:/home/kiosk/temp/
+ssh kiosk@%HOSTNAME% "cd ~/scripts && ./hotload.sh"

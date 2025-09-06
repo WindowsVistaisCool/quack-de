@@ -1,3 +1,4 @@
+from time import time
 from typing import TYPE_CHECKING
 
 from LEDService import LEDService
@@ -25,6 +26,8 @@ class HomePage(NavigationPage):
         self._initCommands()
 
     def _initUI(self):
+        self.grid_rowconfigure(10, weight=1)
+
         self.ui.add(
             ctk.CTkLabel,
             "title",
@@ -64,16 +67,43 @@ class HomePage(NavigationPage):
             .cget("fg_color")
         )
 
+        self.svc_status = self.ui.add(
+            ctk.CTkFrame,
+            "svc_status",
+            corner_radius=0,
+        ).grid(row=10, column=0, padx=0, pady=0, sticky="swe").getInstance()
+
+        self.ui.add(
+            ctk.CTkLabel,
+            "label_svc_status",
+            root=self.svc_status,
+            text="Service Status:",
+            font=(self.appRoot.FONT_NAME, 12),
+        ).grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+
+        tv_status = ctk.StringVar(value="unkonwn")
+        self.ui.add(
+            ctk.CTkLabel,
+            "label_svc_status_value",
+            root=self.svc_status,
+            textvariable=tv_status,
+            font=(self.appRoot.FONT_NAME, 12),
+        ).grid(row=0, column=1, padx=5, pady=5, sticky="nw")
+        LEDService.getInstance().leds.onConnect = lambda: tv_status.set("Connected")
+        LEDService.getInstance().leds.onDisconnect = lambda: tv_status.set("Disconnected")
+        LEDService.getInstance().leds.exceptionCall = lambda e: tv_status.set(f"{e}")
+        LEDService.getInstance().leds.begin()
+
     def _initCommands(self):
         def b_ledlow_targ(state):
             if state:
-                LEDService.getInstance().setBrightness(20)
+                LEDService.getInstance().leds.setBrightness(10)
             else:
-                LEDService.getInstance().setBrightness(255)
+                LEDService.getInstance().leds.setBrightness(255)
 
         self.ui.get("b_ledoff").setCommand(
             lambda: (
-                LEDService.getInstance().off(),
+                LEDService.getInstance().leds.off(),
                 self.ui.get("b_ledlow").getInstance().toggle(False),
             )
         )

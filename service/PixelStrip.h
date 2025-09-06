@@ -1,0 +1,36 @@
+#pragma once
+
+#include <cstdint>
+
+#include <cstdint>
+#include "ws2811.h"
+#include "Color.h"
+
+class PixelStrip
+{
+public:
+    PixelStrip(int count, int gpio = 18, int dma = 10, int freq = WS2811_TARGET_FREQ, int channel = 0);
+    ~PixelStrip();
+
+    bool begin();
+
+    void setBrightness(uint8_t brightness, bool log = false);
+    void setColor(const Color &color);
+
+    void setPixelColor(int index, const Color &color);
+    void setPixelColor(int index, uint8_t r, uint8_t g, uint8_t b);
+    void show();
+
+    uint32_t getRawPixelColor(int index);
+    Color getPixelColor(int index);
+    uint8_t getPixelAverageLight(int index);
+
+    void clear();
+
+    int numPixels() const { return m_count; }
+
+private:
+    ws2811_t m_leds;
+    int m_count;
+    int m_channel;
+};

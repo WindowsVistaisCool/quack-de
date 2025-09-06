@@ -38,7 +38,7 @@ else:
         return 67 # he he he haw
 
 class App(QuackApp):
-    VERSION = f"v1.1{'-dev' if isDev() else ''}"
+    VERSION = f"v2.0{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
@@ -197,7 +197,7 @@ class App(QuackApp):
 
             def update():
                 self.navigation.getPage(HomePage).updateGreeting(now)
-                # self.navigation.getPage(WeatherPage).updateTime(now)
+                self.navigation.getPage(WeatherPage).updateTime(now)
 
             update()
             while self.clock_enabled:
@@ -213,15 +213,17 @@ class App(QuackApp):
         self.addLockCallback(lambda: self.ui.get("nav_debug").drop())
 
     def _addPages(self):
-        HomePage(self.navigation, self, self.content_root.getInstance())
-        LEDsPage(self.navigation, self, self.content_root.getInstance())
+        LEDsPage(self.navigation, self, self.content_root.getInstance()).ledService.leds
         WeatherPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
+        HomePage(self.navigation, self, self.content_root.getInstance())
 
         self.clock_thread().start()
 
         self.navigation.navigate(HomePage)
+
+        
 
     def toggleNav(self, viewable):
         if not viewable:
@@ -274,7 +276,7 @@ if __name__ == "__main__":
     else:
         app.toggleFullAccess(True)
 
-    LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
+    # LEDService.getInstance().setLoop(LEDThemes.getTheme("twinkle"), subStrip="All")
     
 
     dev = isDev()
@@ -282,5 +284,7 @@ if __name__ == "__main__":
         app.mainloop()
     except:
         if dev:
-            with open(f"/home/kiosk/{datetime.now().timestamp()}.log", "w") as f:
+            ts = datetime.now().timestamp()
+            os.system(f"touch {os.path.expanduser(f'~/{ts}')}")
+            with open(os.path.expanduser(f"~/{ts}.log"), "w") as f:
                 f.write(traceback.format_exc())

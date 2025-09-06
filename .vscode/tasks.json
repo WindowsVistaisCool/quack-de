@@ -20,6 +20,24 @@
             }
         },
         {
+            "label": "Deploy LED Service",
+            "type": "shell",
+            "command": ".vscode/service.bat",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Setup Scripts on Target",
             "type": "shell",
             "command": ".vscode/deployscripts.bat",
