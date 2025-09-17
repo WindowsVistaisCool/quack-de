@@ -4,7 +4,7 @@
 #include "LEDMath8.h"
 #include <thread>
 
-#define HSHIFT_SHIFT_DELAY 15 // Number of cycles before shifting hue
+#define HSHIFT_SHIFT_DELAY 10 // Number of cycles before shifting hue
 #define HSHIFT_LOWER_BOUND -30
 #define HSHIFT_UPPER_BOUND 35
 

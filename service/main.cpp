@@ -140,6 +140,7 @@ void parseMessage(const std::string &message)
         int r = 0, g = 0, b = 0;
         sscanf(color.c_str(), "%d,%d,%d", &r, &g, &b);
         Color colorRaw(r, g, b);
+        registry->clearCurrentTheme();
         registry->m_strip.setColor(Color(colorRaw));
     }
     else if (message.compare(0, 5, "clear") == 0)
