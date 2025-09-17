@@ -3,6 +3,8 @@
 #include <cstring>
 #include <iostream>
 #include "LEDMath8.h"
+#include <chrono>
+#include <mutex>
 
 PixelStrip::PixelStrip(int count, int gpio, int dma, int freq, int channel)
     : m_count(count), m_channel(channel)
@@ -25,6 +27,7 @@ PixelStrip::~PixelStrip()
 
 bool PixelStrip::begin()
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
     ws2811_return_t rc = ws2811_init(&m_leds);
     if (rc != WS2811_SUCCESS)
     {
@@ -42,21 +45,40 @@ void PixelStrip::setBrightness(uint8_t brightness, bool log)
         //     uint8_t log_brightness = (uint8_t)(std::pow(2.0, brightness / 32.0) - 1);
         //     brightness = log_brightness;
     }
+    std::lock_guard<std::mutex> lk(m_mutex);
     m_leds.channel[m_channel].brightness = brightness;
 }
 
 void PixelStrip::setColor(const Color &color)
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
     for (int i = 0; i < m_count; ++i)
     {
-        setPixelColor(i, color);
+        uint32_t col = ((uint32_t)color.r << 16) | ((uint32_t)color.g << 8) | (uint32_t)color.b;
+        m_leds.channel[m_channel].leds[i] = col;
     }
-    show();
+    // render while holding mutex to avoid concurrent modification
+    ws2811_render(&m_leds);
+    ws2811_wait(&m_leds);
 }
 
 void PixelStrip::show()
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
+    // Log render start time to help correlate flashes with render calls
+    auto now = std::chrono::steady_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    std::cout << "[PixelStrip] render start: " << ms << " ms" << std::endl;
+
     ws2811_render(&m_leds);
+
+    // Wait for the DMA/render to complete before returning to avoid buffer modifications
+    // while a transfer is in progress. This helps rule out mid-transfer corruption.
+    ws2811_wait(&m_leds);
+
+    auto done = std::chrono::steady_clock::now();
+    auto done_ms = std::chrono::duration_cast<std::chrono::milliseconds>(done.time_since_epoch()).count();
+    std::cout << "[PixelStrip] render end: " << done_ms << " ms (dur=" << (done_ms - ms) << " ms)" << std::endl;
 }
 
 void PixelStrip::setPixelColor(int index, const Color &color)
@@ -69,13 +91,15 @@ void PixelStrip::setPixelColor(int index, uint8_t r, uint8_t g, uint8_t b)
     if (index < 0 || index >= m_count)
         return;
     uint32_t color = ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
+    std::lock_guard<std::mutex> lk(m_mutex);
     m_leds.channel[m_channel].leds[index] = color;
 }
 
 uint32_t PixelStrip::getRawPixelColor(int index)
 {
     if (index < 0 || index >= m_count)
-        return -1;
+        return 0;
+    std::lock_guard<std::mutex> lk(m_mutex);
     return m_leds.channel[m_channel].leds[index];
 }
 
@@ -96,7 +120,9 @@ uint8_t PixelStrip::getPixelAverageLight(int index)
 
 void PixelStrip::clear()
 {
+    std::lock_guard<std::mutex> lk(m_mutex);
     for (int i = 0; i < m_count; ++i)
         m_leds.channel[m_channel].leds[i] = 0;
-    show();
+    ws2811_render(&m_leds);
+    ws2811_wait(&m_leds);
 }

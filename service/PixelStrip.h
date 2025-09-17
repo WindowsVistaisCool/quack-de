@@ -5,6 +5,7 @@
 #include <cstdint>
 #include "ws2811.h"
 #include "Color.h"
+#include <mutex>
 
 class PixelStrip
 {
@@ -33,4 +34,6 @@ private:
     ws2811_t m_leds;
     int m_count;
     int m_channel;
+    // protect accesses to the ws2811 buffer and render calls
+    std::mutex m_mutex;
 };
