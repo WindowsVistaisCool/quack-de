@@ -50,7 +50,7 @@ int main()
     registry->add("rainbow", new Rainbow(strip));
     registry->add("twinkle", new Twinkle(strip));
     strip.setBrightness(150);
-    themeThread = registry->setCurrentTheme("twinkle");
+    themeThread = registry->setCurrentTheme("pacifica");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);

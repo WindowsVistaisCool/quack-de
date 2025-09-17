@@ -19,6 +19,8 @@ private:
     void waves_add_whitecaps();
     void waves_deepen_colors();
 
+    void hueShift(int hueAdd);
+
     const Palette pacifica1 = Palette({Color(0x000507),
                                        Color(0x000409),
                                        Color(0x00030B),

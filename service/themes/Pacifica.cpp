@@ -4,6 +4,18 @@
 #include "LEDMath8.h"
 #include <thread>
 
+#define HSHIFT_SHIFT_DELAY 15 // Number of cycles before shifting hue
+#define HSHIFT_LOWER_BOUND -30
+#define HSHIFT_UPPER_BOUND 35
+
+// constrain function to limit value between low and high
+template <typename T>
+T constrain(T val, T low, T high) {
+    if (val < low) return low;
+    if (val > high) return high;
+    return val;
+}
+
 void Pacifica::themeInit()
 {
     strip.clear();
@@ -15,6 +27,20 @@ void Pacifica::run()
     // Each is incremented at a different speed, and the speeds vary over time.
     static uint16_t sCIStart1, sCIStart2, sCIStart3, sCIStart4;
     static uint32_t sLastms = 0;
+
+    static int hueShiftCounter = 0; // Counter to track when to shift hue
+    static int hueShiftDirection = 1; // 1 for right, -1 for left
+    static int hueShiftAmount = 0;
+
+    hueShiftCounter++;
+    if (hueShiftCounter >= HSHIFT_SHIFT_DELAY) {
+        hueShiftAmount += hueShiftDirection; // Shift hue by 1 unit
+        if (hueShiftAmount < HSHIFT_LOWER_BOUND || hueShiftAmount > HSHIFT_UPPER_BOUND) {
+            hueShiftDirection *= -1; // Reverse direction
+            hueShiftAmount = constrain(hueShiftAmount, HSHIFT_LOWER_BOUND, HSHIFT_UPPER_BOUND);
+        }
+        hueShiftCounter = 0;
+    }
 
     uint32_t ms = GET_MILLIS();
     uint32_t deltams = ms - sLastms;
@@ -43,27 +69,30 @@ void Pacifica::run()
 
     // Add brighter 'whitecaps' where the waves lines up more
     waves_add_whitecaps();
+    
+    hueShift(hueShiftAmount);
 
-    // Deepen the blues and greens a bit
+    // Deepen the blues and greens a bit AFTER hue shifting
     waves_deepen_colors();
 
     strip.show();
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
 }
 
-void Pacifica::waves_one_layer(const Palette& p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff)
+void Pacifica::waves_one_layer(const Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff)
 {
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;
     uint16_t wavescale_half = (wavescale / 2) + 20;
-    for( uint16_t i = 0; i < strip.numPixels(); i++) {
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
         waveangle += 250;
-        uint16_t s16 = sin16( waveangle ) + 32768;
-        uint16_t cs = scale16( s16 , wavescale_half ) + wavescale_half;
+        uint16_t s16 = sin16(waveangle) + 32768;
+        uint16_t cs = scale16(s16, wavescale_half) + wavescale_half;
         ci += cs;
-        uint16_t sindex16 = sin16( ci) + 32768;
-        uint8_t sindex8 = scale16( sindex16, 240);
-        Color c = ColorFromPalette( p, sindex8, bri, LINEARBLEND);
+        uint16_t sindex16 = sin16(ci) + 32768;
+        uint8_t sindex8 = scale16(sindex16, 240);
+        Color c = ColorFromPalette(p, sindex8, bri, LINEARBLEND);
         strip.setPixelColor(i, strip.getPixelColor(i) + c);
     }
 }
@@ -96,5 +125,20 @@ void Pacifica::waves_deepen_colors()
         c.b = scale8(c.b, 255);
         c |= Color{2, 5, 7};
         strip.setPixelColor(i, c);
+    }
+}
+
+void Pacifica::hueShift(int hueAdd)
+{
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
+        HSVColor hsv = Color::toHSV(strip.getPixelColor(i));
+
+        // Shift hue
+        hsv.h += hueAdd;
+        hsv.h &= 0xFF;
+
+        Color newColor = Color::fromHSV(hsv.h, hsv.s, hsv.v);
+        strip.setPixelColor(i, newColor);
     }
 }
