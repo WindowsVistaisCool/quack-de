@@ -2,6 +2,7 @@
 #include <thread>
 #include <chrono>
 #include "PixelStrip.h"
+#include "themes/Epilepsy.h"
 #include "themes/Fire2012.h"
 #include "themes/Jerry.h"
 #include "themes/Pacifica.h"
@@ -49,6 +50,7 @@ int main()
     registry->add("pacifica", new Pacifica(strip));
     registry->add("rainbow", new Rainbow(strip));
     registry->add("twinkle", new Twinkle(strip));
+    registry->add("epilepsy", new Epilepsy(strip));
     strip.setBrightness(150);
     themeThread = registry->setCurrentTheme("pacifica");
 

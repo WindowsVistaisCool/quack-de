@@ -451,39 +451,16 @@ class LEDThemes:
     def epilepsy(self):
         self._checkThemeExists("epilepsy")
 
-        hue = 0
-
-        def target(theme: "LEDTheme"):
-            nonlocal hue
-
-            hue = (hue + 32) & 0xFF
-
-            for i in range(theme.strip.numPixels()):
-                theme.strip.setPixelColorRGB(i, *FastLEDFunctions.fromHSV(hue, 255, 255))
-            theme.strip.show()
-
-            time.sleep(0.05)
-
-            for i in range(theme.strip.numPixels()):
-                theme.strip.setPixelColorRGB(i, 0, 0, 0)
-            theme.strip.show()
-
-            time.sleep(0.05)
-
         return LEDTheme(
-            "epilepsy",
-            target,
+            "epilepsy"
         )
 
     def rainbow(self, *, _name="rainbow"):
         self._checkThemeExists(_name)
 
         iterations = ctk.IntVar(value=10)
-        _iterations = iterations.get()
         delay = ctk.IntVar(value=30)
-        _delay = delay.get()
         step_size = ctk.IntVar(value=4)
-        _step_size = step_size.get()
 
         def uiMaker(theme: LEDTheme, ui: CommandUI, withShowSaveButton: callable):
             ui.add(

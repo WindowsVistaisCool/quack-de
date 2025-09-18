@@ -13,6 +13,7 @@ add_executable(service
 	main.cpp
 	PixelStrip.cpp
 	ThemeRegistry.cpp
+	themes/Epilepsy.cpp
 	themes/Fire2012.cpp
 	themes/Jerry.cpp
     themes/Pacifica.cpp
