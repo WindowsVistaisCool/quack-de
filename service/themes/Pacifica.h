@@ -4,16 +4,25 @@
 #include "Palette.h"
 #include "Color.h"
 
+#define DEFAULT_SHIFT_DELAY 10
+#define DEFAULT_LOWER_BOUND -30
+#define DEFAULT_UPPER_BOUND 35
+
 class Pacifica : public Theme
 {
 public:
-    using Theme::Theme;
+    Pacifica(PixelStrip &strip, int shiftDelay, int lowShiftBound, int highShiftBound);
+    Pacifica(PixelStrip &strip) : Pacifica(strip, DEFAULT_SHIFT_DELAY, DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND) {}
     ~Pacifica() = default;
 
     void run() override;
 
 private:
     void themeInit() override;
+
+    int shiftDelay {};
+    int lowShiftBound {};
+    int highShiftBound {};
 
     void waves_one_layer(const Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff);
     void waves_add_whitecaps();

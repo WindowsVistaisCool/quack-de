@@ -96,7 +96,7 @@ class LEDsPage(NavigationPage):
         ).withGridProperties(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.tabview.getInstance().add("Themes")
         self.tabview.getInstance().add("Solid Color")
-        self.tabview.getInstance().add("Segments")
+        # self.tabview.getInstance().add("Segments")
         self.tabview.getInstance().set("Themes")
         new_fg_color = self.tabview.getInstance()._segmented_button.cget(
             "unselected_color"

@@ -54,6 +54,15 @@ class DebugPage(NavigationPage):
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
         ).grid(row=0, column=1, padx=20, pady=10, sticky="nw")
+        
+        self.ui.add(
+            ctk.CTkButton,
+            "freaky",
+            root=led_frame,
+            text="Freaky",
+            height=50,
+            font=(self.appRoot.FONT_NAME, 18),
+        ).grid(row=0, column=2, padx=20, pady=10, sticky="nw")
 
         f_sock = (
             self.ui.add(
@@ -118,6 +127,9 @@ class DebugPage(NavigationPage):
             self.navigator.navigateEphemeral(yndialog)
 
         self.ui.get("epilepsy").setCommand(epilepsy_call)
+        self.ui.get("freaky").setCommand(
+            lambda: self.appRoot.leds.setLoop(LEDThemes.getTheme("freaky").id)
+        )
 
         self.ui.get("b_reconnect").setCommand(
             lambda: (

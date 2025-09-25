@@ -47,12 +47,13 @@ int main()
     registry = new ThemeRegistry(strip);
     registry->add("fire2012", new Fire2012(strip));
     registry->add("rgbSnake", new Jerry(strip));
-    registry->add("pacifica", new Pacifica(strip));
+    registry->add("pacifica", new Pacifica(strip, 10, -30, 35));
+    registry->add("freaky", new Pacifica(strip, 2, 60, 90));
     registry->add("rainbow", new Rainbow(strip));
     registry->add("twinkle", new Twinkle(strip));
     registry->add("epilepsy", new Epilepsy(strip));
     strip.setBrightness(150);
-    themeThread = registry->setCurrentTheme("pacifica");
+    themeThread = registry->setCurrentTheme("freaky");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);

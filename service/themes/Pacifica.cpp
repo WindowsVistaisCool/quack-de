@@ -4,16 +4,20 @@
 #include "LEDMath8.h"
 #include <thread>
 
-#define HSHIFT_SHIFT_DELAY 10 // Number of cycles before shifting hue
-#define HSHIFT_LOWER_BOUND -30
-#define HSHIFT_UPPER_BOUND 35
-
 // constrain function to limit value between low and high
 template <typename T>
-T constrain(T val, T low, T high) {
-    if (val < low) return low;
-    if (val > high) return high;
+T constrain(T val, T low, T high)
+{
+    if (val < low)
+        return low;
+    if (val > high)
+        return high;
     return val;
+}
+
+Pacifica::Pacifica(PixelStrip &strip, int shiftDelay, int lowShiftBound, int highShiftBound) : Theme(strip), shiftDelay(shiftDelay), lowShiftBound(lowShiftBound), highShiftBound(highShiftBound)
+{
+    themeInit();
 }
 
 void Pacifica::themeInit()
@@ -28,18 +32,22 @@ void Pacifica::run()
     static uint16_t sCIStart1, sCIStart2, sCIStart3, sCIStart4;
     static uint32_t sLastms = 0;
 
-    static int hueShiftCounter = 0; // Counter to track when to shift hue
+    static int hueShiftCounter = 0;   // Counter to track when to shift hue
     static int hueShiftDirection = 1; // 1 for right, -1 for left
     static int hueShiftAmount = 0;
 
-    hueShiftCounter++;
-    if (hueShiftCounter >= HSHIFT_SHIFT_DELAY) {
-        hueShiftAmount += hueShiftDirection; // Shift hue by 1 unit
-        if (hueShiftAmount < HSHIFT_LOWER_BOUND || hueShiftAmount > HSHIFT_UPPER_BOUND) {
-            hueShiftDirection *= -1; // Reverse direction
-            hueShiftAmount = constrain(hueShiftAmount, HSHIFT_LOWER_BOUND, HSHIFT_UPPER_BOUND);
+    if (shiftDelay > 0) {
+        hueShiftCounter++;
+        if (hueShiftCounter >= shiftDelay)
+        {
+            hueShiftAmount += hueShiftDirection; // Shift hue by 1 unit
+            if (hueShiftAmount < lowShiftBound || hueShiftAmount > highShiftBound)
+            {
+                hueShiftDirection *= -1; // Reverse direction
+                hueShiftAmount = constrain(hueShiftAmount, lowShiftBound, highShiftBound);
+            }
+            hueShiftCounter = 0;
         }
-        hueShiftCounter = 0;
     }
 
     uint32_t ms = GET_MILLIS();
@@ -70,10 +78,10 @@ void Pacifica::run()
     // Add brighter 'whitecaps' where the waves lines up more
     waves_add_whitecaps();
     
+    // Deepen the blues and greens a bit
+    // waves_deepen_colors();
+    
     hueShift(hueShiftAmount);
-
-    // Deepen the blues and greens a bit AFTER hue shifting
-    waves_deepen_colors();
 
     strip.show();
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -134,7 +142,7 @@ void Pacifica::hueShift(int hueAdd)
     {
         HSVColor hsv = Color::toHSV(strip.getPixelColor(i));
 
-        // Shift hue
+        // Shift and clamp hue
         hsv.h += hueAdd;
         hsv.h &= 0xFF;
 

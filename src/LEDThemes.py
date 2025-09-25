@@ -377,6 +377,7 @@ class LEDThemes:
             "twinkle": self.twinkle(),
             "pacifica": self.pacifica(),
             "epilepsy": self.epilepsy(),
+            "freaky": LEDTheme("freaky"),
         }
 
     @classmethod
