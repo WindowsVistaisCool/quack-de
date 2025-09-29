@@ -258,3 +258,23 @@ void Twinkle::run()
     }
     strip.show();
 }
+
+void Twinkle::setAttribute(const std::string &key, const std::string &value)
+{
+    if (key == "twinkleSpeed") {
+        int val = std::stoi(value);
+        twinkleSpeed = std::clamp(val, 0, 8); // Valid range: 0-8
+    } else if (key == "twinkleDensity") {
+        int val = std::stoi(value);
+        twinkleDensity = std::clamp(val, 0, 16); // Valid range: 0-16
+    } else if (key == "secondsPerPalette") {
+        int val = std::stoi(value);
+        secondsPerPalette = std::max(0, val); // Ensure non-negative
+    } else if (key == "coolLikeIncandescent") {
+        if (value == "true" || value == "1") {
+            coolLikeIncandescent = true;
+        } else if (value == "false" || value == "0") {
+            coolLikeIncandescent = false;
+        }
+    }
+}

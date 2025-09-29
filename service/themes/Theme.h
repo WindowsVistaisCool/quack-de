@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 
 class PixelStrip; // forward-declare
 
@@ -15,6 +16,8 @@ public:
         themeInit();
     };
     virtual void run() = 0;
+
+    virtual void setAttribute(const std::string &key, const std::string &value) {};
 
     inline virtual void sendStopSignal() final {
         returnSig = true;

@@ -3,6 +3,7 @@
 #include "PixelStrip.h"
 #include "LEDMath8.h"
 #include <thread>
+#include <string>
 
 // constrain function to limit value between low and high
 template <typename T>
@@ -85,6 +86,20 @@ void Pacifica::run()
 
     strip.show();
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
+}
+
+void Pacifica::setAttribute(const std::string &key, const std::string &value)
+{
+    if (key == "shiftDelay") {
+        int val = std::stoi(value);
+        shiftDelay = std::max(0, val); // Ensure non-negative
+    } else if (key == "lowShiftBound") {
+        int val = std::stoi(value);
+        lowShiftBound = val;
+    } else if (key == "highShiftBound") {
+        int val = std::stoi(value);
+        highShiftBound = val;
+    }
 }
 
 void Pacifica::waves_one_layer(const Palette &p, uint16_t cistart, uint16_t wavescale, uint8_t bri, uint16_t ioff)

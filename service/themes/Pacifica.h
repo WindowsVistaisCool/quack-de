@@ -4,6 +4,8 @@
 #include "Palette.h"
 #include "Color.h"
 
+#include <string>
+
 #define DEFAULT_SHIFT_DELAY 10
 #define DEFAULT_LOWER_BOUND -30
 #define DEFAULT_UPPER_BOUND 35
@@ -16,6 +18,8 @@ public:
     ~Pacifica() = default;
 
     void run() override;
+
+    void setAttribute(const std::string &key, const std::string &value) override;
 
 private:
     void themeInit() override;
