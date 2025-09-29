@@ -53,7 +53,7 @@ int main()
     registry->add("twinkle", new Twinkle(strip));
     registry->add("epilepsy", new Epilepsy(strip));
     strip.setBrightness(150);
-    themeThread = registry->setCurrentTheme("freaky");
+    themeThread = registry->setCurrentTheme("pacifica");
 
     // Initialize the server socket
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -132,6 +132,29 @@ void parseMessage(const std::string &message)
         }
         themeThread = registry->setCurrentTheme(themeName);
     }
+    else if (message.compare(0, 5, "attr:") == 0) {
+        std::string setting = message.substr(5); // get the part after "attr:"
+        // should be in the format key,value
+        size_t commaPos = setting.find(',');
+        if (commaPos == std::string::npos) {
+            if (connection >= 0) {
+                const std::string errorMsg = "Attribute setting must be in the format key,value.\n";
+                send(connection, errorMsg.c_str(), errorMsg.size(), 0);
+            }
+            return;
+        }
+        std::string key = setting.substr(0, commaPos);
+        std::string value = setting.substr(commaPos + 1);
+        std::cout << "Setting attribute " << key << " to " << value << std::endl;
+        if (registry->getCurrentTheme() == nullptr) {
+            if (connection >= 0) {
+                const std::string errorMsg = "No theme is currently set. Cannot set attribute.\n";
+                send(connection, errorMsg.c_str(), errorMsg.size(), 0);
+            }
+            return;
+        }
+        registry->getCurrentTheme()->setAttribute(key, value);
+    }
     else if (message.compare(0, 7, "bright:") == 0)
     {
         std::string brightness = message.substr(7); // get the part after "bright:"
@@ -181,6 +204,6 @@ void parseMessage(const std::string &message)
     }
     else if (message != "")
     {
-        std::cout << "> " << message << std::endl;
+        std::cout << "Unknown command: " << message << std::endl;
     }
 }
