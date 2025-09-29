@@ -9,16 +9,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rpi_281x)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/rpi_281x)
 
+file(GLOB THEME_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/themes/*.cpp")
+
 add_executable(service
 	main.cpp
 	PixelStrip.cpp
 	ThemeRegistry.cpp
-	themes/Epilepsy.cpp
-	themes/Fire2012.cpp
-	themes/Jerry.cpp
-    themes/Pacifica.cpp
-	themes/Rainbow.cpp
-	themes/Twinkle.cpp
+	${THEME_SOURCES}
 )
 
 target_include_directories(service PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/themes)
