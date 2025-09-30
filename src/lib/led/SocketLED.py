@@ -128,6 +128,9 @@ class SocketLED:
     def setLoop(self, loop: str, subStrip="All"):
         self._sender.put(f"set:{loop}")
         # self._subStrip = subStrip
+    
+    def setAttribute(self, key: str, value: str):
+        self._sender.put(f"attr:{key},{value}")
 
     def setBrightness(self, brightness: int):
         brightness = int(brightness)

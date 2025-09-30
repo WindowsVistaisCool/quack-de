@@ -44,7 +44,7 @@ class DebugPage(NavigationPage):
             height=50,
             font=(self.appRoot.FONT_NAME, 18),
             state="disabled",
-        ).grid(row=0, column=0, padx=20, pady=10, sticky="nw")
+        ).withGridProperties(row=0, column=0, padx=20, pady=10, sticky="nw")
 
         self.ui.add(
             ctk.CTkButton,

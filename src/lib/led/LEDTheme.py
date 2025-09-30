@@ -1,10 +1,6 @@
-import threading
-import rpi_ws281x as ws
-
 from lib.Configurator import Configurator
 from lib.QuackApp import QuackApp
 from lib.led.LEDThemeSettings import LEDThemeSettings
-from lib.led.WSExtensions import SegmentedPixelStrip, SubStrip
 
 class LEDTheme:
     def __init__(self,
@@ -22,12 +18,6 @@ class LEDTheme:
         self.themeData = Configurator.getInstance().get(self.id, {})
 
         self.app: 'QuackApp' = None
-
-        # self.leds: 'SegmentedPixelStrip' = None
-        # self.strip: 'SubStrip' = None
-
-        # self.break_event: 'threading.Event' = None
-        # self.after = lambda delay, callback: None
 
     def getSettings(self, app: QuackApp) -> 'LEDThemeSettings':
         """

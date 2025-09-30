@@ -293,8 +293,7 @@ class LEDsPage(NavigationPage):
             def exception_wrapper():
                 try:
                     # self.appRoot.setLoop(loop)
-                    # self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
-                    pass
+                    self.navigator.navigateEphemeral(loop.getSettings(self.appRoot))
                 except:
                     self.ui.exceptionCallback(traceback.format_exc())
 

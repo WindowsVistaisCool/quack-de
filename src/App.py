@@ -59,7 +59,7 @@ class App(QuackApp):
         self._fullAccessLockCallbacks = []
 
         self.leds = SocketLED()
-        LEDThemes() # initialize themes
+        LEDThemes(self.leds) # initialize themes
 
         self._initUI()
         self._initCommands()
