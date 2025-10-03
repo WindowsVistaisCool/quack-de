@@ -2,3 +2,4 @@ __pycache__/
 build/
 window.pid
 appconfig.json
+src/.env

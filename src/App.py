@@ -20,6 +20,7 @@ from pages.Calendar import CalendarPage
 from pages.Debug import DebugPage
 from pages.LEDs import LEDsPage
 from pages.Home import HomePage
+from pages.HomeAssistant import HomeAssistantPage
 from pages.Settings import SettingsPage
 from pages.Weather import WeatherPage
 
@@ -139,6 +140,17 @@ class App(QuackApp):
 
         self.ui.add(
             ctk.CTkButton,
+            "nav_assistant",
+            root=self.navbar.getInstance(),
+            text="HomeAssistant",
+            font=(self.FONT_NAME, 18),
+            width=150,
+            height=60,
+            corner_radius=20,
+        ).grid(row=5, column=0, padx=20, pady=(10, 0), sticky="new")
+
+        self.ui.add(
+            ctk.CTkButton,
             "nav_weather",
             root=self.navbar.getInstance(),
             text="Weather",
@@ -146,7 +158,7 @@ class App(QuackApp):
             width=150,
             height=60,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(10, 0), sticky="new")
+        ).grid(row=6, column=0, padx=20, pady=(10, 0), sticky="new")
 
         self.ui.add(
             ctk.CTkButton,
@@ -157,7 +169,7 @@ class App(QuackApp):
             width=140,
             height=40,
             corner_radius=20,
-        ).withGridProperties(row=6, column=0, padx=20, pady=(10, 0), sticky="s")
+        ).withGridProperties(row=7, column=0, padx=20, pady=(10, 0), sticky="s")
 
         self.ui.add(
             ctk.CTkButton,
@@ -168,7 +180,7 @@ class App(QuackApp):
             width=140,
             height=50,
             corner_radius=20,
-        ).grid(row=7, column=0, padx=20, pady=(10, 15), sticky="s")
+        ).grid(row=8, column=0, padx=20, pady=(10, 15), sticky="s")
 
         # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
@@ -192,6 +204,7 @@ class App(QuackApp):
         self.ui.addCommand("nav_home", lambda: self.navigation.navigate(HomePage))
         self.ui.addCommand("nav_leds", lambda: self.navigation.navigate(LEDsPage))
         self.ui.addCommand("nav_weather", lambda: self.navigation.navigate(WeatherPage))
+        self.ui.addCommand("nav_assistant", lambda: self.navigation.navigate(HomeAssistantPage))
         self.ui.addCommand("nav_debug", lambda: self.navigation.navigate(DebugPage))
         self.ui.addCommand(
             "nav_settings", lambda: self.navigation.navigate(SettingsPage)
@@ -223,6 +236,7 @@ class App(QuackApp):
     def _addPages(self):
         LEDsPage(self.navigation, self, self.content_root.getInstance())
         WeatherPage(self.navigation, self, self.content_root.getInstance())
+        HomeAssistantPage(self.navigation, self, self.content_root.getInstance())
         DebugPage(self.navigation, self, self.content_root.getInstance())
         SettingsPage(self.navigation, self, self.content_root.getInstance())
         HomePage(self.navigation, self, self.content_root.getInstance())
