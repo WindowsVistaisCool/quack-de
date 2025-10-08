@@ -18,19 +18,19 @@ public:
 private:
     void themeInit() override;
 
-    int twinkleSpeed;
-    int twinkleDensity;
-    int secondsPerPalette;
-    uint32_t lastPaletteChangeMs = 0;
-    uint32_t lastBlendMs = 0;
+    int twinkleSpeed{5};
+    int twinkleDensity{2};
+    int secondsPerPalette{30};
+    uint32_t lastPaletteChangeMs{0};
+    uint32_t lastBlendMs{0};
     // bool autoSelectBg;
-    bool coolLikeIncandescent;
+    bool coolLikeIncandescent{true};
 
     // Keep the reference palettes as immutable templates; do not modify them.
     std::vector<std::reference_wrapper<const Palette>> palettes;
 
     // Working palette is a mutable copy that we blend toward a target template.
     std::unique_ptr<Palette> workingPalette;
-    Palette* currentPalette = nullptr;        // points to workingPalette.get()
-    const Palette* targetPalette = nullptr;   // points into `palettes`
+    Palette *currentPalette = nullptr;      // points to workingPalette.get()
+    const Palette *targetPalette = nullptr; // points into `palettes`
 };
