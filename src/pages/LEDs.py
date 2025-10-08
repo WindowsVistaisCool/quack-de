@@ -69,7 +69,7 @@ class LEDsPage(NavigationPage):
             "l_currentSeg",
             text="Sublength: ",
             font=(self.appRoot.FONT_NAME, 18, "bold"),
-        ).grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        ).withGridProperties(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
 
         self.tv_segmentNum = ctk.IntVar(value=-1)
         self.tv_segmentLabel = ctk.StringVar(value="All")
@@ -78,7 +78,7 @@ class LEDsPage(NavigationPage):
             "currentSegment",
             textvariable=self.tv_segmentLabel,
             font=(self.appRoot.FONT_NAME, 18),
-        ).grid(row=0, column=2, padx=(0, 20), pady=(20, 0), sticky="nsew")
+        ).withGridProperties(row=0, column=2, padx=(0, 20), pady=(20, 0), sticky="nsew")
 
         self.tabviewUI = SwappableUI(self)
         self.tabviewUI.grid(

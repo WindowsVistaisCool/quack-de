@@ -70,7 +70,7 @@ class HomePage(NavigationPage):
             ctk.CTkFrame,
             "svc_status",
             corner_radius=0,
-        ).grid(row=10, column=0, padx=0, pady=0, sticky="swe").getInstance()
+        ).withGridProperties(row=10, column=0, padx=0, pady=0, sticky="swe").getInstance()
 
         self.ui.add(
             ctk.CTkLabel,
@@ -107,6 +107,12 @@ class HomePage(NavigationPage):
             )
         )
         self.ui.get("b_ledlow").setCommand(b_ledlow_targ)
+
+    def onShow(self):
+        if self.appRoot.hasFullAccess():
+            self.ui.get("svc_status").grid()
+        else:
+            self.ui.get("svc_status").drop()
 
     def updateGreeting(self, datetime):
         if datetime.hour >= 2 and datetime.hour < 5:

@@ -40,7 +40,7 @@ else:
         return 67 # he he he haw
 
 class App(QuackApp):
-    VERSION = f"v2.0{'-dev' if isDev() else ''}"
+    VERSION = f"v2.1{'-dev' if isDev() else ''}"
     APP_TITLE = "QuackDE"
     APP_DESCRIPTION = "Quackings Dorm Environment\nWritten by Kyle Rush"
     FONT_NAME = "Ubuntu Mono"
@@ -60,7 +60,7 @@ class App(QuackApp):
         self._fullAccessLockCallbacks = []
 
         self.leds = SocketLED()
-        LEDThemes(self.leds) # initialize themes
+        LEDThemes(self.leds) # initialize theme data
 
         self._initUI()
         self._initCommands()
@@ -72,60 +72,60 @@ class App(QuackApp):
 
     def _initUI(self):
         # init grid
-        self.grid_columnconfigure(0, weight=0)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=0)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1,  weight=0)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(3, weight=0)
 
         # grid in the nav root
-        self.content_root.grid(row=0, column=1, sticky="nsew")
+        self.content_root.grid(row=1, column=0, sticky="nsew")
         self.content_root.getInstance().grid_rowconfigure(0, weight=1)
         self.content_root.getInstance().grid_columnconfigure(0, weight=1)
 
-        # init nav sidebar
+        # init nav
         self.navbar = self.ui.add(ctk.CTkFrame, "sb_main", width=800, corner_radius=0)
-        self.navbar.grid(row=0, column=0, rowspan=10, sticky="nsew")
-        self.navbar.getInstance().grid_rowconfigure((7), weight=1)
+        self.navbar.grid(row=3, column=0, sticky="nsew")
+        self.navbar.getInstance().grid_columnconfigure((8), weight=1)
 
         self._fullAccessText = ctk.StringVar(value=f"{self.APP_TITLE}")
-        self.ui.add(
-            ctk.CTkLabel,
-            "app_title",
-            root=self.navbar.getInstance(),
-            textvariable=self._fullAccessText,
-            font=(self.FONT_NAME, 28, "bold"),
-            pady=0,
-        ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="new")
+        # self.ui.add(
+        #     ctk.CTkLabel,
+        #     "app_title",
+        #     root=self.navbar.getInstance(),
+        #     textvariable=self._fullAccessText,
+        #     font=(self.FONT_NAME, 28, "bold"),
+        #     pady=0,
+        # ).grid(row=0, column=0, padx=20, pady=(20, 0), sticky="new")
 
         self.clock_label = ctk.StringVar(value="Unknown Time")
-        self.ui.add(
-            ctk.CTkLabel,
-            "clock",
-            root=self.navbar.getInstance(),
-            textvariable=self.clock_label,
-            font=(self.FONT_NAME, 16),
-        ).grid(row=1, column=0, padx=20, pady=(5, 0), sticky="new")
+        # self.ui.add(
+        #     ctk.CTkLabel,
+        #     "clock",
+        #     root=self.navbar.getInstance(),
+        #     textvariable=self.clock_label,
+        #     font=(self.FONT_NAME, 16),
+        # ).grid(row=0, column=1, padx=5, pady=3, sticky="ns")
 
         self.temp_label = ctk.StringVar(value="CPU: ?% ?°C")
-        self.ui.add(
-            ctk.CTkLabel,
-            "temp",
-            root=self.navbar.getInstance(),
-            textvariable=self.temp_label,
-            font=(self.FONT_NAME, 16),
-            pady=0,
-        ).grid(row=2, column=0, padx=20, pady=(0, 0), sticky="new")
+        # self.ui.add(
+        #     ctk.CTkLabel,
+        #     "temp",
+        #     root=self.navbar.getInstance(),
+        #     textvariable=self.temp_label,
+        #     font=(self.FONT_NAME, 16),
+        #     pady=0,
+        # ).grid(row=0, column=2, padx=5, pady=3, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
             "nav_home",
             root=self.navbar.getInstance(),
-            text="Home",
+            text="🏠",
             font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
+            width=100,
+            height=50,
             corner_radius=20,
-        ).grid(row=3, column=0, padx=20, pady=(10, 0), sticky="new")
+        ).grid(row=0, column=3, padx=(20, 5), pady=10, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
@@ -133,10 +133,10 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             text="LEDs",
             font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
+            width=100,
+            height=50,
             corner_radius=20,
-        ).grid(row=4, column=0, padx=20, pady=(10, 0), sticky="new")
+        ).grid(row=0, column=4, padx=5, pady=10, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
@@ -144,10 +144,10 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             text="HomeAssistant",
             font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
+            width=100,
+            height=50,
             corner_radius=20,
-        ).grid(row=5, column=0, padx=20, pady=(10, 0), sticky="new")
+        ).grid(row=0, column=5, padx=5, pady=10, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
@@ -155,32 +155,32 @@ class App(QuackApp):
             root=self.navbar.getInstance(),
             text="Weather",
             font=(self.FONT_NAME, 18),
-            width=150,
-            height=60,
+            width=100,
+            height=50,
             corner_radius=20,
-        ).grid(row=6, column=0, padx=20, pady=(10, 0), sticky="new")
+        ).grid(row=0, column=6, padx=5, pady=10, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
             "nav_debug",
             root=self.navbar.getInstance(),
-            text="Secrets",
+            text="🤫",
             font=(self.FONT_NAME, 18),
-            width=140,
-            height=40,
+            width=100,
+            height=50,
             corner_radius=20,
-        ).withGridProperties(row=7, column=0, padx=20, pady=(10, 0), sticky="s")
+        ).withGridProperties(row=0, column=7, padx=5, pady=10, sticky="ns")
 
         self.ui.add(
             ctk.CTkButton,
             "nav_settings",
             root=self.navbar.getInstance(),
-            text="Settings",
+            text="🔧",
             font=(self.FONT_NAME, 18),
-            width=140,
+            width=100,
             height=50,
             corner_radius=20,
-        ).grid(row=8, column=0, padx=20, pady=(10, 15), sticky="s")
+        ).grid(row=0, column=8, padx=(5, 20), pady=10, sticky="nse")
 
         # TODO: move this to QuackApp
         self.notifierUI = CommandUI(self)
@@ -189,7 +189,7 @@ class App(QuackApp):
             "notifier_base",
             fg_color="transparent",
             bg_color="transparent",
-        ).withGridProperties(row=1, column=1, padx=0, pady=0, sticky="sew")
+        ).withGridProperties(row=2, column=0, padx=0, pady=0, sticky="sew")
         self.notifierBase.getInstance().grid_columnconfigure(0, weight=1)
         self.notifierBase.getInstance().grid_rowconfigure(0, weight=1)
         self.notifierBase.grid()
