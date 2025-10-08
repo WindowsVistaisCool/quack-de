@@ -6,10 +6,6 @@
 void Twinkle::themeInit()
 {
     strip.clear();
-    twinkleSpeed = 5;
-    twinkleDensity = 2;
-    secondsPerPalette = 30;
-    coolLikeIncandescent = true;
 
     palettes.clear();
     static const Palette retroC9({
@@ -30,6 +26,7 @@ void Twinkle::themeInit()
         Color(0x070758), // C9_Blue
         Color(0x606820)  // C9_White
     });
+    palettes.push_back(std::cref(retroC9));
     static const Palette holly({
         Color(0x00580c), // Holly_Green
         Color(0x00580c), // Holly_Green
@@ -48,6 +45,45 @@ void Twinkle::themeInit()
         Color(0x00580c), // Holly_Green
         Color(0xB00402)  // Holly_Red
     });
+    palettes.push_back(std::cref(holly));
+    static const Palette purple({
+        Color(0x7A0DAF), // purple1
+        Color(0xD466FF), // purple3
+        Color(0xFF66CC), // pink1
+        Color(0xFF00FF), // magenta
+        Color(0xFF33AA), // pink2
+        Color(0x9B2BFF), // purple2
+        Color(0x7F00FF), // violet
+        Color(0x3A0060), // deep_purple
+        Color(0xFF00FF), // magenta
+        Color(0xFF66CC), // pink1
+        Color(0xD466FF), // purple3
+        Color(0xFF33AA), // pink2
+        Color(0x7A0DAF), // purple1
+        Color(0x7F00FF), // violet
+        Color(0xFF00FF), // magenta
+        Color(0x9B2BFF)  // purple2
+    });
+    palettes.push_back(std::cref(purple));
+    static const Palette partyColors({
+        Color(0x5500AB),
+        Color(0x84007C),
+        Color(0xB5004B),
+        Color(0xE5001B),
+        Color(0xE81700),
+        Color(0xB84700),
+        Color(0xAB7700),
+        Color(0xABAB00),
+        Color(0xAB5500),
+        Color(0xDD2200),
+        Color(0xF2000E),
+        Color(0xC2003E),
+        Color(0x8F0071),
+        Color(0x5F00A1),
+        Color(0x2F00D0),
+        Color(0x0007F9)
+    });
+    palettes.push_back(std::cref(partyColors));
     static const Palette fairyLight({
         Color(0xFFE42D), // FairyLight
         Color(0xFFE42D), // FairyLight
@@ -66,15 +102,13 @@ void Twinkle::themeInit()
         Color(0xFFE42D), // FairyLight
         Color(0xFFE42D)  // FairyLight
     });
+    palettes.push_back(std::cref(fairyLight));
     // A cold, icy pale blue palette
     static const Palette ice({Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
                               Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
                               Color(0x0C1040), Color(0x0C1040), Color(0x0C1040), Color(0x0C1040),
                               Color(0x182080), Color(0x182080), Color(0x182080), Color(0x5080C0)});
     palettes.push_back(std::cref(ice));
-    palettes.push_back(std::cref(fairyLight));
-    palettes.push_back(std::cref(retroC9));
-    palettes.push_back(std::cref(holly));
 
     // Create a mutable working copy from the first (template) palette.
     workingPalette = std::make_unique<Palette>(palettes[0].get());
