@@ -8,6 +8,8 @@ public:
     ~Rainbow() = default;
 
     void run() override;
+
+    void setAttribute(const std::string &key, const std::string &value) override;
     
 private:
     void themeInit() override;

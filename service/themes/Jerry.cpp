@@ -7,6 +7,8 @@
 #include <chrono>
 #include <iostream>
 
+#define HUESHIFT_AMOUNT 4
+
 void Jerry::themeInit()
 {
     strip.clear();
@@ -25,7 +27,7 @@ void Jerry::run()
     for (int i = 0; i < num; i += _step_size) {
         if (shouldReturn()) return;
 
-        hue = static_cast<uint8_t>(hue + 4);
+        hue = static_cast<uint8_t>(hue + HUESHIFT_AMOUNT);
 
         // fill pixels for step size
         int fillCount = std::min(_step_size, num - i);
@@ -60,3 +62,27 @@ void Jerry::run()
     }
 }
 
+void Jerry::setAttribute(const std::string &key, const std::string &value)
+{
+    if (key == "tailScaleFactor") {
+        try {
+            int val = std::stoi(value);
+            if (val < 0) val = 0;
+            if (val > 255) val = 255;
+            tailScaleFactor = val;
+        } catch (...) {
+            std::cerr << "Invalid value for tailScaleFactor: " << value << std::endl;
+        }
+    } else if (key == "step_size") {
+        try {
+            int val = std::stoi(value);
+            if (val < 1) val = 1;
+            if (val > 50) val = 50; // arbitrary upper limit
+            step_size = val;
+        } catch (...) {
+            std::cerr << "Invalid value for step_size: " << value << std::endl;
+        }
+    } else {
+        std::cerr << "Unknown attribute key: " << key << std::endl;
+    }
+}

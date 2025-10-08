@@ -58,3 +58,31 @@ void Rainbow::run()
         }
     }
 }
+
+void Rainbow::setAttribute(const std::string &key, const std::string &value)
+{
+    if (key == "iterations")
+    {
+        int val = std::stoi(value);
+        if (val > 0)
+        {
+            iterations = val;
+        }
+    }
+    else if (key == "step_size")
+    {
+        int val = std::stoi(value);
+        if (val > 0)
+        {
+            step_size = val;
+        }
+    }
+    else if (key == "delay")
+    {
+        int val = std::stoi(value);
+        if (val >= 0)
+        {
+            delay = val;
+        }
+    }
+}

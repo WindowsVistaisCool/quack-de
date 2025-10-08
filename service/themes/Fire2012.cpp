@@ -59,3 +59,20 @@ void Fire2012::run()
 
     strip.show();
 }
+
+void Fire2012::setAttribute(const std::string &key, const std::string &value)
+{
+    if (key == "cooling") {
+        int val = std::stoi(value);
+        cooling = std::clamp(val, 20, 200); // Valid range: 20-200
+    } else if (key == "sparking") {
+        int val = std::stoi(value);
+        sparking = std::clamp(val, 50, 250); // Valid range: 50-250
+    } else if (key == "reverseDirection") {
+        if (value == "true" || value == "1") {
+            reverseDirection = true;
+        } else if (value == "false" || value == "0") {
+            reverseDirection = false;
+        }
+    }
+}
