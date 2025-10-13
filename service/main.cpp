@@ -1,5 +1,7 @@
 #include <iostream>
 #include <thread>
+#include <atomic>
+#include <memory>
 #include <chrono>
 #include "PixelStrip.h"
 #include "themes/Epilepsy.h"
@@ -19,14 +21,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #endif
-#include <atomic>
 
 #define LED_COUNT 822
 #define LED_PIN 18
 #define LED_DMA 10
+#define SOCKET_PORT 5000
+#define SOCKET_ADDR "127.0.0.1"
+
+#define DEFAULT_BRIGHTNESS 150
 
 std::thread *themeThread = nullptr;
-ThemeRegistry *registry = nullptr;
+std::unique_ptr<ThemeRegistry> registry;
 int connection = -1;
 
 void parseMessage(const std::string &message);
@@ -44,7 +49,7 @@ int main()
     }
 
     // Appoint registry
-    registry = new ThemeRegistry(strip);
+    registry = std::make_unique<ThemeRegistry>(strip);
     registry->add("fire2012", new Fire2012(strip));
     registry->add("rgbSnake", new Jerry(strip));
     registry->add("pacifica", new Pacifica(strip, 10, -30, 35));
@@ -52,7 +57,7 @@ int main()
     registry->add("rainbow", new Rainbow(strip));
     registry->add("twinkle", new Twinkle(strip));
     registry->add("epilepsy", new Epilepsy(strip));
-    strip.setBrightness(150);
+    strip.setBrightness(DEFAULT_BRIGHTNESS);
     themeThread = registry->setCurrentTheme("pacifica");
 
     // Initialize the server socket
@@ -64,8 +69,8 @@ int main()
     }
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(5000);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_addr.sin_port = htons(SOCKET_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(SOCKET_ADDR);
     bind(server, (sockaddr *)&server_addr, sizeof(server_addr));
     listen(server, 5);
 

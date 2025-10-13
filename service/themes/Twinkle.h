@@ -18,8 +18,8 @@ public:
 private:
     void themeInit() override;
 
-    int twinkleSpeed{5};
-    int twinkleDensity{2};
+    int twinkleSpeed{4};
+    int twinkleDensity{6};
     int secondsPerPalette{30};
     uint32_t lastPaletteChangeMs{0};
     uint32_t lastBlendMs{0};
